@@ -344,14 +344,27 @@ async function verifyAndRead(b64,canvas){
   if(br<30){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo scura";btn.textContent="❌ Riscatta";return}
   if(br>235){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo chiara";btn.textContent="❌ Riscatta";return}
   if(va<200){vb.className="verify-bar fail";vb.innerHTML="❌ Inquadra bilancia con cesta";btn.textContent="❌ Riscatta";return}
-  // AI
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
-  // Send original photo directly (already 1400px from capture)
-  var tb=canvas.toDataURL("image/jpeg",0.85);
+
+  // Crop the UPPER 60% of the photo (where the display is) and upscale for better reading
+  vb.innerHTML='<span class="spin"></span> Preparazione...';
+  var cropH=Math.round(h*0.6);
+  var cropC=document.createElement("canvas");
+  var scale=Math.min(2,2000/w); // upscale up to 2x for better OCR
+  cropC.width=Math.round(w*scale);cropC.height=Math.round(cropH*scale);
+  cropC.getContext("2d").drawImage(canvas,0,0,w,cropH,0,0,cropC.width,cropC.height);
+  var cropB64=cropC.toDataURL("image/jpeg",0.9);
+
+  // Also send full photo at lower res for cesta verification
+  var fullC=document.createElement("canvas");
+  var fw=w,fh=h;if(fw>1000){fh=Math.round(fh*1000/fw);fw=1000}
+  fullC.width=fw;fullC.height=fh;fullC.getContext("2d").drawImage(canvas,0,0,fw,fh);
+  var fullB64=fullC.toDataURL("image/jpeg",0.7);
+
   vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
   try{
-    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:tb})});
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:fullB64,fotoDisplay:cropB64})});
     var txt=await res.text();var j;
     try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore script";return}
     if(j.valid===true){
@@ -365,8 +378,7 @@ async function verifyAndRead(b64,canvas){
         wr.classList.remove("hid");btn.disabled=false;
         btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
       } else {
-        // Valid photo but can't read weight — manual fallback
-        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile — inserisci manualmente:";
+        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile — inserisci:";
         wr.classList.remove("hid");
         document.getElementById("wrVal").innerHTML='<input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:var(--inbg);border:2px solid var(--warn);border-radius:10px;padding:10px;font-size:24px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:140px;outline:none" oninput="manualWChk()">';
         document.getElementById("wrNet").textContent="—";
@@ -411,12 +423,25 @@ function wBldSum(){
 async function wSave(){
   var btn=document.getElementById("btnSF");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
   var totNetto=0;wCeste.forEach(function(c){totNetto+=c.pesoNetto||0});
-  getDay(activeDate)[wZone.id]={ceste:wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}}),autista:curUser,totaleNetto:totNetto};saveL();
-  var url=gUrl();if(url){
-    try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:totNetto,nceste:wNC,ceste:wCeste.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
-      for(var i=0;i<wCeste.length;i++){if(wCeste[i].foto){try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:activeDate,operatore:curUser,zona:wZone.id,cesta:i+1,foto:wCeste[i].foto})})}catch(e){}}}
-      showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto")}catch(e){showT("⚠ Salvato localmente")}}else{showT("✓ Salvato localmente")}
-  cancelWiz()}
+  // 1) SAVE LOCALLY IMMEDIATELY
+  var cesteData=wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}});
+  getDay(activeDate)[wZone.id]={ceste:cesteData,autista:curUser,totaleNetto:totNetto};saveL();
+  showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto");
+  // 2) Save photos for background upload
+  var photosToSync=wCeste.map(function(c,i){return{cesta:i+1,foto:c.foto}}).filter(function(p){return p.foto});
+  var syncZone=wZone;var syncDate=activeDate;
+  // 3) Return to main immediately
+  cancelWiz();
+  // 4) BACKGROUND SYNC — data first (fast), then photos (slow)
+  var url=gUrl();if(!url)return;
+  try{
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:photosToSync.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+  }catch(e){}
+  // Photos in background one by one
+  for(var i=0;i<photosToSync.length;i++){
+    try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})})}catch(e){}
+  }
+}
 
 function openSet(){var p=prompt("Password:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
 function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updUI()}
