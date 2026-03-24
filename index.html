@@ -346,7 +346,7 @@ function init(){
 function initApp(){
   document.getElementById("sUrl").value=gUrl();
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
-  delete dayData["2026-03-24"];saveL();
+  delete dayData["2026-03-24"];delete dayData["2026-03-25"];delete dayData[todayStr];saveL();
   // User badge
   var mz=myZones().map(function(id){var z=zoneById(id);return z?z.name:id}).join(", ");
   document.getElementById("ubName").textContent="🚚 "+curUser;
@@ -480,8 +480,10 @@ function wClrP(){
 
 async function verifyPhoto(b64,canvas){
   var vb=document.getElementById("vBar"),ok=document.getElementById("camOk"),btn=document.getElementById("btnNP");
-  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica foto...';vb.classList.remove("hid");
+  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Controllo foto...';vb.classList.remove("hid");
   ok.classList.add("hid");btn.disabled=true;
+
+  // Offline checks
   var cx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
   var px=cx.getImageData(0,0,w,h).data,totalPx=w*h,brightness=0,sumSq=0;
   for(var i=0;i<px.length;i+=4){var lum=(px[i]+px[i+1]+px[i+2])/3;brightness+=lum;sumSq+=lum*lum}
@@ -490,25 +492,58 @@ async function verifyPhoto(b64,canvas){
   if(brightness>235){vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo chiara";btn.textContent="❌ Riscatta";return}
   if(variance<200){vb.className="verify-bar fail";vb.innerHTML="❌ Inquadra la bilancia con la cesta";btn.textContent="❌ Riscatta";return}
   if(w<300||h<300){vb.className="verify-bar fail";vb.innerHTML="❌ Usa la fotocamera";btn.textContent="❌ Riscatta";return}
+
+  // AI verification
   var url=gUrl();
-  if(url){vb.innerHTML='<span class="spin"></span> Verifica AI...';
-    try{var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:b64})});
-      var j=await res.json();
-      if(j.valid===true){
-        // AI OK - continue to pass
-      } else if(j.valid===false){
-        vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida — serve cesta su bilancia");btn.textContent="❌ Riscatta";return;
-      } else {
-        // Unexpected response (old script, error, etc) - fail safe
-        vb.className="verify-bar fail";vb.innerHTML="❌ Verifica non riuscita — riprova";btn.textContent="❌ Riscatta";return;
-      }
-    }catch(e){
-      vb.className="verify-bar fail";vb.innerHTML="❌ Connessione assente — riprova";btn.textContent="❌ Riprova";return;
-    }
+  if(!url){
+    // No Google Sheets = no AI, pass with basic checks only
+    vb.className="verify-bar pass";vb.innerHTML="✓ Controllo base OK (AI non attiva)";
+    ok.classList.remove("hid");btn.disabled=false;
+    btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+    return;
   }
-  vb.className="verify-bar pass";vb.innerHTML="✓ Foto verificata";
-  ok.classList.remove("hid");btn.disabled=false;
-  btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2)}
+
+  vb.innerHTML='<span class="spin"></span> Invio foto a verifica AI...';
+
+  try{
+    var res=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify({action:"verifyPhoto",foto:b64})
+    });
+
+    vb.innerHTML='<span class="spin"></span> Analisi AI in corso...';
+    var txt=await res.text();
+    var j;
+    try{ j=JSON.parse(txt); }catch(pe){
+      vb.className="verify-bar fail";
+      vb.innerHTML="❌ Risposta script non valida — aggiorna lo script Google";
+      btn.textContent="❌ Errore script";return;
+    }
+
+    if(j.valid===true){
+      vb.className="verify-bar pass";vb.innerHTML="✓ Foto verificata da AI";
+      ok.classList.remove("hid");btn.disabled=false;
+      btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+    } else if(j.valid===false){
+      vb.className="verify-bar fail";
+      vb.innerHTML="❌ "+(j.reason||"Foto non valida — serve cesta su bilancia");
+      btn.textContent="❌ Riscatta";
+    } else if(j.error){
+      vb.className="verify-bar fail";
+      vb.innerHTML="❌ Errore script: "+(j.error||"sconosciuto");
+      btn.textContent="❌ Errore — riprova";
+    } else {
+      vb.className="verify-bar fail";
+      vb.innerHTML="❌ Risposta imprevista — aggiorna lo script Google";
+      btn.textContent="❌ Errore";
+    }
+  }catch(e){
+    vb.className="verify-bar fail";
+    vb.innerHTML="❌ Connessione fallita: "+e.message;
+    btn.textContent="❌ Riprova";
+  }
+}
 
 function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(5)}}
 function bldCP(id){var h="";for(var i=0;i<wNC;i++){var c=i<wCC?"done":i===wCC?"active":"";h+='<div class="cp-d '+c+'">'+(i<wCC?"✓":(i+1))+'</div>'}document.getElementById(id).innerHTML=h}
