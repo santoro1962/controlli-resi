@@ -334,7 +334,7 @@ function festPick(zid){
 function festConfirm(){
   if(!festSel)return;var z=ZONES.find(function(x){return x.id===festSel});
   getDay(activeDate)[festSel]="festivo";saveL();showT("🏖️ "+z.name+" segnata festiva");
-  festSel=null;if(pendZ(activeDate).length===0){clFest()}else{showFest()}}
+  festSel=null;clFest()}
 function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");festSel=null;updUI()}
 function festAll(){if(!confirm("Giornata chiusura — tutte festive?"))return;pendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
 
@@ -376,7 +376,15 @@ function wPhoto(e){
   };img.src=ev.target.result};rd.readAsDataURL(f)}
 
 function wClrP(){
-  document.getElementById("camIn").value="";document.getElementById("camP").classList.remove("hid");
+  // Recreate camera input to ensure onchange fires on mobile
+  var oldIn=document.getElementById("camIn");
+  var newIn=document.createElement("input");
+  newIn.id="camIn";newIn.type="file";newIn.accept="image/*";
+  newIn.setAttribute("capture","environment");
+  newIn.style.display="none";
+  newIn.onchange=function(e){wPhoto(e)};
+  oldIn.parentNode.replaceChild(newIn,oldIn);
+  document.getElementById("camP").classList.remove("hid");
   document.getElementById("camD").classList.add("hid");document.getElementById("camBox").className="cam-box cam-req";
   document.getElementById("vBar").classList.add("hid");document.getElementById("camOk").classList.add("hid");
   document.getElementById("btnNP").disabled=true;document.getElementById("btnNP").textContent="📸 Scatta foto per continuare";
