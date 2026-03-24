@@ -14,23 +14,31 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 input[type="number"],input[type="url"]{font-size:18px!important}
 button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .app{max-width:480px;margin:0 auto;padding:20px 16px 100px}
-
-/* Header */
 .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .hdr-left{display:flex;align-items:center;gap:12px}
 .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:26px}
-.hdr h1{font-size:22px;font-weight:700}
-.hdr-sub{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
+.hdr h1{font-size:22px;font-weight:700}.hdr-sub{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .btn-gear{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:20px;color:var(--text)}
 
-/* Today summary */
+/* Alert banner */
+.alert-banner{border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px}
+.alert-banner.red{background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.3)}
+.alert-banner.amber{background:rgba(245,158,11,0.1);border:2px solid rgba(245,158,11,0.3)}
+.alert-banner .alert-icon{font-size:28px;flex-shrink:0}
+.alert-banner .alert-body{flex:1}
+.alert-banner .alert-title{font-weight:700;font-size:15px;margin-bottom:4px}
+.alert-banner .alert-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Today panel */
 .today{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px}
 .today-date{font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500}
 .today-date strong{color:var(--text);font-size:15px}
+.today-date .old-tag{background:rgba(239,68,68,0.15);color:var(--danger);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px}
 .giri-grid{display:flex;flex-direction:column;gap:8px}
 .giro-row{display:flex;align-items:center;justify-content:space-between;background:var(--inbg);border-radius:12px;padding:12px 16px;border:1px solid var(--inbord)}
 .giro-row.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
+.giro-row.festivo{border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.04)}
 .giro-left{display:flex;align-items:center;gap:10px}
 .giro-dot{width:12px;height:12px;border-radius:4px}
 .giro-name{font-weight:600;font-size:15px}
@@ -38,94 +46,77 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .giro-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
 .giro-status.waiting{color:var(--warn);background:rgba(245,158,11,0.1)}
 .giro-status.ok{color:var(--ok);background:rgba(34,197,94,0.1)}
+.giro-status.fest{color:var(--muted);background:rgba(148,163,184,0.1)}
 .giro-op{font-size:10px;color:var(--muted);margin-left:22px;margin-top:2px}
 .total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:8px}
 .total-label{font-size:13px;color:var(--muted);font-weight:600}
 .total-val{font-family:monospace;font-size:18px;font-weight:700;color:var(--text)}
 
-/* Big action button */
-.btn-action{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+/* Buttons */
+.btn-action{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-action.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}
 .btn-action.save{background:linear-gradient(135deg,#10b981,#059669)}
 .btn-action.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
 .btn-action.close{background:var(--inbg);color:var(--muted)}
+.btn-action.festivo{background:var(--inbg);color:var(--muted);font-size:14px;padding:14px;border:1px solid var(--inbord)}
 
-/* Entry flow panels */
+/* Entry flow */
 .panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
 .panel-title{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:12px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;margin-right:8px}
-
-/* Operator selection */
 .op-btns{display:flex;gap:10px}
 .op-btn{flex:1;padding:16px;border-radius:12px;font-size:16px;font-weight:600;background:var(--inbg);color:var(--muted);border:2px solid var(--inbord);text-align:center;transition:all 0.15s}
 .op-btn.sel-c{background:linear-gradient(135deg,#ec4899,#db2777);color:#fff;border-color:transparent}
 .op-btn.sel-a{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-color:transparent}
 
-/* Giro selection */
 .giro-btns{display:flex;flex-direction:column;gap:10px}
 .giro-btn{padding:18px 16px;border-radius:12px;font-size:16px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:12px;transition:all 0.15s}
 .giro-btn.sel{border-color:var(--accent);background:rgba(139,92,246,0.08)}
-.giro-btn.done-btn{opacity:0.4;cursor:not-allowed}
+.giro-btn.done-btn{opacity:0.35;cursor:not-allowed}
 .giro-btn .gdot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
-.giro-btn .gcheck{margin-left:auto;color:var(--ok);font-size:14px}
+.giro-btn .gcheck{margin-left:auto;font-size:13px}
+.giro-btn .gcheck.ok{color:var(--ok)}
+.giro-btn .gcheck.fest{color:var(--muted)}
 
-/* Weight input */
-.weight-box{text-align:center;padding:10px 0}
+/* Festivo per giro */
+.fest-opt{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:12px 16px;background:var(--inbg);border-radius:12px;border:1px solid var(--inbord)}
+.fest-opt span{font-size:14px;color:var(--muted)}
+.btn-fest-giro{background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600}
+
 .weight-input{background:var(--inbg);border:2px solid var(--inbord);border-radius:16px;padding:20px;font-size:32px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none}
 .weight-input:focus{border-color:var(--accent)}
-.weight-unit{font-size:14px;color:var(--muted);margin-top:6px}
+.weight-unit{font-size:14px;color:var(--muted);margin-top:6px;text-align:center}
 
-/* Camera */
 .cam-box{border-radius:14px;padding:20px;text-align:center;margin-top:16px}
 .cam-req{background:rgba(239,68,68,0.06);border:2px dashed rgba(239,68,68,0.3)}
 .cam-ok{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.3)}
-.cam-icon{font-size:48px;margin-bottom:10px}
-.cam-text{font-size:15px;font-weight:600;color:var(--danger);margin-bottom:12px}
 .btn-cam{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-radius:12px;padding:16px 28px;font-weight:700;font-size:16px;width:100%}
 .cam-preview{width:100%;max-width:280px;border-radius:12px;margin:0 auto;display:block}
-.cam-ok-text{font-size:13px;color:var(--ok);font-weight:600;margin-top:10px}
-.btn-reshoot{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px}
 
-/* Settings */
 .set-card{background:var(--card);border-radius:16px;border:1px solid rgba(139,92,246,0.2);padding:20px;margin-bottom:16px}
 .fi{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:14px;color:var(--text);font-family:monospace;font-size:14px;outline:none;width:100%}
 .set-btns{display:flex;gap:8px;margin-top:12px}
 .btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;padding:12px 24px;font-weight:600;font-size:14px;flex:1}
 .btn-xx{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:10px;padding:12px 16px;font-size:14px}
 
-/* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;z-index:10000;border:1px solid #334155;display:none;white-space:nowrap}
-.toast.show{display:block;animation:fu .3s}
-@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-
-/* Photo overlay */
+.toast.show{display:block;animation:fu .3s}@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .po{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
-.po.show{display:flex}
-.po img{max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain}
+.po.show{display:flex}.po img{max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain}
 .po-c{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);color:white;font-size:24px;width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center}
-
 .hid{display:none!important}
 </style>
 </head>
 <body>
-
 <div id="toast" class="toast"></div>
 <div id="po" class="po" onclick="closePhoto()"><button class="po-c" onclick="closePhoto()">✕</button><img id="poImg" src=""/></div>
 
 <div class="app">
-  <!-- HEADER -->
   <div class="hdr">
-    <div class="hdr-left">
-      <div class="logo">🍞</div>
-      <div>
-        <h1>Resi Pane</h1>
-        <div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div>
-      </div>
-    </div>
+    <div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div>
     <button class="btn-gear" onclick="toggleSet()">⚙️</button>
   </div>
 
-  <!-- SETTINGS -->
   <div id="setP" class="set-card hid">
     <div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Google Sheets</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">Incolla l'URL dello script Google (finisce con /exec)</p>
@@ -133,351 +124,394 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
     <div class="set-btns"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div>
   </div>
 
-  <!-- NO URL -->
   <div id="noUrl" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px">
     <strong style="color:var(--danger)">⚠ Configura Google Sheets</strong>
     <p style="color:var(--muted);margin-top:4px;font-size:12px">Tocca ⚙️ per collegare il foglio.</p>
   </div>
 
-  <!-- TODAY SUMMARY -->
-  <div id="todayPanel" class="today">
-    <div class="today-date">Oggi: <strong id="todayDate"></strong></div>
-    <div class="giri-grid">
-      <div id="rowAv" class="giro-row">
-        <div class="giro-left"><div class="giro-dot" style="background:var(--av)"></div><span class="giro-name">Avellino</span></div>
-        <span id="valAv" class="giro-val" style="color:var(--av)">—</span>
-        <span id="stAv" class="giro-status waiting">in attesa</span>
-      </div>
-      <div id="opAv" class="giro-op hid"></div>
-      <div id="rowSr" class="giro-row">
-        <div class="giro-left"><div class="giro-dot" style="background:var(--sr)"></div><span class="giro-name">Sergio</span></div>
-        <span id="valSr" class="giro-val" style="color:var(--sr)">—</span>
-        <span id="stSr" class="giro-status waiting">in attesa</span>
-      </div>
-      <div id="opSr" class="giro-op hid"></div>
-      <div id="rowGv" class="giro-row">
-        <div class="giro-left"><div class="giro-dot" style="background:var(--gv)"></div><span class="giro-name">Giovanni</span></div>
-        <span id="valGv" class="giro-val" style="color:var(--gv)">—</span>
-        <span id="stGv" class="giro-status waiting">in attesa</span>
-      </div>
-      <div id="opGv" class="giro-op hid"></div>
-    </div>
-    <div class="total-row">
-      <span class="total-label">Totale pesata</span>
-      <span id="totVal" class="total-val">—</span>
+  <!-- OVERDUE ALERT -->
+  <div id="overdueAlert" class="alert-banner red hid">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-body">
+      <div class="alert-title">Resi non completati!</div>
+      <div class="alert-desc" id="overdueText">Ci sono giorni precedenti con resi mancanti. Completa prima di proseguire.</div>
     </div>
   </div>
 
-  <!-- BIG ADD BUTTON -->
+  <!-- AFTERNOON REMINDER -->
+  <div id="pmAlert" class="alert-banner amber hid">
+    <div class="alert-icon">⏰</div>
+    <div class="alert-body">
+      <div class="alert-title">Promemoria ore 14</div>
+      <div class="alert-desc">Ci sono ancora giri da registrare oggi. Ricordati di completare tutti i resi!</div>
+    </div>
+  </div>
+
+  <!-- TODAY PANEL -->
+  <div id="todayPanel" class="today">
+    <div class="today-date"><span id="dayLabel">Oggi</span>: <strong id="todayDate"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div>
+    <div class="giri-grid">
+      <div id="rowAv" class="giro-row"><div class="giro-left"><div class="giro-dot" style="background:var(--av)"></div><span class="giro-name">Avellino</span></div><span id="valAv" class="giro-val" style="color:var(--av)">—</span><span id="stAv" class="giro-status waiting">in attesa</span></div>
+      <div id="opAv" class="giro-op hid"></div>
+      <div id="rowSr" class="giro-row"><div class="giro-left"><div class="giro-dot" style="background:var(--sr)"></div><span class="giro-name">Sergio</span></div><span id="valSr" class="giro-val" style="color:var(--sr)">—</span><span id="stSr" class="giro-status waiting">in attesa</span></div>
+      <div id="opSr" class="giro-op hid"></div>
+      <div id="rowGv" class="giro-row"><div class="giro-left"><div class="giro-dot" style="background:var(--gv)"></div><span class="giro-name">Giovanni</span></div><span id="valGv" class="giro-val" style="color:var(--gv)">—</span><span id="stGv" class="giro-status waiting">in attesa</span></div>
+      <div id="opGv" class="giro-op hid"></div>
+    </div>
+    <div class="total-row"><span class="total-label">Totale pesata</span><span id="totVal" class="total-val">—</span></div>
+  </div>
+
   <button id="btnAdd" class="btn-action primary hid" onclick="startEntry()">📦 Registra reso giro</button>
+  <button id="btnAllFest" class="btn-action festivo hid" onclick="markAllFestivo()">🏖️ Oggi giorno festivo — nessun giro</button>
 
-  <!-- ═══ ENTRY FLOW ═══ -->
+  <!-- ENTRY FLOW -->
   <div id="entryFlow" class="hid">
-
-    <!-- STEP 1: Operator -->
-    <div class="panel">
-      <div class="panel-title"><span class="step-num">1</span>Chi sei?</div>
-      <div class="op-btns">
-        <button id="eOpC" class="op-btn" onclick="pickOp('Carmela')">👩 Carmela</button>
-        <button id="eOpA" class="op-btn" onclick="pickOp('Antonio')">👨 Antonio</button>
-      </div>
+    <div class="panel"><div class="panel-title"><span class="step-num">1</span>Chi sei?</div>
+      <div class="op-btns"><button id="eOpC" class="op-btn" onclick="pickOp('Carmela')">👩 Carmela</button><button id="eOpA" class="op-btn" onclick="pickOp('Antonio')">👨 Antonio</button></div>
     </div>
-
-    <!-- STEP 2: Giro (shown after op) -->
-    <div id="step2" class="panel hid">
-      <div class="panel-title"><span class="step-num">2</span>Quale giro?</div>
+    <div id="step2" class="panel hid"><div class="panel-title"><span class="step-num">2</span>Quale giro?</div>
       <div class="giro-btns">
-        <button id="gBtnAv" class="giro-btn" onclick="pickGiro('avellino')"><div class="gdot" style="background:var(--av)"></div>Avellino<span class="gcheck hid" id="gChkAv">✓</span></button>
-        <button id="gBtnSr" class="giro-btn" onclick="pickGiro('sergio')"><div class="gdot" style="background:var(--sr)"></div>Sergio<span class="gcheck hid" id="gChkSr">✓</span></button>
-        <button id="gBtnGv" class="giro-btn" onclick="pickGiro('giovanni')"><div class="gdot" style="background:var(--gv)"></div>Giovanni<span class="gcheck hid" id="gChkGv">✓</span></button>
+        <button id="gBtnAv" class="giro-btn" onclick="pickGiro('avellino')"><div class="gdot" style="background:var(--av)"></div>Avellino<span class="gcheck hid" id="gChkAv"></span></button>
+        <button id="gBtnSr" class="giro-btn" onclick="pickGiro('sergio')"><div class="gdot" style="background:var(--sr)"></div>Sergio<span class="gcheck hid" id="gChkSr"></span></button>
+        <button id="gBtnGv" class="giro-btn" onclick="pickGiro('giovanni')"><div class="gdot" style="background:var(--gv)"></div>Giovanni<span class="gcheck hid" id="gChkGv"></span></button>
       </div>
+      <div class="fest-opt"><span>Questo giro non esce oggi?</span><button class="btn-fest-giro" id="btnFestGiro" onclick="markGiroFestivo()">🏖️ Segna festivo</button></div>
     </div>
-
-    <!-- STEP 3: Weight (shown after giro) -->
-    <div id="step3" class="panel hid">
-      <div class="panel-title"><span class="step-num">3</span>Peso cesta — <strong id="giroLabel" style="color:var(--accent)"></strong></div>
-      <div class="weight-box">
-        <input id="wInput" type="number" step="0.1" placeholder="0.0" class="weight-input" oninput="checkReady()">
-        <div class="weight-unit">chilogrammi (kg)</div>
-      </div>
+    <div id="step3" class="panel hid"><div class="panel-title"><span class="step-num">3</span>Peso cesta — <strong id="giroLabel" style="color:var(--accent)"></strong></div>
+      <div><input id="wInput" type="number" step="0.1" placeholder="0.0" class="weight-input" oninput="checkReady()"><div class="weight-unit">chilogrammi (kg)</div></div>
     </div>
-
-    <!-- STEP 4: Photo (shown after weight) -->
     <div id="step4" class="hid">
-      <div class="cam-box cam-req" id="camBox">
-        <input id="camIn" type="file" accept="image/*" capture="environment" onchange="onPhoto(event)" style="display:none">
-        <div id="camPrompt">
-          <div class="cam-icon">📸</div>
-          <p class="cam-text">Foto della cesta sulla bilancia</p>
-          <button class="btn-cam" onclick="document.getElementById('camIn').click()">📷 Scatta foto</button>
-        </div>
-        <div id="camDone" class="hid">
-          <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
-          <p class="cam-ok-text">✓ Foto OK — tocca per ingrandire</p>
-          <button class="btn-reshoot" onclick="clearPhoto()">🔄 Riscatta</button>
-        </div>
+      <div class="cam-box cam-req" id="camBox"><input id="camIn" type="file" accept="image/*" capture="environment" onchange="onPhoto(event)" style="display:none">
+        <div id="camPrompt"><div style="font-size:48px;margin-bottom:10px">📸</div><p style="font-size:15px;font-weight:600;color:var(--danger);margin-bottom:12px">Foto della cesta sulla bilancia</p><button class="btn-cam" onclick="document.getElementById('camIn').click()">📷 Scatta foto</button></div>
+        <div id="camDone" class="hid"><img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/><p style="font-size:13px;color:var(--ok);font-weight:600;margin-top:10px">✓ Foto OK</p><button onclick="clearPhoto()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px">🔄 Riscatta</button></div>
       </div>
     </div>
-
-    <!-- SAVE / CANCEL -->
     <button id="btnSave" class="btn-action save" disabled onclick="doSave()">Compila tutti i passaggi</button>
     <button class="btn-action close" onclick="cancelEntry()">✕ Annulla</button>
   </div>
-
 </div>
 
 <script>
 // ── STATE ──
 var todayStr = new Date().toISOString().slice(0,10);
-var todayData = {avellino:null, sergio:null, giovanni:null, opAv:null, opSr:null, opGv:null};
-var entryOp = "";
-var entryGiro = "";
-var entryFoto = null;
+var activeDate = todayStr; // the date we're working on (could be yesterday if incomplete)
+var dayData = {}; // { "2026-03-24": {avellino:12.5, sergio:"festivo", giovanni:null, opAv:"Carmela",...} }
+var entryOp="", entryGiro="", entryFoto=null;
 var gUrl = function(){ return localStorage.getItem("gsheet-url")||"" };
+var GIRI = ["avellino","sergio","giovanni"];
+var GIRI_IDS = {avellino:"Av",sergio:"Sr",giovanni:"Gv"};
+var GIRI_LABELS = {avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"};
+
+function getDay(date){
+  if(!dayData[date]) dayData[date]={avellino:null,sergio:null,giovanni:null,opAv:null,opSr:null,opGv:null};
+  return dayData[date];
+}
+
+function giroComplete(d,g){ var v=getDay(d)[g]; return v!=null; } // null=pending, number=done, "festivo"=festivo
+function giroIsFestivo(d,g){ return getDay(d)[g]==="festivo"; }
+function giroHasWeight(d,g){ var v=getDay(d)[g]; return v!=null && v!=="festivo"; }
+function dayComplete(d){ return GIRI.every(function(g){ return giroComplete(d,g); }); }
+
+function fmtDateIt(d){ var p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
 
 // ── INIT ──
 function init(){
-  var d = todayStr.split("-");
-  document.getElementById("todayDate").textContent = d[2]+"/"+d[1]+"/"+d[0];
   document.getElementById("sUrl").value = gUrl();
-  // Load today's data from localStorage
-  try {
-    var saved = JSON.parse(localStorage.getItem("today-"+todayStr));
-    if (saved) todayData = saved;
-  } catch(e){}
-  if (gUrl()) doSync();
-  updateToday();
+  // Load all saved day data
+  try{ var s=localStorage.getItem("dayData"); if(s) dayData=JSON.parse(s); }catch(e){}
+  // Find active date: oldest incomplete date from yesterday back, or today
+  findActiveDate();
+  if(gUrl()) doSync(); else updateUI();
+  // Check time for afternoon reminder
+  checkAfternoon();
+  setInterval(checkAfternoon, 60000); // check every minute
+}
+
+function findActiveDate(){
+  // Check yesterday and earlier for incomplete days
+  var d = new Date(); d.setDate(d.getDate()-1);
+  var yesterday = d.toISOString().slice(0,10);
+  // Only check yesterday (not older — we don't want to go back weeks)
+  if(dayData[yesterday] && !dayComplete(yesterday)){
+    activeDate = yesterday;
+  } else {
+    activeDate = todayStr;
+  }
+}
+
+function saveLocal(){
+  localStorage.setItem("dayData", JSON.stringify(dayData));
 }
 
 // ── SYNC ──
 async function doSync(){
-  var url = gUrl(); if(!url) { updateToday(); return; }
-  try {
-    var r = await fetch(url+"?action=getAll");
-    var j = await r.json();
-    if (j.data) {
-      // Find today's entries from cloud
+  var url=gUrl(); if(!url){updateUI();return}
+  try{
+    var r=await fetch(url+"?action=getAll"); var j=await r.json();
+    if(j.data){
+      // Parse cloud data into dayData
       j.data.forEach(function(d){
-        if (d.data === todayStr) {
-          if (d.avellino != null) { todayData.avellino = d.avellino; todayData.opAv = d.operatore; }
-          if (d.sergio != null) { todayData.sergio = d.sergio; todayData.opSr = d.operatore; }
-          if (d.giovanni != null) { todayData.giovanni = d.giovanni; todayData.opGv = d.operatore; }
-        }
+        if(!d.data) return;
+        var day = getDay(d.data);
+        if(d.avellino!=null) { day.avellino=d.avellino; day.opAv=d.operatore||day.opAv; }
+        if(d.sergio!=null) { day.sergio=d.sergio; day.opSr=d.operatore||day.opSr; }
+        if(d.giovanni!=null) { day.giovanni=d.giovanni; day.opGv=d.operatore||day.opGv; }
       });
-      document.getElementById("sDot").style.background = "var(--ok)";
-      document.getElementById("sLbl").textContent = "Connesso";
+      saveLocal();
+      document.getElementById("sDot").style.background="var(--ok)";
+      document.getElementById("sLbl").textContent="Connesso";
       showT("✓ Sincronizzato");
     }
-  } catch(e) {
-    document.getElementById("sDot").style.background = "var(--danger)";
-    document.getElementById("sLbl").textContent = "Offline";
+  }catch(e){
+    document.getElementById("sDot").style.background="var(--danger)";
+    document.getElementById("sLbl").textContent="Offline";
   }
-  updateToday();
+  findActiveDate();
+  updateUI();
 }
 
-// ── UPDATE TODAY VIEW ──
-function updateToday(){
-  var con = !!gUrl();
-  document.getElementById("noUrl").classList.toggle("hid", con);
+// ── AFTERNOON CHECK ──
+function checkAfternoon(){
+  var now = new Date();
+  var h = now.getHours();
+  var day = getDay(todayStr);
+  var pending = GIRI.filter(function(g){ return !giroComplete(todayStr,g); });
+  var pmEl = document.getElementById("pmAlert");
+  if(h >= 14 && pending.length > 0 && activeDate === todayStr){
+    pmEl.classList.remove("hid");
+  } else {
+    pmEl.classList.add("hid");
+  }
+}
 
-  var giri = [
-    {key:"avellino",id:"Av",val:todayData.avellino,op:todayData.opAv},
-    {key:"sergio",id:"Sr",val:todayData.sergio,op:todayData.opSr},
-    {key:"giovanni",id:"Gv",val:todayData.giovanni,op:todayData.opGv}
-  ];
-  var total = 0;
-  var allDone = true;
+// ── UPDATE UI ──
+function updateUI(){
+  var con=!!gUrl();
+  document.getElementById("noUrl").classList.toggle("hid",con);
 
-  giri.forEach(function(g){
-    var isDone = g.val != null;
-    if (isDone) total += g.val; else allDone = false;
-    document.getElementById("val"+g.id).textContent = isDone ? g.val.toFixed(1)+" kg" : "—";
-    document.getElementById("row"+g.id).className = "giro-row"+(isDone?" done":"");
-    var st = document.getElementById("st"+g.id);
-    st.textContent = isDone ? "✓ "+g.val.toFixed(1)+" kg" : "in attesa";
-    st.className = "giro-status "+(isDone?"ok":"waiting");
-    var opEl = document.getElementById("op"+g.id);
-    if (isDone && g.op) { opEl.textContent = (g.op==="Carmela"?"👩":"👨")+" "+g.op; opEl.classList.remove("hid"); }
-    else { opEl.classList.add("hid"); }
-    // Update giro buttons in entry flow
-    var btn = document.getElementById("gBtn"+g.id);
-    if (btn) {
-      if (isDone) { btn.classList.add("done-btn"); document.getElementById("gChk"+g.id).classList.remove("hid"); }
-      else { btn.classList.remove("done-btn"); document.getElementById("gChk"+g.id).classList.add("hid"); }
-    }
+  var isOld = activeDate !== todayStr;
+  document.getElementById("dayLabel").textContent = isOld ? "⚠️ Da completare" : "Oggi";
+  document.getElementById("todayDate").textContent = fmtDateIt(activeDate);
+  document.getElementById("oldTag").classList.toggle("hid", !isOld);
+
+  // Overdue alert
+  var overdueEl = document.getElementById("overdueAlert");
+  if(isOld){
+    overdueEl.classList.remove("hid");
+    document.getElementById("overdueText").textContent =
+      "I resi del "+fmtDateIt(activeDate)+" non sono completi. Devi completarli o segnarli festivi prima di registrare i resi di oggi.";
+  } else { overdueEl.classList.add("hid"); }
+
+  var day = getDay(activeDate);
+  var total=0, allDone=true, anyPending=false;
+
+  GIRI.forEach(function(g){
+    var id = GIRI_IDS[g];
+    var val = day[g];
+    var isDone = val!=null;
+    var isFest = val==="festivo";
+    var hasW = isDone && !isFest;
+
+    if(hasW) total += val;
+    if(!isDone){ allDone=false; anyPending=true; }
+
+    document.getElementById("val"+id).textContent = hasW ? val.toFixed(1)+" kg" : isFest ? "—" : "—";
+    document.getElementById("row"+id).className = "giro-row"+(hasW?" done":isFest?" festivo":"");
+    var st = document.getElementById("st"+id);
+    st.textContent = hasW ? "✓ "+val.toFixed(1)+" kg" : isFest ? "🏖️ festivo" : "in attesa";
+    st.className = "giro-status "+(hasW?"ok":isFest?"fest":"waiting");
+    var opKey = "op"+id;
+    var opEl = document.getElementById("op"+id);
+    if(hasW && day[opKey]){
+      opEl.textContent=(day[opKey]==="Carmela"?"👩":"👨")+" "+day[opKey];
+      opEl.classList.remove("hid");
+    } else { opEl.classList.add("hid"); }
   });
 
-  document.getElementById("totVal").textContent = total > 0 ? total.toFixed(1)+" kg" : "—";
+  document.getElementById("totVal").textContent = total>0 ? total.toFixed(1)+" kg" : "—";
 
-  // Show add button only if connected and at least one giro is missing
-  var btn = document.getElementById("btnAdd");
-  if (con && !allDone) btn.classList.remove("hid"); else btn.classList.add("hid");
+  // Buttons
+  var btnAdd = document.getElementById("btnAdd");
+  var btnFest = document.getElementById("btnAllFest");
+  if(con && anyPending){
+    btnAdd.classList.remove("hid");
+    // Show "all festivo" button only if NO giro has been registered yet for this day
+    var noneStarted = GIRI.every(function(g){ return day[g]==null; });
+    btnFest.classList.toggle("hid", !noneStarted);
+  } else {
+    btnAdd.classList.add("hid");
+    btnFest.classList.add("hid");
+  }
+
+  // If this day is now complete and it was an old day, switch to today
+  if(allDone && isOld){
+    activeDate = todayStr;
+    showT("✓ "+fmtDateIt(isOld?activeDate:todayStr)+" completato — ora mostra oggi");
+    updateUI(); // recurse with today
+    return;
+  }
+
+  checkAfternoon();
+}
+
+// ── MARK ALL FESTIVO ──
+function markAllFestivo(){
+  if(!confirm("Confermi che oggi ("+fmtDateIt(activeDate)+") è giorno festivo e nessun giro esce?")) return;
+  var day = getDay(activeDate);
+  GIRI.forEach(function(g){ if(day[g]==null) day[g]="festivo"; });
+  saveLocal();
+  syncGiroToCloud(activeDate);
+  showT("🏖️ Giornata segnata come festiva");
+  updateUI();
 }
 
 // ── ENTRY FLOW ──
 function startEntry(){
-  entryOp = ""; entryGiro = ""; entryFoto = null;
+  entryOp=""; entryGiro=""; entryFoto=null;
   document.getElementById("entryFlow").classList.remove("hid");
   document.getElementById("btnAdd").classList.add("hid");
+  document.getElementById("btnAllFest").classList.add("hid");
   document.getElementById("todayPanel").classList.add("hid");
-  // Reset UI
-  document.getElementById("eOpC").className = "op-btn";
-  document.getElementById("eOpA").className = "op-btn";
+  document.getElementById("overdueAlert").classList.add("hid");
+  document.getElementById("pmAlert").classList.add("hid");
+  // Reset
+  document.getElementById("eOpC").className="op-btn";
+  document.getElementById("eOpA").className="op-btn";
   document.getElementById("step2").classList.add("hid");
   document.getElementById("step3").classList.add("hid");
   document.getElementById("step4").classList.add("hid");
-  document.getElementById("wInput").value = "";
-  clearPhoto();
-  checkReady();
+  document.getElementById("wInput").value="";
+  document.getElementById("btnFestGiro").classList.remove("hid");
+  clearPhoto(); checkReady();
   // Mark done giros
-  ["Av","Sr","Gv"].forEach(function(id){
-    var key = id==="Av"?"avellino":id==="Sr"?"sergio":"giovanni";
-    var btn = document.getElementById("gBtn"+id);
-    var chk = document.getElementById("gChk"+id);
-    if (todayData[key] != null) { btn.classList.add("done-btn"); chk.classList.remove("hid"); }
-    else { btn.classList.remove("done-btn"); btn.classList.remove("sel"); chk.classList.add("hid"); }
+  var day = getDay(activeDate);
+  GIRI.forEach(function(g){
+    var id=GIRI_IDS[g]; var btn=document.getElementById("gBtn"+id); var chk=document.getElementById("gChk"+id);
+    if(giroComplete(activeDate,g)){
+      btn.classList.add("done-btn");
+      chk.classList.remove("hid");
+      if(giroIsFestivo(activeDate,g)){ chk.textContent="🏖️"; chk.className="gcheck fest"; }
+      else { chk.textContent="✓"; chk.className="gcheck ok"; }
+    } else { btn.classList.remove("done-btn"); btn.classList.remove("sel"); chk.classList.add("hid"); }
   });
 }
 
 function cancelEntry(){
   document.getElementById("entryFlow").classList.add("hid");
   document.getElementById("todayPanel").classList.remove("hid");
-  updateToday();
+  updateUI();
 }
 
 function pickOp(name){
-  entryOp = name;
-  document.getElementById("eOpC").className = "op-btn"+(name==="Carmela"?" sel-c":"");
-  document.getElementById("eOpA").className = "op-btn"+(name==="Antonio"?" sel-a":"");
+  entryOp=name;
+  document.getElementById("eOpC").className="op-btn"+(name==="Carmela"?" sel-c":"");
+  document.getElementById("eOpA").className="op-btn"+(name==="Antonio"?" sel-a":"");
   document.getElementById("step2").classList.remove("hid");
+  entryGiro=""; // reset giro when changing op
+  document.getElementById("step3").classList.add("hid");
+  document.getElementById("step4").classList.add("hid");
+  GIRI.forEach(function(g){ if(!giroComplete(activeDate,g)) document.getElementById("gBtn"+GIRI_IDS[g]).classList.remove("sel"); });
   checkReady();
 }
 
 function pickGiro(giro){
-  // Can't pick already done giro
-  var key = giro==="avellino"?"Av":giro==="sergio"?"Sr":"Gv";
-  if (todayData[giro] != null) return;
-  entryGiro = giro;
-  ["Av","Sr","Gv"].forEach(function(id){
-    var g = id==="Av"?"avellino":id==="Sr"?"sergio":"giovanni";
-    var btn = document.getElementById("gBtn"+id);
-    if (todayData[g] != null) return; // skip done
-    btn.classList.toggle("sel", g === giro);
-  });
-  var labels = {avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"};
-  document.getElementById("giroLabel").textContent = labels[giro];
+  if(giroComplete(activeDate,giro)) return;
+  entryGiro=giro;
+  GIRI.forEach(function(g){ var id=GIRI_IDS[g]; if(!giroComplete(activeDate,g)) document.getElementById("gBtn"+id).classList.toggle("sel",g===giro); });
+  document.getElementById("giroLabel").textContent=GIRI_LABELS[giro];
   document.getElementById("step3").classList.remove("hid");
   document.getElementById("step4").classList.remove("hid");
+  document.getElementById("btnFestGiro").classList.remove("hid");
   document.getElementById("wInput").focus();
   checkReady();
 }
 
-function onPhoto(e){
-  var f = e.target.files && e.target.files[0]; if(!f) return;
-  var rd = new FileReader();
-  rd.onload = function(ev){
-    var img = new Image();
-    img.onload = function(){
-      var c = document.createElement("canvas");
-      var w = img.width, h = img.height;
-      if (w > 800) { h = Math.round(h*800/w); w = 800; }
-      c.width = w; c.height = h;
-      c.getContext("2d").drawImage(img,0,0,w,h);
-      entryFoto = c.toDataURL("image/jpeg",0.7);
-      document.getElementById("prevImg").src = entryFoto;
-      document.getElementById("camPrompt").classList.add("hid");
-      document.getElementById("camDone").classList.remove("hid");
-      document.getElementById("camBox").className = "cam-box cam-ok";
-      checkReady();
-    };
-    img.src = ev.target.result;
-  };
-  rd.readAsDataURL(f);
-}
-
-function clearPhoto(){
-  entryFoto = null;
-  document.getElementById("camIn").value = "";
-  document.getElementById("camPrompt").classList.remove("hid");
-  document.getElementById("camDone").classList.add("hid");
-  document.getElementById("camBox").className = "cam-box cam-req";
-  checkReady();
-}
-
-function checkReady(){
-  var w = parseFloat(document.getElementById("wInput").value);
-  var ok = entryOp && entryGiro && w > 0 && entryFoto;
-  var btn = document.getElementById("btnSave");
-  btn.disabled = !ok;
-  if (ok) {
-    btn.textContent = "✓ Salva reso "+{avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"}[entryGiro];
-  } else if (!entryOp) {
-    btn.textContent = "① Seleziona operatore";
-  } else if (!entryGiro) {
-    btn.textContent = "② Seleziona giro";
-  } else if (!w) {
-    btn.textContent = "③ Inserisci peso";
-  } else {
-    btn.textContent = "④ Scatta foto";
-  }
-}
-
-async function doSave(){
-  var w = parseFloat(document.getElementById("wInput").value);
-  var btn = document.getElementById("btnSave");
-  btn.textContent = "⏳ Salvataggio..."; btn.disabled = true;
-
-  // Save locally
-  todayData[entryGiro] = w;
-  var opKey = "op"+entryGiro.charAt(0).toUpperCase()+entryGiro.slice(1).replace("avellino","Av").replace("sergio","Sr").replace("giovanni","Gv");
-  // Fix: use correct key
-  if (entryGiro==="avellino") todayData.opAv = entryOp;
-  if (entryGiro==="sergio") todayData.opSr = entryOp;
-  if (entryGiro==="giovanni") todayData.opGv = entryOp;
-  localStorage.setItem("today-"+todayStr, JSON.stringify(todayData));
-
-  // Save to Google Sheets
-  var url = gUrl();
-  if (url) {
-    try {
-      // Build full row with all current giro data
-      var entry = {
-        action: "addResi",
-        data: todayStr,
-        operatore: entryOp,
-        avellino: todayData.avellino,
-        sergio: todayData.sergio,
-        giovanni: todayData.giovanni,
-        pesata: (todayData.avellino||0)+(todayData.sergio||0)+(todayData.giovanni||0) || null
-      };
-      await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain"}, body:JSON.stringify(entry)});
-      // Upload photo
-      if (entryFoto) {
-        try { await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain"},
-          body:JSON.stringify({action:"uploadFoto",data:todayStr,operatore:entryOp,giro:entryGiro,foto:entryFoto})}); } catch(e){}
-      }
-      showT("✓ Reso "+entryGiro+" salvato!");
-    } catch(e) { showT("⚠ Salvato localmente"); }
-  } else {
-    showT("✓ Salvato localmente");
-  }
-
-  // Back to main
+function markGiroFestivo(){
+  if(!entryGiro){ showT("Seleziona prima il giro"); return; }
+  if(!entryOp){ showT("Seleziona prima l'operatore"); return; }
+  if(!confirm("Confermi che il giro "+GIRI_LABELS[entryGiro]+" non esce oggi?")) return;
+  var day=getDay(activeDate);
+  day[entryGiro]="festivo";
+  day["op"+GIRI_IDS[entryGiro]]=entryOp;
+  saveLocal();
+  syncGiroToCloud(activeDate);
+  showT("🏖️ "+GIRI_LABELS[entryGiro]+" segnato festivo");
   cancelEntry();
 }
 
-// ── SETTINGS ──
-function toggleSet(){ document.getElementById("setP").classList.toggle("hid"); }
-function saveSet(){
-  localStorage.setItem("gsheet-url", document.getElementById("sUrl").value.trim());
-  document.getElementById("setP").classList.add("hid");
-  if (gUrl()) doSync(); else updateToday();
+function onPhoto(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(ev){ var img=new Image(); img.onload=function(){
+    var c=document.createElement("canvas"),w=img.width,h=img.height;
+    if(w>800){h=Math.round(h*800/w);w=800} c.width=w;c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    entryFoto=c.toDataURL("image/jpeg",0.7);
+    document.getElementById("prevImg").src=entryFoto;
+    document.getElementById("camPrompt").classList.add("hid");
+    document.getElementById("camDone").classList.remove("hid");
+    document.getElementById("camBox").className="cam-box cam-ok";
+    checkReady();
+  }; img.src=ev.target.result; }; rd.readAsDataURL(f);
 }
 
+function clearPhoto(){
+  entryFoto=null; document.getElementById("camIn").value="";
+  document.getElementById("camPrompt").classList.remove("hid");
+  document.getElementById("camDone").classList.add("hid");
+  document.getElementById("camBox").className="cam-box cam-req"; checkReady();
+}
+
+function checkReady(){
+  var w=parseFloat(document.getElementById("wInput").value);
+  var ok=entryOp&&entryGiro&&w>0&&entryFoto;
+  var btn=document.getElementById("btnSave"); btn.disabled=!ok;
+  if(ok) btn.textContent="✓ Salva reso "+GIRI_LABELS[entryGiro];
+  else if(!entryOp) btn.textContent="① Seleziona operatore";
+  else if(!entryGiro) btn.textContent="② Seleziona giro";
+  else if(!w) btn.textContent="③ Inserisci peso";
+  else btn.textContent="④ Scatta foto";
+}
+
+async function doSave(){
+  var w=parseFloat(document.getElementById("wInput").value);
+  var btn=document.getElementById("btnSave"); btn.textContent="⏳ Salvataggio..."; btn.disabled=true;
+  var day=getDay(activeDate);
+  day[entryGiro]=w;
+  day["op"+GIRI_IDS[entryGiro]]=entryOp;
+  saveLocal();
+  // Cloud save
+  await syncGiroToCloud(activeDate, entryFoto);
+  showT("✓ Reso "+GIRI_LABELS[entryGiro]+" salvato!");
+  cancelEntry();
+}
+
+async function syncGiroToCloud(date, foto){
+  var url=gUrl(); if(!url) return;
+  var day=getDay(date);
+  var pesata=0; GIRI.forEach(function(g){ if(typeof day[g]==="number") pesata+=day[g]; });
+  try{
+    var entry={action:"addResi",data:date,operatore:entryOp||"",
+      avellino:typeof day.avellino==="number"?day.avellino:null,
+      sergio:typeof day.sergio==="number"?day.sergio:null,
+      giovanni:typeof day.giovanni==="number"?day.giovanni:null,
+      pesata:pesata||null};
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(entry)});
+    if(foto){
+      try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},
+        body:JSON.stringify({action:"uploadFoto",data:date,operatore:entryOp,giro:entryGiro,foto:foto})});}catch(e){}
+    }
+  }catch(e){ showT("⚠ Salvato solo localmente"); }
+}
+
+// ── SETTINGS ──
+function toggleSet(){document.getElementById("setP").classList.toggle("hid")}
+function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updateUI()}
+
 // ── UTILS ──
-function showT(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(function(){t.classList.remove("show")},3000); }
-function viewP(s){ document.getElementById("poImg").src=s; document.getElementById("po").classList.add("show"); }
-function closePhoto(){ document.getElementById("po").classList.remove("show"); }
+function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
+function viewP(s){document.getElementById("poImg").src=s;document.getElementById("po").classList.add("show")}
+function closePhoto(){document.getElementById("po").classList.remove("show")}
 
 init();
 </script>
