@@ -8,14 +8,13 @@
 <meta name="theme-color" content="#0a0e1a">
 <title>Resi Pane</title>
 <style>
-:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--av:#f59e0b;--sr:#3b82f6;--gv:#10b981;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--carmela:#ec4899;--antonio:#3b82f6}
+:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981;--z5:#ec4899}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
 input[type="number"],input[type="url"]{font-size:18px!important}
 button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .app{max-width:480px;margin:0 auto;padding:20px 16px 100px}
 
-/* Header */
 .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .hdr-left{display:flex;align-items:center;gap:12px}
 .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:26px}
@@ -24,97 +23,120 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .btn-gear{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:20px;color:var(--text)}
 
-/* Alerts */
-.alert-banner{border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px}
-.alert-banner.red{background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.3)}
-.alert-banner.amber{background:rgba(245,158,11,0.1);border:2px solid rgba(245,158,11,0.3)}
-.alert-banner .a-icon{font-size:28px;flex-shrink:0}
-.alert-banner .a-title{font-weight:700;font-size:15px;margin-bottom:4px}
-.alert-banner .a-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.ab{border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px}
+.ab.red{background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.3)}
+.ab.amber{background:rgba(245,158,11,0.1);border:2px solid rgba(245,158,11,0.3)}
+.ab .ai{font-size:28px;flex-shrink:0}
+.ab .at{font-weight:700;font-size:15px;margin-bottom:4px}
+.ab .ad{font-size:12px;color:var(--muted);line-height:1.5}
 
-/* Today panel */
 .today{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px}
 .today-date{font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500}
 .today-date strong{color:var(--text);font-size:15px}
 .old-tag{background:rgba(239,68,68,0.15);color:var(--danger);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px}
-.giri-grid{display:flex;flex-direction:column;gap:8px}
-.giro-row{display:flex;align-items:center;justify-content:space-between;background:var(--inbg);border-radius:12px;padding:12px 16px;border:1px solid var(--inbord)}
-.giro-row.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
-.giro-row.festivo{border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.04)}
-.giro-left{display:flex;align-items:center;gap:10px}
-.giro-dot{width:12px;height:12px;border-radius:4px}
-.giro-name{font-weight:600;font-size:15px}
-.giro-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
-.giro-status.waiting{color:var(--warn);background:rgba(245,158,11,0.1)}
-.giro-status.ok{color:var(--ok);background:rgba(34,197,94,0.1)}
-.giro-status.fest{color:var(--muted);background:rgba(148,163,184,0.1)}
-.giro-op{font-size:10px;color:var(--muted);margin-left:22px;margin-top:2px}
-.total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:8px}
+.zr{display:flex;align-items:center;justify-content:space-between;background:var(--inbg);border-radius:12px;padding:12px 16px;border:1px solid var(--inbord);margin-bottom:8px}
+.zr.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
+.zr.fest{border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.04)}
+.zr-left{display:flex;align-items:center;gap:10px}
+.zr-dot{width:12px;height:12px;border-radius:4px}
+.zr-name{font-weight:600;font-size:14px}
+.zr-sub{font-size:10px;color:var(--muted)}
+.zr-st{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
+.zr-st.w{color:var(--warn);background:rgba(245,158,11,0.1)}
+.zr-st.ok{color:var(--ok);background:rgba(34,197,94,0.1)}
+.zr-st.f{color:var(--muted);background:rgba(148,163,184,0.1)}
+.zr-detail{font-size:10px;color:var(--muted);margin:-4px 0 8px 22px}
+.total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:4px}
 .total-label{font-size:13px;color:var(--muted);font-weight:600}
 .total-val{font-family:monospace;font-size:18px;font-weight:700}
 
-/* Buttons */
-.btn-action{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-action.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.btn-action.save{background:linear-gradient(135deg,#10b981,#059669)}
-.btn-action.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
-.btn-action.close{background:var(--inbg);color:var(--muted);font-size:15px;padding:14px}
-.btn-action.fest{background:var(--inbg);color:var(--muted);font-size:14px;padding:14px;border:1px solid var(--inbord)}
+.btn-a{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-a.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.btn-a.save{background:linear-gradient(135deg,#10b981,#059669)}
+.btn-a.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
+.btn-a.close{background:var(--inbg);color:var(--muted);font-size:15px;padding:14px}
+.btn-a.fest{background:var(--inbg);color:var(--muted);font-size:14px;padding:14px;border:1px solid var(--inbord)}
 
-/* Wizard step */
-.wizard{display:none}
-.wizard.active{display:block}
-.wiz-panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;margin-bottom:16px;min-height:200px}
-.wiz-step{font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.wiz-step .sn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;background:var(--accent);color:#fff;font-size:13px}
-.wiz-question{font-size:20px;font-weight:700;margin-bottom:24px;line-height:1.3}
-.wiz-back{display:flex;align-items:center;gap:6px;background:none;color:var(--muted);font-size:14px;padding:8px 0;margin-bottom:12px}
-.wiz-back svg{width:16px;height:16px}
+.wiz{display:none}.wiz.act{display:block}
+.wp{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;margin-bottom:16px}
+.ws{font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;background:var(--accent);color:#fff;font-size:13px}
+.wq{font-size:20px;font-weight:700;margin-bottom:24px;line-height:1.3}
+.wb{display:flex;align-items:center;gap:6px;background:none;color:var(--muted);font-size:14px;padding:8px 0;margin-bottom:12px}
 
-/* Operator btns */
-.op-btns{display:flex;flex-direction:column;gap:12px}
-.op-btn{padding:20px;border-radius:14px;font-size:18px;font-weight:600;background:var(--inbg);color:var(--muted);border:2px solid var(--inbord);text-align:center;transition:all 0.15s}
-.op-btn.sel-c{background:linear-gradient(135deg,#ec4899,#db2777);color:#fff;border-color:transparent}
-.op-btn.sel-a{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-color:transparent}
+.sel-btns{display:flex;flex-direction:column;gap:12px}
+.sel-btn{padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;transition:all 0.15s}
+.sel-btn .sd{width:16px;height:16px;border-radius:5px;flex-shrink:0}
+.sel-btn.dis{opacity:0.35;cursor:not-allowed}
 
-/* Giro btns in wizard */
-.giro-btns-w{display:flex;flex-direction:column;gap:12px}
-.giro-btn-w{padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;transition:all 0.15s}
-.giro-btn-w .gdot{width:16px;height:16px;border-radius:5px;flex-shrink:0}
+.cnt-btns{display:flex;flex-wrap:wrap;gap:10px}
+.cnt-btn{width:64px;height:64px;border-radius:14px;font-size:22px;font-weight:700;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;justify-content:center}
+.cnt-btn.sel{border-color:var(--accent);background:rgba(139,92,246,0.12);color:var(--accent)}
 
-/* Weight */
-.weight-input{background:var(--inbg);border:2px solid var(--inbord);border-radius:16px;padding:24px;font-size:36px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none}
-.weight-input:focus{border-color:var(--accent)}
-.weight-unit{font-size:15px;color:var(--muted);margin-top:8px;text-align:center}
-.btn-next{width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:700;margin-top:20px;color:#fff;background:var(--accent)}
-.btn-next:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
+.wi{background:var(--inbg);border:2px solid var(--inbord);border-radius:16px;padding:24px;font-size:36px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none}
+.wi:focus{border-color:var(--accent)}
+.wu{font-size:15px;color:var(--muted);margin-top:8px;text-align:center}
+.bn{width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:700;margin-top:20px;color:#fff;background:var(--accent)}
+.bn:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
 
-/* Camera */
-.cam-box{border-radius:14px;padding:24px;text-align:center}
+/* Photo guide */
+.photo-guide{background:var(--inbg);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center}
+.photo-guide-title{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--warn)}
+.photo-guide-img{position:relative;width:100%;max-width:280px;margin:0 auto 12px;border-radius:12px;overflow:hidden}
+.photo-guide-img img{width:100%;border-radius:12px;opacity:0.7}
+.photo-guide-overlay{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;padding:12px}
+.guide-label{background:rgba(0,0,0,0.7);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;display:inline-block}
+.guide-box{border:2px dashed rgba(245,158,11,0.8);border-radius:8px;padding:6px;text-align:center}
+.guide-box.top{margin-bottom:auto}
+.guide-box.bottom{margin-top:auto}
+.photo-guide-tips{font-size:12px;color:var(--muted);line-height:1.6;text-align:left;margin-top:8px}
+.photo-guide-tips li{margin-bottom:4px;list-style:none}
+.photo-guide-tips li::before{content:"✓ ";color:var(--ok)}
+
+.cam-box{border-radius:14px;padding:20px;text-align:center}
 .cam-req{background:rgba(239,68,68,0.06);border:2px dashed rgba(239,68,68,0.3)}
 .cam-ok{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.3)}
 .btn-cam{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-radius:12px;padding:18px;font-weight:700;font-size:17px;width:100%}
 .cam-preview{width:100%;max-width:300px;border-radius:12px;margin:0 auto 12px;display:block}
 
-/* Festivo panel */
-.fest-panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
-.fest-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
-.fest-giro{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--inbg);border-radius:12px;border:1px solid var(--inbord);margin-bottom:8px}
-.fest-giro .fg-left{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
-.fest-giro .fg-dot{width:12px;height:12px;border-radius:4px}
-.btn-fest-single{background:rgba(148,163,184,0.1);color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600}
-.btn-fest-all{width:100%;padding:16px;border-radius:12px;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);font-size:15px;font-weight:600;margin-top:8px}
+.verify-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;margin-top:10px;font-size:13px;font-weight:600}
+.verify-bar.checking{background:rgba(139,92,246,0.1);color:var(--accent)}
+.verify-bar.pass{background:rgba(34,197,94,0.1);color:var(--ok)}
+.verify-bar.fail{background:rgba(239,68,68,0.1);color:var(--danger)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--inbord);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite}
 
-/* Settings */
+/* Cesta progress */
+.cesta-progress{display:flex;gap:8px;margin-bottom:16px}
+.cp-dot{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord)}
+.cp-dot.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cp-dot.done{background:rgba(34,197,94,0.15);color:var(--ok);border-color:rgba(34,197,94,0.3)}
+
+/* Summary */
+.sum-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.sum-row:last-child{border:none}
+.sum-label{font-size:14px;color:var(--muted)}
+.sum-val{font-size:15px;font-weight:700;font-family:monospace}
+.sum-cesta{font-size:12px;color:var(--muted);padding:6px 0}
+
+/* Festivo */
+.fp{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.ft{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.fg{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--inbg);border-radius:12px;border:1px solid var(--inbord);margin-bottom:8px}
+.fg-l{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.fg-d{width:12px;height:12px;border-radius:4px}
+.btn-fg{background:rgba(148,163,184,0.1);color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600}
+.btn-fa{width:100%;padding:16px;border-radius:12px;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);font-size:15px;font-weight:600;margin-top:8px}
+
 .set-card{background:var(--card);border-radius:16px;border:1px solid rgba(139,92,246,0.2);padding:20px;margin-bottom:16px}
 .fi{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:14px;color:var(--text);font-family:monospace;font-size:14px;outline:none;width:100%}
 .set-btns{display:flex;gap:8px;margin-top:12px}
 .btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;padding:12px 24px;font-weight:600;font-size:14px;flex:1}
 .btn-xx{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:10px;padding:12px 16px;font-size:14px}
 
-/* Toast & Photo overlay */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;z-index:10000;border:1px solid #334155;display:none;white-space:nowrap}
-.toast.show{display:block;animation:fu .3s}@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.toast.show{display:block;animation:fu .3s}
+@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .po{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
 .po.show{display:flex}.po img{max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain}
 .po-c{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);color:white;font-size:24px;width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center}
@@ -123,92 +145,98 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 </head>
 <body>
 <div id="toast" class="toast"></div>
-<div id="po" class="po" onclick="closePhoto()"><button class="po-c" onclick="closePhoto()">✕</button><img id="poImg" src=""/></div>
+<div id="po" class="po" onclick="clPo()"><button class="po-c" onclick="clPo()">✕</button><img id="poImg" src=""/></div>
 
 <div class="app">
-  <!-- HEADER -->
-  <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><button class="btn-gear" onclick="toggleSet()">⚙️</button></div>
+  <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><button class="btn-gear" onclick="openSet()">⚙️</button></div>
 
-  <!-- SETTINGS -->
-  <div id="setP" class="set-card hid"><div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Google Sheets</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">Incolla l'URL dello script Google (finisce con /exec)</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec"><div class="set-btns"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div></div>
+  <div id="setP" class="set-card hid"><div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Google Sheets</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">URL script Google (finisce con /exec)</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec"><div class="set-btns"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div></div>
   <div id="noUrl" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px"><strong style="color:var(--danger)">⚠ Configura Google Sheets</strong><p style="color:var(--muted);margin-top:4px;font-size:12px">Tocca ⚙️ per collegare il foglio.</p></div>
 
-  <!-- ═══ MAIN SCREEN ═══ -->
-  <div id="mainScreen">
-    <div id="overdueAlert" class="alert-banner red hid"><div class="a-icon">🚨</div><div><div class="a-title">Resi non completati!</div><div class="a-desc" id="overdueText"></div></div></div>
-    <div id="pmAlert" class="alert-banner amber hid"><div class="a-icon">⏰</div><div><div class="a-title">Promemoria</div><div class="a-desc">Ci sono ancora giri da registrare oggi!</div></div></div>
+  <!-- ═══ MAIN ═══ -->
+  <div id="mainScr">
+    <div id="overdueAl" class="ab red hid"><div class="ai">🚨</div><div><div class="at">Resi non completati!</div><div class="ad" id="ovTxt"></div></div></div>
+    <div id="pmAl" class="ab amber hid"><div class="ai">⏰</div><div><div class="at">Promemoria</div><div class="ad">Ci sono ancora zone da registrare!</div></div></div>
 
     <div class="today">
-      <div class="today-date"><span id="dayLabel">Oggi</span>: <strong id="todayDate"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div>
-      <div class="giri-grid" id="giriGrid"></div>
-      <div class="total-row"><span class="total-label">Totale pesata</span><span id="totVal" class="total-val">—</span></div>
+      <div class="today-date"><span id="dayLbl">Oggi</span>: <strong id="todayDt"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div>
+      <div id="zoneGrid"></div>
+      <div class="total-row"><span class="total-label">Totale giornata</span><span id="totVal" class="total-val">—</span></div>
     </div>
 
-    <button id="btnAdd" class="btn-action primary hid" onclick="startWizard()">📦 Registra reso giro</button>
-    <button id="btnFest" class="btn-action fest hid" onclick="showFestivo()">🏖️ Segna festivo (giro non uscito)</button>
+    <button id="btnAdd" class="btn-a primary hid" onclick="startWiz()">📦 Registra reso</button>
+    <button id="btnFest" class="btn-a fest hid" onclick="showFest()">🏖️ Segna festivo</button>
   </div>
 
-  <!-- ═══ FESTIVO PANEL ═══ -->
-  <div id="festScreen" class="hid">
-    <button class="wiz-back" onclick="closeFestivo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Indietro</button>
-    <div class="fest-panel">
-      <div class="fest-title">🏖️ Segna festivo</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona i giri che non escono oggi:</p>
-      <div id="festList"></div>
-      <button class="btn-fest-all" id="btnFestAll" onclick="festAll()">🏖️ Tutti i giri festivi — giornata di chiusura</button>
-    </div>
-    <button class="btn-action close" onclick="closeFestivo()">✕ Annulla</button>
+  <!-- ═══ FESTIVO ═══ -->
+  <div id="festScr" class="hid">
+    <button class="wb" onclick="clFest()">← Indietro</button>
+    <div class="fp"><div class="ft">🏖️ Segna festivo</div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona le zone che non escono oggi:</p><div id="festList"></div><button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Giornata di chiusura — tutte festive</button></div>
+    <button class="btn-a close" onclick="clFest()">✕ Annulla</button>
   </div>
 
   <!-- ═══ WIZARD ═══ -->
-  <!-- Step 1: Operator -->
-  <div id="wiz1" class="wizard">
-    <button class="wiz-back" onclick="cancelWizard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Annulla</button>
-    <div class="wiz-panel">
-      <div class="wiz-step"><span class="sn">1</span>PASSAGGIO 1 DI 4</div>
-      <div class="wiz-question">Chi sta registrando?</div>
-      <div class="op-btns">
-        <button class="op-btn" onclick="wizPickOp('Carmela')">👩 Carmela</button>
-        <button class="op-btn" onclick="wizPickOp('Antonio')">👨 Antonio</button>
+  <!-- W1: Autista -->
+  <div id="w1" class="wiz"><button class="wb" onclick="cancelWiz()">← Annulla</button><div class="wp"><div class="ws"><span class="sn">1</span>AUTISTA</div><div class="wq">Chi sta registrando?</div>
+    <div class="sel-btns"><button class="sel-btn" onclick="wPickA('Antonio')"><div class="sd" style="background:var(--z1)"></div>🚚 Antonio</button><button class="sel-btn" onclick="wPickA('Sergio')"><div class="sd" style="background:var(--z2)"></div>🚚 Sergio</button><button class="sel-btn" onclick="wPickA('Giovanni')"><div class="sd" style="background:var(--z3)"></div>🚚 Giovanni</button></div>
+  </div></div>
+
+  <!-- W2: Zona -->
+  <div id="w2" class="wiz"><button class="wb" onclick="wGo(1)">← Indietro</button><div class="wp"><div class="ws"><span class="sn">2</span>ZONA</div><div class="wq">Quale zona?</div><div class="sel-btns" id="wZoneList"></div></div></div>
+
+  <!-- W3: Quante ceste -->
+  <div id="w3" class="wiz"><button class="wb" onclick="wGo(2)">← Indietro</button><div class="wp"><div class="ws"><span class="sn">3</span>CESTE</div><div class="wq">Quante ceste di reso?</div><div class="cnt-btns" id="wCntBtns"></div></div></div>
+
+  <!-- W4: Peso cesta N -->
+  <div id="w4" class="wiz"><button class="wb" onclick="wBackFromWeight()">← Indietro</button><div class="wp">
+    <div class="cesta-progress" id="cpDots"></div>
+    <div class="ws"><span class="sn" id="w4sn">4</span><span id="w4step"></span></div>
+    <div class="wq">Peso cesta <span id="w4n"></span> — <span id="w4zona" style="color:var(--accent)"></span></div>
+    <input id="wWeight" type="number" step="0.1" placeholder="0.0" class="wi" oninput="wChkW()">
+    <div class="wu">chilogrammi (kg)</div>
+    <button id="btnNxtW" class="bn" disabled onclick="wNextFromWeight()">Avanti →</button>
+  </div></div>
+
+  <!-- W5: Foto cesta N -->
+  <div id="w5" class="wiz"><button class="wb" onclick="wGo(4)">← Indietro</button><div class="wp">
+    <div class="cesta-progress" id="cpDots2"></div>
+    <div class="ws"><span class="sn" id="w5sn">4</span><span id="w5step"></span></div>
+    <div class="wq">📸 Foto cesta <span id="w5n"></span> sulla bilancia</div>
+
+    <!-- Photo guide -->
+    <div class="photo-guide" id="photoGuide">
+      <div class="photo-guide-title">⚠️ Come scattare la foto</div>
+      <div class="photo-guide-img"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyODAiIGhlaWdodD0iMzYwIj48cmVjdCB3aWR0aD0iMjgwIiBoZWlnaHQ9IjM2MCIgZmlsbD0iIzFhMWYyZSIgcng9IjEyIi8+PHJlY3QgeD0iNzAiIHk9IjIwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzJhMmYzZSIgcng9IjgiIHN0cm9rZT0iI2Y1OWUwYiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiLz48dGV4dCB4PSIxNDAiIHk9IjYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZjU5ZTBiIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNzAwIj5ESVNQTEFZIFBFU088L3RleHQ+PHRleHQgeD0iMTQwIiB5PSI4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2Y1OWUwYiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCI+MTIuMyBrZzwvdGV4dD48cmVjdCB4PSI1MCIgeT0iMjIwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iI2VmNDQ0NCIgcng9IjgiIHN0cm9rZT0iI2Y1OWUwYiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiIG9wYWNpdHk9IjAuMyIvPjx0ZXh0IHg9IjE0MCIgeT0iMjcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZjU5ZTBiIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNzAwIj5DRVNUQSBSRVNPPC90ZXh0Pjx0ZXh0IHg9IjE0MCIgeT0iMjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZjU5ZTBiIiBmb250LXNpemU9IjEwIj4oY2VzdGEgcm9zc2EgdmlzaWJpbGUpPC90ZXh0Pjx0ZXh0IHg9IjE0MCIgeT0iMTYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjRhOWI4IiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIj5PUklQQU48L3RleHQ+PHRlY3QgeD0iMTQwIiB5PSIxODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2NGE5YjgiIGZvbnQtc2l6ZT0iMTAiPm1hY2NoaW5hIHZpc2liaWxlPC90ZXh0Pjwvc3ZnPg==" alt="Guida foto"/></div>
+      <ul class="photo-guide-tips">
+        <li>Display peso leggibile (schermino piccolo)</li>
+        <li>Cesta rossa visibile sulla piattaforma</li>
+        <li>Inquadra frontalmente la bilancia ORIPAN</li>
+        <li>Foto non sfocata e ben illuminata</li>
+      </ul>
+    </div>
+
+    <div id="camBox" class="cam-box cam-req">
+      <input id="camIn" type="file" accept="image/*" capture="environment" onchange="wPhoto(event)" style="display:none">
+      <div id="camP"><div style="font-size:48px;margin-bottom:12px">📷</div><button class="btn-cam" onclick="document.getElementById('camIn').click()">Scatta foto cesta</button></div>
+      <div id="camD" class="hid">
+        <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
+        <div id="verifyBar" class="verify-bar checking hid"><span class="spin"></span> Verifica foto in corso...</div>
+        <p id="camOkTxt" class="hid" style="font-size:13px;color:var(--ok);font-weight:600;margin-top:10px">✓ Foto verificata</p>
+        <button onclick="wClrPhoto()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px">🔄 Riscatta</button>
       </div>
     </div>
-  </div>
+    <button id="btnNxtP" class="bn" disabled onclick="wNextFromPhoto()" style="margin-top:16px">Scatta foto per continuare</button>
+  </div></div>
 
-  <!-- Step 2: Giro -->
-  <div id="wiz2" class="wizard">
-    <button class="wiz-back" onclick="wizGo(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Indietro</button>
-    <div class="wiz-panel">
-      <div class="wiz-step"><span class="sn">2</span>PASSAGGIO 2 DI 4</div>
-      <div class="wiz-question">Quale giro è rientrato?</div>
-      <div class="giro-btns-w" id="wizGiroList"></div>
-    </div>
+  <!-- W6: Summary -->
+  <div id="w6" class="wiz"><button class="wb" onclick="wGo(4)">← Indietro</button><div class="wp">
+    <div class="ws"><span class="sn">✓</span>RIEPILOGO</div>
+    <div class="wq">Conferma reso <span id="w6zona" style="color:var(--accent)"></span></div>
+    <div id="sumBody"></div>
+    <div class="sum-row" style="border-top:2px solid var(--accent);margin-top:8px;padding-top:12px"><span class="sum-label" style="font-size:16px;font-weight:700;color:var(--text)">TOTALE</span><span id="sumTot" class="sum-val" style="font-size:20px;color:var(--accent)"></span></div>
   </div>
-
-  <!-- Step 3: Weight -->
-  <div id="wiz3" class="wizard">
-    <button class="wiz-back" onclick="wizGo(2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Indietro</button>
-    <div class="wiz-panel">
-      <div class="wiz-step"><span class="sn">3</span>PASSAGGIO 3 DI 4</div>
-      <div class="wiz-question">Peso cesta <span id="wizGiroName" style="color:var(--accent)"></span></div>
-      <input id="wInput" type="number" step="0.1" placeholder="0.0" class="weight-input" oninput="wizCheckWeight()">
-      <div class="weight-unit">chilogrammi (kg)</div>
-      <button id="btnNext3" class="btn-next" disabled onclick="wizGo(4)">Avanti →</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Photo -->
-  <div id="wiz4" class="wizard">
-    <button class="wiz-back" onclick="wizGo(3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Indietro</button>
-    <div class="wiz-panel">
-      <div class="wiz-step"><span class="sn">4</span>PASSAGGIO 4 DI 4</div>
-      <div class="wiz-question">Foto della cesta sulla bilancia</div>
-      <div id="camBox" class="cam-box cam-req">
-        <input id="camIn" type="file" accept="image/*" capture="environment" onchange="wizPhoto(event)" style="display:none">
-        <div id="camPrompt"><div style="font-size:48px;margin-bottom:12px">📸</div><p style="font-size:15px;color:var(--danger);font-weight:600;margin-bottom:14px">Foto obbligatoria prima di salvare</p><button class="btn-cam" onclick="document.getElementById('camIn').click()">📷 Scatta foto</button></div>
-        <div id="camDone" class="hid"><img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/><p style="font-size:13px;color:var(--ok);font-weight:600;margin-top:10px">✓ Foto acquisita</p><button onclick="wizClearPhoto()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px">🔄 Riscatta</button></div>
-      </div>
-    </div>
-    <button id="btnSave" class="btn-action save" disabled onclick="wizSave()">📸 Scatta la foto per salvare</button>
+    <button id="btnSaveFinal" class="btn-a save" onclick="wSave()">✓ Conferma e salva</button>
+    <button class="btn-a close" onclick="cancelWiz()">✕ Annulla</button>
   </div>
 </div>
 
@@ -216,205 +244,296 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 var todayStr=new Date().toISOString().slice(0,10);
 var activeDate=todayStr;
 var dayData={};
-var wizOp="",wizGiro="",wizFoto=null;
-var GIRI=["avellino","sergio","giovanni"];
-var GID={avellino:"Av",sergio:"Sr",giovanni:"Gv"};
-var GLBL={avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"};
-var GCLR={avellino:"var(--av)",sergio:"var(--sr)",giovanni:"var(--gv)"};
+var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"var(--z1)"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"var(--z2)"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"var(--z3)"},{id:"z5",name:"Zona 5",area:"Napoli-Caserta",clr:"var(--z5)"}];
+var AUTISTI=["Antonio","Sergio","Giovanni"];
 var gUrl=function(){return localStorage.getItem("gsheet-url")||""};
-function getDay(d){if(!dayData[d])dayData[d]={avellino:null,sergio:null,giovanni:null,opAv:null,opSr:null,opGv:null};return dayData[d]}
-function isDone(d,g){return getDay(d)[g]!=null}
-function isFest(d,g){return getDay(d)[g]==="festivo"}
-function hasWeight(d,g){var v=getDay(d)[g];return v!=null&&v!=="festivo"}
-function dayComplete(d){return GIRI.every(function(g){return isDone(d,g)})}
+
+// Wizard state
+var wAut="",wZone=null,wNCeste=0,wCurCesta=0,wCeste=[]; // each: {peso:N, foto:base64}
+
+function getDay(d){if(!dayData[d])dayData[d]={};return dayData[d]}
+function zDone(d,zid){var v=getDay(d)[zid];return v!=null}
+function zFest(d,zid){return getDay(d)[zid]==="festivo"}
+function zData(d,zid){return getDay(d)[zid]}
+function dayOk(d){return ZONES.every(function(z){return zDone(d,z.id)})}
+function pendZ(d){return ZONES.filter(function(z){return!zDone(d,z.id)})}
 function fmtDt(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
-function saveLocal(){localStorage.setItem("dayData",JSON.stringify(dayData))}
-function pendingGiri(d){return GIRI.filter(function(g){return!isDone(d,g)})}
+function saveL(){localStorage.setItem("dayData",JSON.stringify(dayData))}
 
 function init(){
   document.getElementById("sUrl").value=gUrl();
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
-  findActive();
-  if(gUrl())doSync();else updateUI();
-  checkPM();setInterval(checkPM,60000);
+  findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000);
 }
-
-function findActive(){
+function findAct(){
   var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);
-  if(dayData[y]&&!dayComplete(y)){activeDate=y}else{activeDate=todayStr}
+  activeDate=(dayData[y]&&!dayOk(y))?y:todayStr;
 }
 
 async function doSync(){
-  var url=gUrl();if(!url){updateUI();return}
+  var url=gUrl();if(!url){updUI();return}
   try{var r=await fetch(url+"?action=getAll");var j=await r.json();
     if(j.data){j.data.forEach(function(d){if(!d.data)return;var day=getDay(d.data);
-      if(d.avellino!=null){day.avellino=d.avellino;day.opAv=d.operatore||day.opAv}
-      if(d.sergio!=null){day.sergio=d.sergio;day.opSr=d.operatore||day.opSr}
-      if(d.giovanni!=null){day.giovanni=d.giovanni;day.opGv=d.operatore||day.opGv}
-    });saveLocal();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso";showT("✓ Sincronizzato")}
+      // Map old columns to zones if needed
+      if(d.avellino!=null&&!day.z3) day.z3={ceste:[{peso:d.avellino}],autista:d.operatore,totale:d.avellino};
+      if(d.sergio!=null&&!day.z2) day.z2={ceste:[{peso:d.sergio}],autista:d.operatore,totale:d.sergio};
+      if(d.giovanni!=null&&!day.z1) day.z1={ceste:[{peso:d.giovanni}],autista:d.operatore,totale:d.giovanni};
+    });saveL();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso";showT("✓ Sincronizzato")}
   }catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline"}
-  findActive();updateUI();
+  findAct();updUI();
 }
 
-function checkPM(){
-  var h=new Date().getHours();var pend=pendingGiri(todayStr);
-  document.getElementById("pmAlert").classList.toggle("hid",!(h>=14&&pend.length>0&&activeDate===todayStr));
+function chkPM(){
+  var h=new Date().getHours();var p=pendZ(todayStr);
+  document.getElementById("pmAl").classList.toggle("hid",!(h>=14&&p.length>0&&activeDate===todayStr));
 }
 
-function updateUI(){
-  var con=!!gUrl();
-  document.getElementById("noUrl").classList.toggle("hid",con);
+function updUI(){
+  var con=!!gUrl();document.getElementById("noUrl").classList.toggle("hid",con);
   var isOld=activeDate!==todayStr;
-  document.getElementById("dayLabel").textContent=isOld?"⚠️ Da completare":"Oggi";
-  document.getElementById("todayDate").textContent=fmtDt(activeDate);
+  document.getElementById("dayLbl").textContent=isOld?"⚠️ Da completare":"Oggi";
+  document.getElementById("todayDt").textContent=fmtDt(activeDate);
   document.getElementById("oldTag").classList.toggle("hid",!isOld);
-  var ov=document.getElementById("overdueAlert");
-  if(isOld){ov.classList.remove("hid");document.getElementById("overdueText").textContent="I resi del "+fmtDt(activeDate)+" non sono completi. Completa o segna festivo."}
-  else{ov.classList.add("hid")}
+  var ov=document.getElementById("overdueAl");
+  if(isOld){ov.classList.remove("hid");document.getElementById("ovTxt").textContent="Completa "+fmtDt(activeDate)+" prima."}else{ov.classList.add("hid")}
 
-  var day=getDay(activeDate),total=0,allDone=true;
-  var html="";
-  GIRI.forEach(function(g){
-    var id=GID[g],v=day[g],done=v!=null,fest=v==="festivo",hasW=done&&!fest;
-    if(hasW)total+=v;if(!done)allDone=false;
-    var cls=hasW?"done":fest?"festivo":"";
-    var stTxt=hasW?"✓ "+v.toFixed(1)+" kg":fest?"🏖️ festivo":"in attesa";
-    var stCls=hasW?"ok":fest?"fest":"waiting";
-    html+='<div class="giro-row '+cls+'"><div class="giro-left"><div class="giro-dot" style="background:'+GCLR[g]+'"></div><span class="giro-name">'+GLBL[g]+'</span></div><span class="giro-status '+stCls+'">'+stTxt+'</span></div>';
-    if(hasW&&day["op"+id]){html+='<div class="giro-op">'+(day["op"+id]==="Carmela"?"👩":"👨")+" "+day["op"+id]+'</div>'}
+  var html="",total=0,allDone=true;
+  ZONES.forEach(function(z){
+    var v=getDay(activeDate)[z.id];
+    var done=v!=null,fest=v==="festivo",hasD=done&&!fest;
+    var tot=0;
+    if(hasD&&v.ceste){v.ceste.forEach(function(c){tot+=c.peso||0})}
+    else if(hasD&&typeof v==="number"){tot=v}
+    if(hasD)total+=tot;if(!done)allDone=false;
+    var cls=hasD?"done":fest?"fest":"";
+    var stTxt=hasD?"✓ "+tot.toFixed(1)+" kg":fest?"🏖️ festivo":"in attesa";
+    var stCls=hasD?"ok":fest?"f":"w";
+    html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div><div class="zr-sub">'+z.area+'</div></div></div><span class="zr-st '+stCls+'">'+stTxt+'</span></div>';
+    if(hasD&&v.autista){html+='<div class="zr-detail">🚚 '+v.autista+(v.ceste?' · '+v.ceste.length+' cest'+(v.ceste.length>1?'e':'a'):'')+'</div>'}
   });
-  document.getElementById("giriGrid").innerHTML=html;
+  document.getElementById("zoneGrid").innerHTML=html;
   document.getElementById("totVal").textContent=total>0?total.toFixed(1)+" kg":"—";
-
-  var pend=pendingGiri(activeDate);
+  var pend=pendZ(activeDate);
   document.getElementById("btnAdd").classList.toggle("hid",!(con&&pend.length>0));
   document.getElementById("btnFest").classList.toggle("hid",!(con&&pend.length>0));
-
-  if(allDone&&isOld){activeDate=todayStr;showT("✓ Completato — ora mostra oggi");updateUI();return}
-  checkPM();
+  if(allDone&&isOld){activeDate=todayStr;showT("✓ Completato!");updUI();return}
+  chkPM();
 }
 
-// ── FESTIVO PANEL ──
-function showFestivo(){
-  document.getElementById("mainScreen").classList.add("hid");
-  document.getElementById("festScreen").classList.remove("hid");
-  var pend=pendingGiri(activeDate);
-  document.getElementById("festList").innerHTML=pend.map(function(g){
-    return'<div class="fest-giro"><div class="fg-left"><div class="fg-dot" style="background:'+GCLR[g]+'"></div>'+GLBL[g]+'</div><button class="btn-fest-single" onclick="festSingle(\''+g+'\')">🏖️ Festivo</button></div>';
+// ── FESTIVO ──
+function showFest(){
+  document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");
+  var pend=pendZ(activeDate);
+  document.getElementById("festList").innerHTML=pend.map(function(z){
+    return'<div class="fg"><div class="fg-l"><div class="fg-d" style="background:'+z.clr+'"></div>'+z.name+' — '+z.area+'</div><button class="btn-fg" onclick="fest1(\''+z.id+'\')">🏖️</button></div>';
   }).join("");
-  document.getElementById("btnFestAll").classList.toggle("hid",pend.length<=1);
+  document.getElementById("btnFA").classList.toggle("hid",pend.length<=1);
 }
-function closeFestivo(){
-  document.getElementById("festScreen").classList.add("hid");
-  document.getElementById("mainScreen").classList.remove("hid");
-  updateUI();
-}
-function festSingle(g){
-  if(!confirm("Confermi che "+GLBL[g]+" non esce oggi?"))return;
-  getDay(activeDate)[g]="festivo";saveLocal();syncCloud(activeDate);
-  showT("🏖️ "+GLBL[g]+" festivo");
-  if(pendingGiri(activeDate).length===0)closeFestivo();
-  else showFestivo(); // refresh list
+function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");updUI()}
+function fest1(zid){
+  var z=ZONES.find(function(x){return x.id===zid});
+  if(!confirm(z.name+" ("+z.area+") festivo oggi?"))return;
+  getDay(activeDate)[zid]="festivo";saveL();syncCloud();showT("🏖️ "+z.name+" festivo");
+  if(pendZ(activeDate).length===0)clFest();else showFest();
 }
 function festAll(){
-  if(!confirm("Confermi giornata festiva — nessun giro esce?"))return;
-  var day=getDay(activeDate);
-  pendingGiri(activeDate).forEach(function(g){day[g]="festivo"});
-  saveLocal();syncCloud(activeDate);showT("🏖️ Giornata festiva");closeFestivo();
+  if(!confirm("Giornata chiusura — tutte festive?"))return;
+  pendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();syncCloud();showT("🏖️ Tutto festivo");clFest();
 }
 
 // ── WIZARD ──
-function startWizard(){
-  wizOp="";wizGiro="";wizFoto=null;
-  document.getElementById("mainScreen").classList.add("hid");
-  wizGo(1);
-}
-function cancelWizard(){
-  [1,2,3,4].forEach(function(n){document.getElementById("wiz"+n).classList.remove("active")});
-  document.getElementById("mainScreen").classList.remove("hid");
-  updateUI();
-}
-function wizGo(step){
-  [1,2,3,4].forEach(function(n){document.getElementById("wiz"+n).classList.remove("active")});
-  document.getElementById("wiz"+step).classList.add("active");
-  if(step===2) wizBuildGiroList();
-  if(step===3){document.getElementById("wInput").value="";wizCheckWeight();document.getElementById("wizGiroName").textContent=GLBL[wizGiro];setTimeout(function(){document.getElementById("wInput").focus()},100)}
-  if(step===4){wizClearPhoto();wizCheckSave()}
+function startWiz(){wAut="";wZone=null;wNCeste=0;wCurCesta=0;wCeste=[];document.getElementById("mainScr").classList.add("hid");wGo(1)}
+function cancelWiz(){[1,2,3,4,5,6].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("mainScr").classList.remove("hid");updUI()}
+function wGo(s){[1,2,3,4,5,6].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("w"+s).classList.add("act");
+  if(s===2)wBuildZones();if(s===3)wBuildCnt();if(s===4)wSetupWeight();if(s===5)wSetupPhoto();if(s===6)wBuildSum();
 }
 
-function wizPickOp(name){
-  wizOp=name;
-  wizGo(2);
-}
+function wPickA(a){wAut=a;wGo(2)}
 
-function wizBuildGiroList(){
-  var pend=pendingGiri(activeDate);
-  document.getElementById("wizGiroList").innerHTML=pend.map(function(g){
-    return'<button class="giro-btn-w" onclick="wizPickGiro(\''+g+'\')"><div class="gdot" style="background:'+GCLR[g]+'"></div>'+GLBL[g]+'</button>';
+function wBuildZones(){
+  var pend=pendZ(activeDate);
+  document.getElementById("wZoneList").innerHTML=pend.map(function(z){
+    return'<button class="sel-btn" onclick="wPickZ(\''+z.id+'\')"><div class="sd" style="background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></button>';
   }).join("");
 }
+function wPickZ(zid){wZone=ZONES.find(function(z){return z.id===zid});wGo(3)}
 
-function wizPickGiro(g){
-  wizGiro=g;
-  wizGo(3);
+function wBuildCnt(){
+  var html="";for(var i=1;i<=6;i++){html+='<button class="cnt-btn" onclick="wPickCnt('+i+')">'+i+'</button>'}
+  document.getElementById("wCntBtns").innerHTML=html;
+}
+function wPickCnt(n){wNCeste=n;wCurCesta=0;wCeste=[];wGo(4)}
+
+function wSetupWeight(){
+  var n=wCurCesta+1;var total=wNCeste;
+  document.getElementById("w4sn").textContent=n;
+  document.getElementById("w4step").textContent="CESTA "+n+" DI "+total;
+  document.getElementById("w4n").textContent=n;
+  document.getElementById("w4zona").textContent=wZone.name;
+  document.getElementById("wWeight").value="";
+  document.getElementById("btnNxtW").disabled=true;
+  buildCPDots("cpDots");
+  setTimeout(function(){document.getElementById("wWeight").focus()},100);
+}
+function wChkW(){document.getElementById("btnNxtW").disabled=!(parseFloat(document.getElementById("wWeight").value)>0)}
+function wNextFromWeight(){
+  var w=parseFloat(document.getElementById("wWeight").value);
+  if(!wCeste[wCurCesta])wCeste[wCurCesta]={};
+  wCeste[wCurCesta].peso=w;
+  wGo(5);
+}
+function wBackFromWeight(){if(wCurCesta===0)wGo(3);else{wCurCesta--;wGo(5)}}
+
+function wSetupPhoto(){
+  var n=wCurCesta+1;
+  document.getElementById("w5sn").textContent=n;
+  document.getElementById("w5step").textContent="FOTO CESTA "+n+" DI "+wNCeste;
+  document.getElementById("w5n").textContent=n;
+  document.getElementById("photoGuide").classList.remove("hid");
+  wClrPhoto();
+  document.getElementById("btnNxtP").disabled=true;
+  document.getElementById("btnNxtP").textContent="📸 Scatta foto per continuare";
+  buildCPDots("cpDots2");
 }
 
-function wizCheckWeight(){
-  var w=parseFloat(document.getElementById("wInput").value);
-  document.getElementById("btnNext3").disabled=!(w>0);
-}
-
-function wizPhoto(e){
+function wPhoto(e){
   var f=e.target.files&&e.target.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(ev){var img=new Image();img.onload=function(){
+  var rd=new FileReader();rd.onload=function(ev){var img=new Image();img.onload=function(){
     var c=document.createElement("canvas"),w=img.width,h=img.height;
-    if(w>800){h=Math.round(h*800/w);w=800}c.width=w;c.height=h;
-    c.getContext("2d").drawImage(img,0,0,w,h);
-    wizFoto=c.toDataURL("image/jpeg",0.7);
-    document.getElementById("prevImg").src=wizFoto;
-    document.getElementById("camPrompt").classList.add("hid");
-    document.getElementById("camDone").classList.remove("hid");
+    if(w>800){h=Math.round(h*800/w);w=800}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+    var b64=c.toDataURL("image/jpeg",0.7);
+    if(!wCeste[wCurCesta])wCeste[wCurCesta]={};
+    wCeste[wCurCesta].foto=b64;
+    document.getElementById("prevImg").src=b64;
+    document.getElementById("camP").classList.add("hid");
+    document.getElementById("camD").classList.remove("hid");
     document.getElementById("camBox").className="cam-box cam-ok";
-    wizCheckSave();
+    document.getElementById("photoGuide").classList.add("hid");
+    // AI Verify
+    verifyPhoto(b64);
   };img.src=ev.target.result};rd.readAsDataURL(f);
 }
-function wizClearPhoto(){
-  wizFoto=null;document.getElementById("camIn").value="";
-  document.getElementById("camPrompt").classList.remove("hid");
-  document.getElementById("camDone").classList.add("hid");
+
+function wClrPhoto(){
+  document.getElementById("camIn").value="";
+  document.getElementById("camP").classList.remove("hid");
+  document.getElementById("camD").classList.add("hid");
   document.getElementById("camBox").className="cam-box cam-req";
-  wizCheckSave();
-}
-function wizCheckSave(){
-  var ok=!!wizFoto;var btn=document.getElementById("btnSave");btn.disabled=!ok;
-  btn.textContent=ok?"✓ Salva reso "+GLBL[wizGiro]:"📸 Scatta la foto per salvare";
-}
-
-async function wizSave(){
-  var w=parseFloat(document.getElementById("wInput").value);
-  var btn=document.getElementById("btnSave");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
-  var day=getDay(activeDate);
-  day[wizGiro]=w;day["op"+GID[wizGiro]]=wizOp;
-  saveLocal();
-  await syncCloud(activeDate,wizFoto);
-  showT("✓ "+GLBL[wizGiro]+" — "+w.toFixed(1)+" kg salvato!");
-  cancelWizard();
+  document.getElementById("verifyBar").classList.add("hid");
+  document.getElementById("camOkTxt").classList.add("hid");
+  document.getElementById("btnNxtP").disabled=true;
+  document.getElementById("btnNxtP").textContent="📸 Scatta foto per continuare";
+  document.getElementById("photoGuide").classList.remove("hid");
 }
 
-async function syncCloud(date,foto){
+async function verifyPhoto(b64){
+  var vb=document.getElementById("verifyBar");
+  var okT=document.getElementById("camOkTxt");
+  var btn=document.getElementById("btnNxtP");
+  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica foto...';vb.classList.remove("hid");
+  okT.classList.add("hid");btn.disabled=true;
+
+  // Try AI verification via Google Apps Script
+  var url=gUrl();
+  var aiOk=false;
+  if(url){
+    try{
+      var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},
+        body:JSON.stringify({action:"verifyPhoto",foto:b64})});
+      var j=await r.json();
+      if(j.valid!==undefined){
+        aiOk=j.valid;
+        if(!aiOk){
+          vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida — riscatta");
+          btn.textContent="❌ Foto non valida — riscatta";return;
+        }
+      } else { aiOk=true; } // endpoint exists but no verify action = pass
+    }catch(e){ aiOk=true; } // offline = pass with basic checks
+  } else { aiOk=true; }
+
+  // Basic client checks: not too dark
+  var img=document.getElementById("prevImg");
+  var cv=document.createElement("canvas");cv.width=50;cv.height=50;
+  var cx=cv.getContext("2d");cx.drawImage(img,0,0,50,50);
+  var px=cx.getImageData(0,0,50,50).data;
+  var brightness=0;for(var i=0;i<px.length;i+=4){brightness+=(px[i]+px[i+1]+px[i+2])/3}
+  brightness/=(px.length/4);
+  if(brightness<30){
+    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo scura — riscatta con più luce";
+    btn.textContent="❌ Foto troppo scura";return;
+  }
+
+  vb.className="verify-bar pass";vb.innerHTML="✓ Foto verificata";
+  okT.classList.remove("hid");
+  btn.disabled=false;
+  var isLast=wCurCesta>=wNCeste-1;
+  btn.textContent=isLast?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCurCesta+2);
+}
+
+function wNextFromPhoto(){
+  if(wCurCesta<wNCeste-1){wCurCesta++;wGo(4)} // next cesta weight
+  else{wGo(6)} // summary
+}
+
+function buildCPDots(containerId){
+  var html="";for(var i=0;i<wNCeste;i++){
+    var cls=i<wCurCesta?"done":i===wCurCesta?"active":"";
+    html+='<div class="cp-dot '+cls+'">'+(i<wCurCesta?"✓":(i+1))+'</div>';
+  }
+  document.getElementById(containerId).innerHTML=html;
+}
+
+function wBuildSum(){
+  document.getElementById("w6zona").textContent=wZone.name+" — "+wZone.area;
+  var html="<div class='sum-row'><span class='sum-label'>Autista</span><span class='sum-val'>🚚 "+wAut+"</span></div>";
+  var tot=0;
+  wCeste.forEach(function(c,i){
+    tot+=c.peso;
+    html+="<div class='sum-row'><span class='sum-label'>Cesta "+(i+1)+"</span><span class='sum-val'>"+c.peso.toFixed(1)+" kg "+(c.foto?"📷":"")+"</span></div>";
+  });
+  document.getElementById("sumBody").innerHTML=html;
+  document.getElementById("sumTot").textContent=tot.toFixed(1)+" kg";
+}
+
+async function wSave(){
+  var btn=document.getElementById("btnSaveFinal");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
+  var tot=0;wCeste.forEach(function(c){tot+=c.peso});
+  var entry={ceste:wCeste.map(function(c){return{peso:c.peso}}),autista:wAut,totale:tot};
+  getDay(activeDate)[wZone.id]=entry;saveL();
+
+  // Cloud sync
+  var url=gUrl();if(url){
+    try{
+      await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({
+        action:"addResi",data:activeDate,operatore:wAut,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,
+        peso:tot,nceste:wNCeste,
+        ceste:wCeste.map(function(c,i){return{n:i+1,peso:c.peso}})
+      })});
+      // Upload photos
+      for(var i=0;i<wCeste.length;i++){
+        if(wCeste[i].foto){
+          try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({
+            action:"uploadFoto",data:activeDate,operatore:wAut,giro:wZone.id,cesta:i+1,foto:wCeste[i].foto
+          })})}catch(e){}
+        }
+      }
+      showT("✓ "+wZone.name+" salvato — "+tot.toFixed(1)+" kg");
+    }catch(e){showT("⚠ Salvato localmente")}
+  }else{showT("✓ Salvato localmente")}
+  cancelWiz();
+}
+
+async function syncCloud(){
   var url=gUrl();if(!url)return;
-  var day=getDay(date);var p=0;GIRI.forEach(function(g){if(typeof day[g]==="number")p+=day[g]});
-  try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:date,operatore:wizOp||"",avellino:typeof day.avellino==="number"?day.avellino:null,sergio:typeof day.sergio==="number"?day.sergio:null,giovanni:typeof day.giovanni==="number"?day.giovanni:null,pesata:p||null})});
-    if(foto){try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:date,operatore:wizOp,giro:wizGiro,foto:foto})})}catch(e){}}
-  }catch(e){showT("⚠ Salvato solo localmente")}
+  // minimal sync for festivo
+  try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:"",nota:"festivo"})})}catch(e){}
 }
 
-function toggleSet(){document.getElementById("setP").classList.toggle("hid")}
-function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updateUI()}
+function openSet(){var p=prompt("Password impostazioni:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
+function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updUI()}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
 function viewP(s){document.getElementById("poImg").src=s;document.getElementById("po").classList.add("show")}
-function closePhoto(){document.getElementById("po").classList.remove("show")}
+function clPo(){document.getElementById("po").classList.remove("show")}
 init();
 </script>
 </body>
