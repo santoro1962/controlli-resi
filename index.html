@@ -129,7 +129,15 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
   <!-- FESTIVO -->
   <div id="festScr" class="hid">
     <button class="wb" onclick="clFest()">← Indietro</button>
-    <div class="fp"><div class="ft">🏖️ Segna festivo</div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Zone che non escono oggi:</p><div id="festList"></div><button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Giornata chiusura — tutte</button></div>
+    <div class="fp">
+      <div class="ft">🏖️ Segna festivo</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona la zona che non esce oggi:</p>
+      <div id="festList"></div>
+      <button id="btnFConf" class="bn hid" style="margin-top:16px;background:var(--muted)" onclick="festConfirm()">Seleziona una zona</button>
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+        <button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Giornata chiusura — tutte festive</button>
+      </div>
+    </div>
     <button class="btn-a close" onclick="clFest()">✕ Annulla</button>
   </div>
 
@@ -309,12 +317,26 @@ function updUI(){
 }
 
 // FESTIVO
-function showFest(){document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");
-  var p=pendZ(activeDate);document.getElementById("festList").innerHTML=p.map(function(z){return'<div class="fg"><div class="fg-l"><div class="fg-d" style="background:'+z.clr+'"></div>'+z.name+' — '+z.area+'</div><button class="btn-fg" onclick="fest1(\''+z.id+'\')">🏖️</button></div>'}).join("");
+var festSel=null;
+function showFest(){document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");festSel=null;
+  var p=pendZ(activeDate);
+  document.getElementById("festList").innerHTML=p.map(function(z){
+    return'<button class="sel-btn" id="fb-'+z.id+'" onclick="festPick(\''+z.id+'\')" style="margin-bottom:8px"><div class="sd" style="background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></button>';
+  }).join("");
+  document.getElementById("btnFConf").classList.add("hid");
   document.getElementById("btnFA").classList.toggle("hid",p.length<=1)}
-function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");updUI()}
-function fest1(zid){var z=ZONES.find(function(x){return x.id===zid});if(!confirm(z.name+" festivo?"))return;getDay(activeDate)[zid]="festivo";saveL();showT("🏖️ "+z.name+" festivo");if(pendZ(activeDate).length===0)clFest();else showFest()}
-function festAll(){if(!confirm("Giornata chiusura?"))return;pendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
+function festPick(zid){
+  festSel=zid;var p=pendZ(activeDate);
+  p.forEach(function(z){var el=document.getElementById("fb-"+z.id);if(el){el.style.borderColor=z.id===zid?"var(--accent)":"var(--inbord)";el.style.background=z.id===zid?"rgba(139,92,246,0.12)":"var(--inbg)"}});
+  var z=ZONES.find(function(x){return x.id===zid});
+  var btn=document.getElementById("btnFConf");btn.classList.remove("hid");
+  btn.textContent="🏖️ Conferma "+z.name+" festivo";btn.style.background="var(--accent)";btn.disabled=false}
+function festConfirm(){
+  if(!festSel)return;var z=ZONES.find(function(x){return x.id===festSel});
+  getDay(activeDate)[festSel]="festivo";saveL();showT("🏖️ "+z.name+" segnata festiva");
+  festSel=null;if(pendZ(activeDate).length===0){clFest()}else{showFest()}}
+function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");festSel=null;updUI()}
+function festAll(){if(!confirm("Giornata chiusura — tutte festive?"))return;pendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
 
 // WIZARD
 function startWiz(){wAut="";wZone=null;wNC=0;wCC=0;wCeste=[];document.getElementById("mainScr").classList.add("hid");wGo(1)}
@@ -368,32 +390,50 @@ async function verifyPhoto(b64,canvas){
   vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica foto...';vb.classList.remove("hid");
   ok.classList.add("hid");btn.disabled=true;
 
-  // 1) CHECK LUMINOSITÀ
+  // 1) CHECK LUMINOSITÀ e VARIANZA (evita foto nere, bianche, screenshot)
   var cx=canvas.getContext("2d");
-  var px=cx.getImageData(0,0,canvas.width,canvas.height).data;
-  var brightness=0,totalPx=px.length/4;
-  for(var i=0;i<px.length;i+=4){brightness+=(px[i]+px[i+1]+px[i+2])/3}
+  var w=canvas.width,h=canvas.height;
+  var px=cx.getImageData(0,0,w,h).data;
+  var totalPx=w*h;
+  var brightness=0,sumSq=0;
+  for(var i=0;i<px.length;i+=4){
+    var lum=(px[i]+px[i+1]+px[i+2])/3;
+    brightness+=lum;sumSq+=lum*lum;
+  }
   brightness/=totalPx;
+  var variance=(sumSq/totalPx)-(brightness*brightness);
 
-  if(brightness<35){
-    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo scura — riscatta con più luce";
-    btn.textContent="❌ Foto troppo scura";return}
-  if(brightness>240){
-    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo chiara / bianca — riscatta";
-    btn.textContent="❌ Foto non valida";return}
+  if(brightness<30){
+    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo scura — serve più luce";
+    btn.textContent="❌ Riscatta";return}
+  if(brightness>235){
+    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo chiara o bianca";
+    btn.textContent="❌ Riscatta";return}
+  if(variance<200){
+    vb.className="verify-bar fail";vb.innerHTML="❌ Foto non valida — inquadra la bilancia con la cesta";
+    btn.textContent="❌ Riscatta";return}
+
+  // 2) CHECK DIMENSIONI (foto troppo piccola = screenshot o icona)
+  if(w<300||h<300){
+    vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo piccola — usa la fotocamera";
+    btn.textContent="❌ Riscatta";return}
 
   // 3) AI VERIFICATION (se Google Sheets configurato)
   var url=gUrl();
   if(url){
-    vb.innerHTML='<span class="spin"></span> Verifica AI in corso...';
+    vb.innerHTML='<span class="spin"></span> Verifica AI...';
     try{
       var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},
         body:JSON.stringify({action:"verifyPhoto",foto:b64})});
       var j=await res.json();
-      if(j.valid===false){
-        vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida — riscatta");
-        btn.textContent="❌ Foto rifiutata — riscatta";return}
-    }catch(e){/* offline: passa con check base */}
+      if(j.valid===true){
+        // AI says OK
+      } else if(j.valid===false){
+        vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");
+        btn.textContent="❌ Riscatta";return;
+      }
+      // If j.valid is undefined (action not yet implemented), continue with offline check
+    }catch(e){/* offline: skip AI */}
   }
 
   // TUTTO OK
