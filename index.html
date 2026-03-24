@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Controlli Resi Pane</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         -webkit-tap-highlight-color: transparent; overscroll-behavior: none; color: #e2e8f0; }
+  input[type="number"], input[type="date"], input[type="url"] { font-size: 16px !important; }
+  button { -webkit-appearance: none; appearance: none; font-family: inherit; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  .photo-modal-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px; }
+  .photo-modal-overlay img { max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain; }
+  .photo-modal-close { position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:24px;width:44px;height:44px;border-radius:22px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+  .sync-dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px; }
+  .toast { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:10000;border:1px solid #334155;animation:fadeInUp 0.3s; }
+  @keyframes fadeInUp { from { opacity:0;transform:translateX(-50%) translateY(20px); } to { opacity:1;transform:translateX(-50%) translateY(0); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spinner { display:inline-block;width:16px;height:16px;border:2px solid #334155;border-top-color:#8b5cf6;border-radius:50%;animation:spin 0.6s linear infinite; }
+</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useCallback, useEffect, useRef } = React;
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Area, ComposedChart, Bar, BarChart } = Recharts;
+
+// ── GOOGLE SHEETS API LAYER ──
+const API = {
+  getUrl: () => localStorage.getItem("gsheet-url") || "",
+  setUrl: (url) => localStorage.setItem("gsheet-url", url),
+  
+  async fetchAll() {
+    const url = this.getUrl();
+    if (!url) return null;
+    const res = await fetch(url + "?action=getAll");
+    const json = await res.json();
+    return json.data || [];
+  },
+  
+  async addResi(entry, fotoBase64) {
+    const url = this.getUrl();
+    if (!url) return { success: false, error: "URL non configurato" };
+    // 1. Salva i resi
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "addResi", ...entry })
+    });
+    const json = await res.json();
+    
+    // 2. Upload foto se presente
+    if (json.success && fotoBase64) {
+      try {
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "uploadFoto", data: entry.data, operatore: entry.operatore, foto: fotoBase64 })
+        });
+      } catch(e) { console.log("Foto upload failed:", e); }
+    }
+    return json;
+  },
+  
+  async updateDDT(data, ddt) {
+    const url = this.getUrl();
+    if (!url) return { success: false };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "updateDDT", data, ddt })
+    });
+    return await res.json();
+  }
+};
+
+// ── DATA & UTILS ──
+const INITIAL_DATA = [["2025-09-25",45.4,30,30.7,106.1,100.2,5.9],["2025-09-26",53.2,25,35,113.2,108.7,4.5],["2025-09-27",59,40,40,139,141.4,-2.4],["2025-09-28",34.2,11.7,22,67.9,70.7,-2.8],["2025-09-29",31,20.1,34,85.1,84.4,0.7],["2025-09-30",20,28.7,29.5,78.2,74.5,3.7],["2025-10-01",26.6,21,39,86.6,87.4,-0.8],["2025-10-02",25.5,16,35.5,77,77.3,-0.3],["2025-10-03",26,18.8,25.4,70.2,74.7,-4.5],["2025-10-04",38,16,33,87,80.6,6.4],["2025-10-05",36.8,28.4,15.5,80.7,84.6,-3.9],["2025-10-06",31,10.5,22.7,64.2,56.8,7.4],["2025-10-07",14.5,9,30,53.5,54.1,-0.6],["2025-10-08",23.3,27,38.7,89,95.7,-6.7],["2025-10-09",37,23.3,45,105.3,101.5,3.8],["2025-10-10",23.3,22.5,33.5,79.3,77.6,1.7],["2025-10-11",47.3,14.4,43,104.7,107.5,-2.8],["2025-10-12",31.6,17.4,24.6,73.6,74.8,-1.2],["2025-10-13",39.3,38.3,45,122.6,121.2,1.4],["2025-10-14",25,30.9,28,83.9,85.6,-1.7],["2025-10-15",39.6,15.7,38.3,93.6,99.3,-5.7],["2025-10-16",38.7,21.5,34.2,94.4,90.3,4.1],["2025-10-17",42.2,24,35,101.2,104.5,-3.3],["2025-10-18",46.3,17.1,32.5,95.9,94.8,1.1],["2025-10-19",31.2,12.3,24,67.5,68.7,-1.2],["2025-10-20",35.7,13.6,56.3,105.6,103.6,2],["2025-10-21",24.3,29.6,42.3,96.2,90.2,6],["2025-10-22",39.5,22.9,36.7,99.1,98.3,0.8],["2025-10-23",42.5,26.4,37.44,106.34,106.5,-0.16],["2025-10-24",32.7,37,52,121.7,129.2,-7.5],["2025-10-25",37.18,26,37.2,100.38,94.7,5.68],["2025-10-26",36,15,23,74,75.5,-1.5],["2025-10-27",21.6,9.6,36.6,67.8,64.2,3.6],["2025-10-28",29.7,17,39.8,86.5,87.4,-0.9],["2025-10-29",38.7,17,41,96.7,92.9,3.8],["2025-10-30",39.6,28.5,37,105.1,106,-0.9],["2025-10-31",20.46,22.6,36.3,79.36,72.3,7.06],["2025-11-01",37.4,10.2,35,82.6,82.5,0.1],["2025-11-02",25.3,13.6,5.8,44.7,48.3,-3.6],["2025-11-03",13.9,13,37.3,64.2,59.9,4.3],["2025-11-04",16.7,20,23.5,60.2,62.7,-2.5],["2025-11-05",32.3,21.2,25,78.5,78.5,0],["2025-11-06",28.4,13.5,34,75.9,80.5,-4.6],["2025-11-07",36.1,30.4,37.8,104.3,105,-0.7],["2025-11-08",47.5,22.8,36,106.3,103.7,2.6],["2025-11-09",29.1,20.4,20.1,69.6,68.6,1],["2025-11-10",18.7,10.5,43.5,72.7,76.2,-3.5],["2025-11-11",26.3,27,40,93.3,89,4.3],["2025-11-12",32.5,15,34,81.5,80.6,0.9],["2025-11-13",26.8,23.7,35,85.5,88.3,-2.8],["2025-11-14",33.2,16,31.5,80.7,80.5,0.2],["2025-11-15",47,20,42,109,111.2,-2.2],["2025-11-16",36.8,21.4,39,97.2,96.9,0.3],["2025-11-17",28.5,26,39,93.5,90.2,3.3],["2025-11-18",24.1,11.5,30,65.6,65.3,0.3],["2025-11-19",39.1,25,32.2,96.3,95.3,1],["2025-11-20",34,15.5,36,85.5,80.6,4.9],["2025-11-21",34.8,22.5,30,87.3,86.6,0.7],["2025-11-22",34.1,28.5,30,92.6,96.4,-3.8],["2025-11-23",30.64,16.3,9.3,56.24,54.5,1.74],["2025-11-24",27.2,19.2,37,83.4,82.3,1.1],["2025-11-25",31.9,14,40,85.9,83.7,2.2],["2025-11-26",41.8,19,26.5,87.3,83.3,4],["2025-11-27",20,14,31,65,65.5,-0.5],["2025-11-28",35,23.8,24.4,83.2,78.6,4.6],["2025-11-29",40.2,20.4,31.4,92,93.2,-1.2],["2025-11-30",29,10.9,17.7,57.6,56.7,0.9],["2025-12-01",24.28,20.5,30.5,75.28,76.3,-1.02],["2025-12-02",31,20.1,34.5,85.6,81.7,3.9],["2025-12-03",30.5,16.8,33.2,80.5,81.7,-1.2],["2025-12-04",41.1,15,35.5,91.6,85.9,5.7],["2025-12-05",27.3,16.5,31.3,75.1,77.4,-2.3],["2025-12-06",62.4,12.7,32.2,107.3,101.6,5.7],["2025-12-07",41,12.9,19,72.9,71.1,1.8],["2025-12-08",31.9,7.2,22,61.1,61.1,0],["2025-12-09",22.6,5.5,16,44.1,42.5,1.6],["2025-12-10",28.2,12.5,25.2,65.9,64.9,1],["2025-12-11",28,18,37.4,83.4,80.7,2.7],["2025-12-12",30,22.1,36.7,88.8,87.9,0.9],["2025-12-13",42.1,17.6,27,86.7,92.4,-5.7],["2025-12-14",20,24,25,69,65.9,3.1],["2025-12-15",29,17.8,37.5,84.3,76.5,7.8],["2025-12-16",36.8,17.6,35.3,89.7,86.7,3],["2025-12-17",20.7,20,40.8,81.5,81.2,0.3],["2025-12-18",32.4,10,35,77.4,74.1,3.3],["2025-12-19",25,24,29,78,79.9,-1.9],["2025-12-20",40.8,14.5,54.3,109.6,113.8,-4.2],["2025-12-21",28,20.9,31.5,80.4,77.3,3.1],["2025-12-22",5.8,9.5,43.1,58.4,59.2,-0.8],["2025-12-23",9.3,6,16.7,32,34.4,-2.4],["2025-12-24",4.5,3.5,6.3,14.3,14.7,-0.4],["2025-12-25",0,0,0,0,null,0],["2025-12-26",3.6,9.3,0.82,13.72,13.9,-0.18],["2025-12-27",5.3,8.5,16,29.8,29.7,0.1],["2025-12-28",13.64,24,9.1,46.74,48,-1.26],["2025-12-29",6,7,19,32,34,-2],["2025-12-30",12,7,13.8,32.8,35.4,-2.6],["2025-12-31",11,6,9.5,26.5,25.9,0.6],["2026-01-01",0,0,0,0,null,0],["2026-01-02",4.6,8.7,5,18.3,17.5,0.8],["2026-01-03",16.5,23.4,15,54.9,54.6,0.3],["2026-01-04",25,23.8,36.6,85.4,80.4,5],["2026-01-05",22.5,25,30,77.5,77.5,0],["2026-01-06",8,3.5,9,20.5,19.9,0.6],["2026-01-07",26.7,9,27.6,63.3,65,-1.7],["2026-01-08",20.5,11.8,13.9,46.2,41.5,4.7],["2026-01-09",21,13.6,17,51.6,48,3.6],["2026-01-10",41.1,17,39.7,97.8,95.4,2.4],["2026-01-11",18,23.4,18.8,60.2,60.4,-0.2],["2026-01-12",15.5,12.6,36.4,64.5,62.6,1.9],["2026-01-13",21.3,17,23.5,61.8,60.9,0.9],["2026-01-14",18,18,20.8,56.8,57.5,-0.7],["2026-01-15",28,26,30,84,84,0],["2026-01-16",24.4,18.2,31.5,74.1,71.8,2.3],["2026-01-17",51.5,14,26.3,91.8,86.7,5.1],["2026-01-18",17,17,20.4,54.4,52.6,1.8],["2026-01-19",20,16.5,40,76.5,74.2,2.3],["2026-01-20",35,15,28.8,78.8,73.3,5.5],["2026-01-21",36,9,17.5,62.5,60,2.5],["2026-01-22",56,13,21.3,90.3,89.5,0.8],["2026-01-23",41,10,23.4,74.4,76.4,-2],["2026-01-24",50,11.9,23.1,85,85,0],["2026-01-25",30.5,3,14,47.5,48.3,-0.8],["2026-01-26",29,11.9,26.3,67.2,64.7,2.5],["2026-01-27",17.2,9.8,40.2,67.2,68.5,-1.3],["2026-01-28",29.5,5.5,34.7,69.7,68.5,1.2],["2026-01-29",34,12.5,33.5,80,79.5,0.5],["2026-01-30",21,6,28.5,55.5,57.3,-1.8],["2026-01-31",30.7,9,38.5,78.2,73.3,4.9],["2026-02-01",41,9.5,11.1,61.6,67.6,-6],["2026-02-02",25.5,7.5,33,66,63.8,2.2],["2026-02-03",19,8,25,52,50.9,1.1],["2026-02-04",24,10,25.5,59.5,60.8,-1.3],["2026-02-05",32.5,15.5,30,78,76.4,1.6],["2026-02-06",26,9.5,26.6,62.1,65.7,-3.6],["2026-02-07",40,12.5,35.5,88,85.7,2.3],["2026-02-08",30,7,17.8,54.8,59.7,-4.9],["2026-02-09",22,8.5,28.6,59.1,60.1,-1],["2026-02-10",16,7.5,16.6,40.1,38.3,1.8],["2026-02-11",25,7.6,28.5,61.1,59.6,1.5],["2026-02-12",31.9,5.6,20.3,57.8,57.9,-0.1],["2026-02-13",22,13,24.6,59.6,59.1,0.5],["2026-02-14",33,9,20,62,59,3],["2026-02-15",28,2,4,34,37,-3],["2026-02-16",27.5,4.7,24,56.2,57.6,-1.4],["2026-02-17",25,0,16,41,40,1],["2026-02-18",23,7.5,23,53.5,52.8,0.7],["2026-02-19",26.2,14,24.2,64.4,60.3,4.1],["2026-02-20",24,15,30,69,71,-2],["2026-02-21",28.4,8,23,59.4,63.5,-4.1],["2026-02-22",22,1,16.2,39.2,39.5,-0.3],["2026-02-23",20,5,25,50,50.5,-0.5],["2026-02-24",15.2,10,22,47.2,43.8,3.4],["2026-02-25",13.5,9.5,30,53,54.8,-1.8],["2026-02-26",26,7,25,58,60.5,-2.5],["2026-02-27",29.5,9.5,25,64,65,-1],["2026-02-28",29,4.5,27,60.5,58.4,2.1],["2026-03-01",27.9,5.5,7.3,40.7,43.8,-3.1],["2026-03-02",26,19.5,23,68.5,71.2,-2.7],["2026-03-03",17,7,22.4,46.4,46,0.4],["2026-03-04",32,7.5,26.6,66.1,65.8,0.3],["2026-03-05",24,6,22,52,50.6,1.4],["2026-03-06",24,13,22,59,60,-1],["2026-03-07",35,5,30,70,65.8,4.2],["2026-03-08",35,8,7.3,50.3,50.9,-0.6],["2026-03-09",32,4,27.3,63.3,66.9,-3.6],["2026-03-10",15.2,8,24.5,47.7,44.5,3.2],["2026-03-11",22,3.5,23.3,48.8,50.3,-1.5],["2026-03-12",26.8,7.5,29,63.3,60.8,2.5],["2026-03-13",13.5,8,30,51.5,46.7,4.8],["2026-03-14",17.5,3,21.2,41.7,42.2,-0.5],["2026-03-15",26,8.5,8,42.5,49.5,-7],["2026-03-16",23,4,18,45,48.6,-3.6],["2026-03-17",16.3,3,20,39.3,40.8,-1.5],["2026-03-18",22,4,27.2,53.2,53.9,-0.7],["2026-03-19",25.3,4,25,54.3,51.9,2.4],["2026-03-20",32,8.5,30,70.5,73.1,-2.6],["2026-03-21",37.5,8,26.4,71.9,68,3.9],["2026-03-22",18.5,1.5,14.5,34.5,39.6,-5.1],["2026-03-23",19.5,8,25,52.5,51.9,0.6]];
+
+function parseRow(r) { return { data: r[0], avellino: r[1], sergio: r[2], giovanni: r[3], pesata: r[4], ddt: r[5], differenza: r[6] }; }
+const STATS = { avellino: { mean: 28.7, std: 11.6 }, sergio: { mean: 20.6, std: 9.5 }, giovanni: { mean: 26.8, std: 10.0 } };
+const ANOMALY_FACTOR = 2; const GIORNI = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+function isAnomaly(v, k) { if (v == null || v === 0) return false; return Math.abs(v - STATS[k].mean) > ANOMALY_FACTOR * STATS[k].std; }
+function movingAvg(arr, key, w=7) { return arr.map((_,i) => { const sl = arr.slice(Math.max(0,i-w+1),i+1).filter(d=>d[key]!=null&&d[key]>0); return sl.length ? +(sl.reduce((s,d)=>s+d[key],0)/sl.length).toFixed(1) : null; }); }
+const fmt = v => v != null ? v.toFixed(2) : "—";
+const fmtDate = d => { const p = d.split("-"); return `${p[2]}/${p[1]}`; };
+const getDow = s => new Date(s+"T00:00:00").getDay();
+function resizeImage(file, maxW=800) { return new Promise(r => { const rd = new FileReader(); rd.onload = e => { const img = new Image(); img.onload = () => { const c = document.createElement('canvas'); let w=img.width,h=img.height; if(w>maxW){h=Math.round(h*maxW/w);w=maxW;} c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h); r(c.toDataURL('image/jpeg',0.7)); }; img.src=e.target.result; }; rd.readAsDataURL(file); }); }
+
+const C = {
+  bg:"#0a0e1a",card:"#111827",border:"#1e293b",text:"#e2e8f0",muted:"#94a3b8",
+  avellino:"#f59e0b",sergio:"#3b82f6",giovanni:"#10b981",
+  danger:"#ef4444",dangerBg:"rgba(239,68,68,0.08)",dangerSoft:"#fca5a5",
+  ok:"#22c55e",okBg:"rgba(34,197,94,0.08)",
+  warn:"#f59e0b",warnBg:"rgba(245,158,11,0.08)",
+  accent:"#8b5cf6",inBg:"#1e293b",inBord:"#334155",ma:"#f472b6",
+  carmela:"#ec4899",antonio:"#3b82f6",
+};
+
+const PhotoModal = ({ src, onClose }) => { if (!src) return null; return (<div className="photo-modal-overlay" onClick={onClose}><button className="photo-modal-close" onClick={onClose}>✕</button><img src={src} alt="Foto" onClick={e=>e.stopPropagation()}/></div>); };
+const Toast = ({ msg }) => { if (!msg) return null; return <div className="toast">{msg}</div>; };
+
+// ── CHARTS (compact) ──
+const GiroChart = ({ data, giroKey, label, color }) => {
+  const cd = useMemo(() => { const ma = movingAvg(data,giroKey); return data.map((d,i) => ({ date:fmtDate(d.data), value:d[giroKey], ma:ma[i], anom:isAnomaly(d[giroKey],giroKey) })); }, [data,giroKey]);
+  const s = STATS[giroKey]; const Dot = p => { if (!p.payload.anom||p.cx==null) return null; return <g><circle cx={p.cx} cy={p.cy} r={6} fill={C.danger} opacity={0.9}/></g>; };
+  return (<div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,padding:"16px 12px 8px",marginBottom:14}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,padding:"0 4px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:10,height:10,borderRadius:3,background:color}}/><span style={{fontWeight:700,fontSize:14}}>{label}</span></div>
+    </div>
+    <ResponsiveContainer width="100%" height={160}><ComposedChart data={cd} margin={{top:5,right:8,left:-12,bottom:0}}>
+      <defs><linearGradient id={`g-${giroKey}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity={0.2}/><stop offset="100%" stopColor={color} stopOpacity={0.01}/></linearGradient></defs>
+      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b"/><XAxis dataKey="date" tick={{fill:C.muted,fontSize:9,fontFamily:"monospace"}} interval={Math.floor(cd.length/7)}/><YAxis tick={{fill:C.muted,fontSize:9,fontFamily:"monospace"}}/>
+      <Tooltip contentStyle={{background:"#1e293b",border:"1px solid #334155",borderRadius:8,fontSize:12}} formatter={(v,n)=>[v!=null?`${v} kg`:"—",n==="value"?label:"Media 7gg"]}/>
+      <ReferenceLine y={s.mean} stroke={C.muted} strokeDasharray="2 4" strokeOpacity={0.3}/>
+      <Area type="monotone" dataKey="value" fill={`url(#g-${giroKey})`} stroke="none"/><Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false}/><Line type="monotone" dataKey="value" stroke="none" dot={<Dot/>}/><Line type="monotone" dataKey="ma" stroke={C.ma} strokeWidth={1.5} strokeDasharray="5 3" dot={false}/>
+    </ComposedChart></ResponsiveContainer></div>);
+};
+
+const DiffChart = ({ data }) => {
+  const cd = useMemo(() => data.map(d => ({date:fmtDate(d.data),ammanco:d.differenza!=null&&d.differenza<0?d.differenza:null,ok:d.differenza!=null&&d.differenza>=0?d.differenza:null})), [data]);
+  return (<div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,padding:"16px 12px 8px",marginBottom:14}}>
+    <span style={{fontWeight:700,fontSize:14,padding:"0 6px"}}>⚖️ DDT vs Pesata</span>
+    <div style={{fontSize:11,color:C.muted,padding:"4px 6px 10px"}}>🔴 ammanco · 🟢 OK</div>
+    <ResponsiveContainer width="100%" height={180}><BarChart data={cd} margin={{top:5,right:8,left:-12,bottom:0}}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b"/><XAxis dataKey="date" tick={{fill:C.muted,fontSize:9,fontFamily:"monospace"}} interval={Math.floor(cd.length/8)}/><YAxis tick={{fill:C.muted,fontSize:9,fontFamily:"monospace"}}/>
+      <Tooltip contentStyle={{background:"#1e293b",border:"1px solid #334155",borderRadius:8,fontSize:12}} formatter={(v,n)=>n==="ammanco"?[`${v?.toFixed(2)} kg`,"⚠ AMMANCO"]:[`+${v?.toFixed(2)} kg`,"✓ OK"]}/>
+      <ReferenceLine y={0} stroke={C.muted} strokeWidth={2}/><Bar dataKey="ok" fill={C.ok} radius={[3,3,0,0]} maxBarSize={10}/><Bar dataKey="ammanco" fill={C.danger} radius={[0,0,3,3]} maxBarSize={10}/>
+    </BarChart></ResponsiveContainer></div>);
+};
+
+// ── MAIN ──
+function Dashboard() {
+  const [cloudData, setCloudData] = useState([]);
+  const [localEntries] = useState(() => INITIAL_DATA.map(parseRow));
+  const [form, setForm] = useState({ operatore:"", data:"", avellino:"", sergio:"", giovanni:"" });
+  const [foto, setFoto] = useState(null);
+  const [view, setView] = useState("60");
+  const [showForm, setShowForm] = useState(false);
+  const [tab, setTab] = useState("table");
+  const [editingDate, setEditingDate] = useState(null);
+  const [ddtInput, setDdtInput] = useState("");
+  const [viewingPhoto, setViewingPhoto] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [connected, setConnected] = useState(!!API.getUrl());
+  const [showSettings, setShowSettings] = useState(false);
+  const [scriptUrl, setScriptUrl] = useState(API.getUrl());
+  const [toast, setToast] = useState("");
+  const fileRef = useRef(null);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+  // Sync with Google Sheets on load
+  const syncData = useCallback(async () => {
+    if (!API.getUrl()) return;
+    setSyncing(true);
+    try {
+      const data = await API.fetchAll();
+      if (data) { setCloudData(data); setConnected(true); showToast("✓ Sincronizzato con Google Sheets"); }
+    } catch(e) { console.log("Sync failed:", e); setConnected(false); showToast("⚠ Offline — dati locali"); }
+    setSyncing(false);
+  }, []);
+
+  useEffect(() => { syncData(); }, [syncData]);
+
+  // Merge local + cloud data
+  const allData = useMemo(() => {
+    const map = new Map();
+    localEntries.forEach(d => map.set(d.data, d));
+    cloudData.forEach(d => map.set(d.data, d)); // cloud overwrites local
+    return [...map.values()].sort((a,b) => a.data.localeCompare(b.data));
+  }, [localEntries, cloudData]);
+
+  const filtered = useMemo(() => { const n = view === "all" ? allData.length : parseInt(view); return allData.slice(-n); }, [allData, view]);
+  const pesataCalc = useMemo(() => { const a=parseFloat(form.avellino)||0,s=parseFloat(form.sergio)||0,g=parseFloat(form.giovanni)||0; return (a||s||g)?+(a+s+g).toFixed(2):null; }, [form.avellino,form.sergio,form.giovanni]);
+  const pendingDDT = useMemo(() => allData.filter(e => e.ddt == null && e.pesata != null && e.pesata > 0 && cloudData.some(c => c.data === e.data)), [allData, cloudData]);
+
+  const handlePhoto = useCallback(async (e) => { const f=e.target.files?.[0]; if(!f) return; setFoto(await resizeImage(f,800)); }, []);
+  const canSave = form.data && form.operatore && pesataCalc && foto;
+
+  const handleAdd = useCallback(async () => {
+    if (!canSave) return;
+    setSyncing(true);
+    const entry = { data:form.data, operatore:form.operatore, avellino:form.avellino?+form.avellino:null, sergio:form.sergio?+form.sergio:null, giovanni:form.giovanni?+form.giovanni:null, pesata:pesataCalc };
+    try {
+      const res = await API.addResi(entry, foto);
+      if (res.success) { showToast("✓ Salvato su Google Sheets + foto"); await syncData(); }
+      else { showToast("⚠ Errore: " + (res.error || "sconosciuto")); }
+    } catch(e) { showToast("⚠ Offline — riprova dopo"); }
+    setForm({ operatore:form.operatore, data:"", avellino:"", sergio:"", giovanni:"" });
+    setFoto(null); setShowForm(false); setSyncing(false);
+    if (fileRef.current) fileRef.current.value = "";
+  }, [form, pesataCalc, foto, canSave, syncData]);
+
+  const handleSaveDDT = useCallback(async () => {
+    if (!editingDate || !ddtInput) return;
+    setSyncing(true);
+    try {
+      const res = await API.updateDDT(editingDate, parseFloat(ddtInput));
+      if (res.success) { showToast("✓ DDT salvato"); await syncData(); }
+      else { showToast("⚠ Errore: " + (res.error || "")); }
+    } catch(e) { showToast("⚠ Offline — riprova"); }
+    setEditingDate(null); setDdtInput(""); setSyncing(false);
+  }, [editingDate, ddtInput, syncData]);
+
+  const handleSaveSettings = () => {
+    API.setUrl(scriptUrl.trim());
+    setConnected(!!scriptUrl.trim());
+    setShowSettings(false);
+    if (scriptUrl.trim()) syncData();
+    else showToast("URL rimosso — modalità offline");
+  };
+
+  const last = allData[allData.length - 1];
+  const isAmm = last?.differenza != null && last.differenza < 0;
+  const iStyle = { background:"#1e293b",border:"1px solid #334155",borderRadius:10,padding:"12px 14px",color:C.text,fontFamily:"monospace",fontSize:16,outline:"none",width:"100%",boxSizing:"border-box" };
+
+  return (
+    <div style={{ background:C.bg, minHeight:"100vh", color:C.text, padding:"16px 12px 80px", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
+      <PhotoModal src={viewingPhoto} onClose={() => setViewingPhoto(null)} />
+      <Toast msg={toast} />
+
+      {/* HEADER */}
+      <div style={{ maxWidth:920, margin:"0 auto 14px" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22 }}>🍞</div>
+            <div>
+              <h1 style={{ margin:0,fontSize:20,fontWeight:700 }}>Controlli Resi</h1>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:C.muted }}>
+                <span className="sync-dot" style={{ background: connected ? C.ok : C.danger }}/>
+                {connected ? "Google Sheets" : "Offline"} · {allData.length} record
+                {syncing && <span className="spinner" style={{ marginLeft:4 }}/>}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setShowSettings(!showSettings)} style={{ background:C.inBg, border:`1px solid ${C.inBord}`, borderRadius:10, padding:"10px 14px", cursor:"pointer", fontSize:18 }}>⚙️</button>
+        </div>
+      </div>
+
+      <div style={{ maxWidth:920, margin:"0 auto" }}>
+        {/* SETTINGS */}
+        {showSettings && (
+          <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.accent}33`, padding:18, marginBottom:14 }}>
+            <div style={{ fontWeight:700, fontSize:15, marginBottom:10 }}>⚙️ Configurazione Google Sheets</div>
+            <p style={{ fontSize:12, color:C.muted, marginBottom:12, lineHeight:1.6 }}>
+              Incolla qui l'URL del Google Apps Script (quello che finisce con /exec).
+              Tutti i dati verranno salvati e letti dal foglio Google.
+            </p>
+            <input type="url" placeholder="https://script.google.com/macros/s/.../exec" value={scriptUrl} onChange={e => setScriptUrl(e.target.value)} style={{...iStyle, fontSize:14, marginBottom:10}}/>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={handleSaveSettings} style={{ background:"linear-gradient(135deg,#10b981,#059669)", color:"#fff", border:"none", borderRadius:8, padding:"12px 24px", fontWeight:600, fontSize:14, cursor:"pointer", flex:1 }}>✓ Salva</button>
+              <button onClick={() => { syncData(); setShowSettings(false); }} style={{ background:C.inBg, color:C.muted, border:`1px solid ${C.inBord}`, borderRadius:8, padding:"12px 16px", fontSize:14, cursor:"pointer" }}>🔄 Sync</button>
+            </div>
+          </div>
+        )}
+
+        {/* NO URL WARNING */}
+        {!connected && !showSettings && (
+          <div style={{ background:"rgba(239,68,68,0.06)", border:`1px solid ${C.danger}33`, borderRadius:12, padding:"14px 16px", marginBottom:12, fontSize:13 }}>
+            <strong style={{ color:C.danger }}>⚠ Google Sheets non configurato</strong>
+            <p style={{ color:C.muted, marginTop:4, fontSize:12 }}>Tocca ⚙️ per collegare il foglio Google. Senza, i dati non verranno salvati.</p>
+          </div>
+        )}
+
+        {/* STAT CARDS */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(100px, 1fr))", gap:8, marginBottom:14 }}>
+          {[
+            { l:"Ultimo", v:last?fmtDate(last.data):"—" },
+            { l:"Op.", v:last?.operatore||"—", c:last?.operatore==="Carmela"?C.carmela:C.antonio },
+            { l:"Av.", v:last?fmt(last.avellino):"—", c:C.avellino },
+            { l:"Sr.", v:last?fmt(last.sergio):"—", c:C.sergio },
+            { l:"Gv.", v:last?fmt(last.giovanni):"—", c:C.giovanni },
+            { l:isAmm?"⚠":"✓", v:last?fmt(last.differenza):"—", c:isAmm?C.danger:C.ok },
+          ].map((x,i) => (
+            <div key={i} style={{background:C.card,borderRadius:10,border:`1px solid ${C.border}`,padding:"8px 10px"}}>
+              <div style={{fontSize:9,color:C.muted,fontWeight:500,marginBottom:2}}>{x.l}</div>
+              <div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:x.c||C.text}}>{x.v}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* PENDING DDT */}
+        {pendingDDT.length > 0 && !showForm && (
+          <div style={{background:C.warnBg,border:`1px solid ${C.warn}33`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
+            <div style={{fontWeight:700,marginBottom:10,fontSize:14}}>📋 {pendingDDT.length} in attesa DDT</div>
+            {pendingDDT.map(e => {
+              const isEd = editingDate === e.data;
+              const dp = ddtInput && isEd ? +((e.pesata??0)-parseFloat(ddtInput)).toFixed(2) : null;
+              return (<div key={e.data} style={{background:"#1e293b",border:"1px solid #334155",borderRadius:10,padding:"12px 14px",marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                  <span style={{fontFamily:"monospace",fontSize:15,fontWeight:700}}>{fmtDate(e.data)} — {e.pesata} kg</span>
+                  {!isEd && <button onClick={()=>{setEditingDate(e.data);setDdtInput("");}} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#000",border:"none",borderRadius:8,padding:"10px 18px",fontWeight:700,fontSize:14,cursor:"pointer"}}>✏️ DDT</button>}
+                </div>
+                {isEd && (<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10}}>
+                  <input type="number" step="0.01" placeholder="DDT (kg)" value={ddtInput} onChange={ev=>setDdtInput(ev.target.value)} style={iStyle} autoFocus/>
+                  {dp!=null && <span style={{fontFamily:"monospace",fontSize:15,fontWeight:700}}>{dp<0?"🔴":"🟢"} Diff: <span style={{color:dp<0?C.danger:C.ok}}>{dp} kg</span></span>}
+                  <button onClick={handleSaveDDT} disabled={!ddtInput||syncing} style={{background:ddtInput?"linear-gradient(135deg,#10b981,#059669)":C.inBg,color:"#fff",border:"none",borderRadius:8,padding:"14px",fontWeight:600,fontSize:16,cursor:ddtInput?"pointer":"not-allowed",opacity:ddtInput?1:0.4}}>
+                    {syncing ? "Salvataggio..." : "✓ Salva DDT"}
+                  </button>
+                </div>)}
+              </div>);
+            })}
+          </div>
+        )}
+
+        {/* ADD ENTRY */}
+        {pendingDDT.length === 0 && connected && (
+          <button onClick={()=>setShowForm(!showForm)} style={{background:showForm?C.inBg:"linear-gradient(135deg,#f59e0b,#ef4444)",color:C.text,border:"none",borderRadius:12,padding:"14px 24px",fontWeight:600,fontSize:15,cursor:"pointer",width:"100%",marginBottom:14}}>{showForm?"✕ Chiudi":"+ Inserisci resi"}</button>
+        )}
+
+        {showForm && (
+          <div style={{background:C.card,borderRadius:14,border:`1px solid ${C.accent}33`,padding:18,marginBottom:14,boxShadow:"0 4px 24px rgba(139,92,246,0.08)"}}>
+            <div style={{marginBottom:form.operatore?14:0}}>
+              <label style={{fontSize:12,color:C.muted,marginBottom:6,fontWeight:500,display:"block"}}>Operatore</label>
+              <div style={{display:"flex",gap:8}}>
+                {["Carmela","Antonio"].map(op => (
+                  <button key={op} onClick={()=>setForm({...form,operatore:op})} style={{
+                    background:form.operatore===op?(op==="Carmela"?`linear-gradient(135deg,${C.carmela},#db2777)`:`linear-gradient(135deg,${C.antonio},#2563eb)`):C.inBg,
+                    color:form.operatore===op?"#fff":C.muted,border:`1px solid ${form.operatore===op?"transparent":C.inBord}`,borderRadius:10,padding:"12px 20px",fontWeight:600,fontSize:15,cursor:"pointer",flex:1,
+                  }}>{op==="Carmela"?"👩":"👨"} {op}</button>
+                ))}
+              </div>
+            </div>
+            {form.operatore && (<>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div style={{gridColumn:"1/-1"}}><label style={{fontSize:12,color:C.muted,marginBottom:3,fontWeight:500,display:"block"}}>Data</label><input type="date" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} style={iStyle}/></div>
+                <div><label style={{fontSize:12,color:C.muted,marginBottom:3,fontWeight:500,display:"block"}}>Avellino</label><input type="number" step="0.01" placeholder="0.00" value={form.avellino} onChange={e=>setForm({...form,avellino:e.target.value})} style={iStyle}/></div>
+                <div><label style={{fontSize:12,color:C.muted,marginBottom:3,fontWeight:500,display:"block"}}>Sergio</label><input type="number" step="0.01" placeholder="0.00" value={form.sergio} onChange={e=>setForm({...form,sergio:e.target.value})} style={iStyle}/></div>
+                <div><label style={{fontSize:12,color:C.muted,marginBottom:3,fontWeight:500,display:"block"}}>Giovanni</label><input type="number" step="0.01" placeholder="0.00" value={form.giovanni} onChange={e=>setForm({...form,giovanni:e.target.value})} style={iStyle}/></div>
+                <div style={{display:"flex",flexDirection:"column",justifyContent:"center"}}><span style={{fontSize:11,color:C.muted}}>Pesata</span><span style={{fontFamily:"monospace",fontSize:20,fontWeight:700}}>{pesataCalc?`${pesataCalc} kg`:"—"}</span></div>
+              </div>
+              {/* CAMERA */}
+              <div style={{marginTop:16,background:foto?C.okBg:"rgba(239,68,68,0.06)",border:`1px solid ${foto?C.ok+"33":C.danger+"33"}`,borderRadius:12,padding:14,textAlign:"center"}}>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{display:"none"}} id="cam"/>
+                {!foto?(<>
+                  <div style={{fontSize:40,marginBottom:8}}>📸</div>
+                  <p style={{fontSize:14,fontWeight:600,color:C.danger,marginBottom:10}}>Foto bilancia OBBLIGATORIA</p>
+                  <button onClick={()=>fileRef.current?.click()} style={{background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:"#fff",border:"none",borderRadius:10,padding:"14px 28px",fontWeight:700,fontSize:16,cursor:"pointer",width:"100%"}}>📷 Scatta foto</button>
+                </>):(<>
+                  <img src={foto} alt="Foto" style={{width:"100%",maxWidth:300,borderRadius:10}} onClick={()=>setViewingPhoto(foto)}/>
+                  <p style={{fontSize:12,color:C.ok,fontWeight:600,marginTop:8}}>✓ Foto acquisita</p>
+                  <button onClick={()=>{setFoto(null);if(fileRef.current)fileRef.current.value="";}} style={{background:"transparent",color:C.muted,border:`1px solid ${C.inBord}`,borderRadius:8,padding:"8px 16px",fontSize:12,cursor:"pointer",marginTop:6}}>🔄 Riscatta</button>
+                </>)}
+              </div>
+              <button onClick={handleAdd} disabled={!canSave||syncing} style={{background:canSave?"linear-gradient(135deg,#10b981,#059669)":C.inBg,color:C.text,border:"none",borderRadius:12,padding:"14px 28px",marginTop:14,fontWeight:700,fontSize:16,cursor:canSave?"pointer":"not-allowed",opacity:canSave?1:0.4,width:"100%"}}>
+                {syncing?"⏳ Salvataggio...":(canSave?"✓ Salva resi":"📸 Compila tutto + foto")}
+              </button>
+            </>)}
+          </div>
+        )}
+
+        {/* TABS */}
+        <div style={{display:"flex",gap:5,marginBottom:12}}>
+          {[["table","📋 Tabella"],["charts","📈 Grafici"],["diff","⚖️ DDT"],["days","📊 Giorni"]].map(([k,l])=>(
+            <button key={k} onClick={()=>setTab(k)} style={{background:tab===k?C.accent:C.inBg,color:tab===k?"#fff":C.muted,border:`1px solid ${tab===k?C.accent:C.inBord}`,borderRadius:8,padding:"8px 14px",fontSize:13,fontWeight:500,cursor:"pointer",flex:1}}>{l}</button>
+          ))}
+        </div>
+
+        {tab !== "table" && (
+          <div style={{display:"flex",gap:5,marginBottom:14}}>
+            {[["30","30gg"],["60","60gg"],["90","90gg"],["all","Tutti"]].map(([v,l])=>(
+              <button key={v} onClick={()=>setView(v)} style={{background:view===v?"#334155":"transparent",color:view===v?C.text:C.muted,border:"1px solid #334155",borderRadius:6,padding:"4px 12px",fontSize:12,cursor:"pointer"}}>{l}</button>
+            ))}
+          </div>
+        )}
+
+        {tab==="charts"&&<><GiroChart data={filtered} giroKey="avellino" label="Avellino" color={C.avellino}/><GiroChart data={filtered} giroKey="sergio" label="Sergio" color={C.sergio}/><GiroChart data={filtered} giroKey="giovanni" label="Giovanni" color={C.giovanni}/></>}
+        {tab==="diff"&&<DiffChart data={filtered}/>}
+        {tab==="days"&&<div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,padding:"16px 12px 8px",marginBottom:14}}><span style={{fontWeight:700,fontSize:14,padding:"0 6px"}}>📊 Analisi per giorno</span><p style={{fontSize:11,color:C.muted,margin:"4px 0 12px 6px"}}>Reso giorno X = pane consegnato il giorno prima</p></div>}
+        {tab==="table"&&(
+          <div style={{background:C.card,borderRadius:14,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+            <div style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontWeight:700,fontSize:14}}>Dati ({allData.length})</span>
+              <button onClick={syncData} disabled={syncing} style={{background:C.inBg,border:`1px solid ${C.inBord}`,borderRadius:8,padding:"6px 12px",fontSize:12,color:C.muted,cursor:"pointer"}}>
+                {syncing?<span className="spinner"/>:"🔄"} Aggiorna
+              </button>
+            </div>
+            <div style={{overflowX:"auto",maxHeight:500,overflowY:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"monospace",fontSize:11}}>
+                <thead><tr style={{background:"#1e293b",position:"sticky",top:0,zIndex:1}}>
+                  {["Data","Op.","Av.","Sr.","Gv.","Pesata","DDT","Diff.",""].map(h=>(
+                    <th key={h} style={{padding:"8px 6px",textAlign:"right",fontWeight:600,color:C.muted,fontSize:9}}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>{allData.slice().reverse().slice(0,100).map((d,i)=>{
+                  const amm=d.differenza!=null&&d.differenza<0;
+                  const noDDT=d.ddt==null&&d.pesata>0;
+                  return(<tr key={i} style={{borderBottom:`1px solid ${C.border}`,background:noDDT?"rgba(245,158,11,0.04)":amm?"rgba(239,68,68,0.03)":"transparent"}}>
+                    <td style={{padding:"6px",textAlign:"right",fontWeight:500,fontSize:10}}>{fmtDate(d.data)}</td>
+                    <td style={{padding:"6px",textAlign:"center",fontSize:9,color:d.operatore==="Carmela"?C.carmela:d.operatore==="Antonio"?C.antonio:C.muted}}>{d.operatore?d.operatore[0]:"—"}</td>
+                    <td style={{padding:"6px",textAlign:"right",color:C.avellino,fontSize:10}}>{fmt(d.avellino)}</td>
+                    <td style={{padding:"6px",textAlign:"right",color:C.sergio,fontSize:10}}>{fmt(d.sergio)}</td>
+                    <td style={{padding:"6px",textAlign:"right",color:C.giovanni,fontSize:10}}>{fmt(d.giovanni)}</td>
+                    <td style={{padding:"6px",textAlign:"right",color:C.muted,fontSize:10}}>{fmt(d.pesata)}</td>
+                    <td style={{padding:"6px",textAlign:"right",fontSize:10}}>{noDDT?<span style={{color:C.warn,fontSize:9}}>⏳</span>:<span style={{color:C.muted}}>{fmt(d.ddt)}</span>}</td>
+                    <td style={{padding:"6px",textAlign:"right",fontWeight:600,color:noDDT?C.muted:(amm?C.danger:C.ok),fontSize:10}}>{noDDT?"—":fmt(d.differenza)}</td>
+                    <td style={{padding:"6px",textAlign:"center"}}>{noDDT?<span style={{color:C.warn,fontSize:9}}>⏳</span>:amm?<span style={{color:C.danger,fontSize:9}}>⚠</span>:<span style={{color:C.ok,fontSize:9}}>✓</span>}</td>
+                  </tr>);
+                })}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Dashboard />);
+</script>
+</body>
+</html>
