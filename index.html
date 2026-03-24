@@ -153,90 +153,89 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
       <div class="ws"><span class="sn" id="w3sn">3</span><span id="w3st"></span></div>
       <div class="wq">📸 Foto cesta <span id="w3n"></span> — <span id="w3z" style="color:var(--accent)"></span></div>
       <div class="photo-guide" id="pGuide">
-        <div class="photo-guide-title">📐 Inquadra ESATTAMENTE così</div>
+        <div class="photo-guide-title">📐 Inquadra SOLO queste 2 zone</div>
         <div class="guide-svg-wrap">
-          <svg width="280" height="420" viewBox="0 0 280 420" xmlns="http://www.w3.org/2000/svg" style="border-radius:12px">
-            <!-- Background = camera view -->
-            <rect width="280" height="420" fill="#0f172a" rx="12"/>
-            <!-- Camera frame corners -->
-            <path d="M12,40 L12,12 L40,12" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-            <path d="M240,12 L268,12 L268,40" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-            <path d="M268,380 L268,408 L240,408" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
-            <path d="M40,408 L12,408 L12,380" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+          <svg width="280" height="440" viewBox="0 0 280 440" xmlns="http://www.w3.org/2000/svg" style="border-radius:12px">
+            <!-- Background camera view -->
+            <rect width="280" height="440" fill="#0f172a" rx="12"/>
+            <!-- Camera corners -->
+            <path d="M12,40 L12,12 L40,12" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M240,12 L268,12 L268,40" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M268,400 L268,428 L240,428" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M40,428 L12,428 L12,400" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"/>
 
-            <!-- BILANCIA TOWER body -->
-            <rect x="70" y="25" width="140" height="280" fill="#475569" rx="6" stroke="#94a3b8" stroke-width="1"/>
+            <!-- Tower body (dimmed) -->
+            <rect x="55" y="20" width="170" height="320" fill="#374151" rx="4" opacity="0.5"/>
 
-            <!-- ZONA 1: SCHERMO GRANDE (dimmed, X over it) -->
-            <rect x="85" y="35" width="110" height="75" fill="#1e3a5f" rx="4" stroke="#475569" stroke-width="1" opacity="0.4"/>
-            <text x="140" y="68" text-anchor="middle" fill="#475569" font-size="8" font-weight="600">SCHERMO GRANDE</text>
-            <text x="140" y="80" text-anchor="middle" fill="#475569" font-size="7">IGNORA ✕</text>
-            <!-- X mark over big screen -->
-            <line x1="90" y1="40" x2="190" y2="105" stroke="#ef4444" stroke-width="2" opacity="0.5"/>
-            <line x1="190" y1="40" x2="90" y2="105" stroke="#ef4444" stroke-width="2" opacity="0.5"/>
+            <!-- ═══ ZONA 1: PICCOLO DISPLAY (top) ═══ -->
+            <!-- Highlight glow -->
+            <rect x="68" y="28" width="144" height="65" fill="#f59e0b" rx="8" opacity="0.1"/>
+            <!-- Display box -->
+            <rect x="73" y="33" width="134" height="55" fill="#0a0e1a" rx="6" stroke="#f59e0b" stroke-width="3"/>
+            <!-- Green dashed overlay -->
+            <rect x="73" y="33" width="134" height="55" fill="none" rx="6" stroke="#22c55e" stroke-width="2" stroke-dasharray="6,3"/>
+            <!-- Weight numbers -->
+            <text x="140" y="58" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="600">Bilancia 1</text>
+            <text x="140" y="78" text-anchor="middle" fill="#22c55e" font-size="24" font-weight="800" font-family="monospace">4.10 kg</text>
+            <!-- Badge ① -->
+            <circle cx="230" cy="60" r="16" fill="#f59e0b"/>
+            <text x="230" y="65" text-anchor="middle" fill="#000" font-size="16" font-weight="800">1</text>
+            <!-- Arrow -->
+            <line x1="214" y1="60" x2="212" y2="60" stroke="#f59e0b" stroke-width="2"/>
+            <text x="253" y="82" text-anchor="middle" fill="#f59e0b" font-size="8" font-weight="700">PESO</text>
 
-            <!-- ZONA 2: PICCOLO DISPLAY — EVIDENZIATO -->
-            <!-- Glow effect -->
-            <rect x="95" y="125" width="90" height="50" fill="#f59e0b" rx="6" opacity="0.08"/>
-            <rect x="98" y="128" width="84" height="44" fill="#0f172a" rx="5" stroke="#f59e0b" stroke-width="3"/>
-            <!-- Animated dashed border -->
-            <rect x="98" y="128" width="84" height="44" fill="none" rx="5" stroke="#22c55e" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
-            <!-- Weight value on display -->
-            <text x="140" y="150" text-anchor="middle" fill="#22c55e" font-size="22" font-weight="800" font-family="monospace">12.3</text>
-            <text x="140" y="165" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600">kg</text>
-            <!-- Label arrow -->
-            <line x1="188" y1="150" x2="210" y2="150" stroke="#f59e0b" stroke-width="2"/>
-            <polygon points="210,146 218,150 210,154" fill="#f59e0b"/>
-            <!-- Number badge -->
-            <circle cx="232" cy="136" r="14" fill="#f59e0b"/>
-            <text x="232" y="141" text-anchor="middle" fill="#000" font-size="14" font-weight="800">1</text>
-            <text x="232" y="155" text-anchor="middle" fill="#f59e0b" font-size="7" font-weight="700">LEGGI</text>
-            <text x="232" y="163" text-anchor="middle" fill="#f59e0b" font-size="7" font-weight="700">PESO</text>
+            <!-- ORIPAN text (dimmed reference) -->
+            <text x="140" y="130" text-anchor="middle" fill="#64748b" font-size="14" font-weight="700">ORIPAN</text>
+            <text x="140" y="148" text-anchor="middle" fill="#475569" font-size="9">Ex ATEX</text>
 
-            <!-- ORIPAN label -->
-            <text x="140" y="200" text-anchor="middle" fill="#cbd5e1" font-size="13" font-weight="700">ORIPAN</text>
-            <text x="140" y="215" text-anchor="middle" fill="#94a3b8" font-size="8">Ex ATEX</text>
+            <!-- Dimmed middle section -->
+            <text x="140" y="200" text-anchor="middle" fill="#334155" font-size="24" font-weight="700" transform="rotate(-90,140,200)">TOWER</text>
 
-            <!-- ZONA 3: PIATTAFORMA + CESTA -->
+            <!-- ═══ ZONA 2: CESTA ROSSA (bottom) ═══ -->
             <!-- Platform rails -->
-            <line x1="35" y1="305" x2="245" y2="305" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="40" y1="305" x2="40" y2="400" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="240" y1="305" x2="240" y2="400" stroke="#94a3b8" stroke-width="2"/>
-            <!-- Red cesta -->
-            <rect x="60" y="320" width="160" height="80" fill="#ef4444" rx="8" opacity="0.6"/>
-            <!-- Cesta holes -->
-            <rect x="78" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="95" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="112" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="129" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="146" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="163" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="180" y="332" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="78" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="95" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="112" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="129" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="146" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="163" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <rect x="180" y="350" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
-            <!-- Cesta highlight border -->
-            <rect x="56" y="316" width="168" height="88" fill="none" rx="10" stroke="#22c55e" stroke-width="2" stroke-dasharray="6,4"/>
-            <!-- Number badge -->
-            <circle cx="48" cy="340" r="14" fill="#22c55e"/>
-            <text x="48" y="345" text-anchor="middle" fill="#000" font-size="14" font-weight="800">2</text>
-            <text x="30" y="365" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="700">CESTA</text>
-            <text x="30" y="373" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="700">ROSSA</text>
+            <line x1="25" y1="280" x2="255" y2="280" stroke="#64748b" stroke-width="2"/>
+            <line x1="30" y1="280" x2="30" y2="410" stroke="#64748b" stroke-width="2"/>
+            <line x1="250" y1="280" x2="250" y2="410" stroke="#64748b" stroke-width="2"/>
+            <!-- Cesta rossa -->
+            <rect x="45" y="295" width="190" height="105" fill="#ef4444" rx="8" opacity="0.6"/>
+            <!-- Cesta wall sides -->
+            <rect x="45" y="295" width="8" height="105" fill="#dc2626" rx="2" opacity="0.7"/>
+            <rect x="227" y="295" width="8" height="105" fill="#dc2626" rx="2" opacity="0.7"/>
+            <!-- Cesta holes pattern -->
+            <rect x="65" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="85" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="105" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="125" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="145" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="165" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="185" y="310" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="65" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="85" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="105" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="125" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="145" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="165" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <rect x="185" y="330" width="10" height="10" fill="#dc2626" rx="2" opacity="0.4"/>
+            <!-- Bread shapes inside cesta -->
+            <ellipse cx="110" cy="355" rx="28" ry="18" fill="#92400e" opacity="0.5"/>
+            <ellipse cx="175" cy="360" rx="25" ry="16" fill="#92400e" opacity="0.5"/>
+            <!-- Cesta highlight -->
+            <rect x="41" y="291" width="198" height="113" fill="none" rx="10" stroke="#22c55e" stroke-width="2" stroke-dasharray="6,3"/>
+            <!-- Badge ② -->
+            <circle cx="27" cy="330" r="16" fill="#22c55e"/>
+            <text x="27" y="335" text-anchor="middle" fill="#000" font-size="16" font-weight="800">2</text>
+            <text x="27" y="355" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="700">CESTA</text>
 
-            <!-- Bottom instruction bar -->
-            <rect x="20" y="395" width="240" height="18" fill="rgba(245,158,11,0.15)" rx="4"/>
-            <text x="140" y="407" text-anchor="middle" fill="#f59e0b" font-size="8" font-weight="700">INQUADRA ENTRAMBE LE ZONE ① E ②</text>
+            <!-- Bottom instruction -->
+            <rect x="30" y="415" width="220" height="20" fill="rgba(245,158,11,0.15)" rx="6"/>
+            <text x="140" y="428" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="700">① DISPLAY + ② CESTA nella stessa foto</text>
           </svg>
         </div>
         <div class="guide-tips">
-          <div><span class="ck" style="color:var(--warn)">①</span> <strong style="color:var(--warn)">PESO</strong> — il piccolo display con numeri verdi deve essere leggibile</div>
-          <div><span class="ck" style="color:var(--ok)">②</span> <strong style="color:var(--ok)">CESTA ROSSA</strong> — la cesta deve essere visibile sulla piattaforma</div>
-          <div><span class="ck">✓</span> Scatta frontalmente, non troppo lontano</div>
-          <div><span class="ck">✓</span> L'AI leggerà il peso automaticamente!</div>
+          <div><span class="ck" style="color:var(--warn)">①</span> <strong style="color:var(--warn)">DISPLAY PICCOLO</strong> in alto — numeri verdi visibili</div>
+          <div><span class="ck" style="color:var(--ok)">②</span> <strong style="color:var(--ok)">CESTA ROSSA</strong> in basso — con il pane</div>
+          <div><span class="ck" style="color:var(--danger)">✕</span> <span style="color:var(--muted)">NON serve lo schermo grande del software</span></div>
+          <div><span class="ck">✓</span> Stai a 1-2 metri, frontale</div>
         </div>
       </div>
       <div id="camBox" class="cam-box cam-req">
@@ -404,18 +403,16 @@ async function verifyAndRead(b64,canvas){
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
 
-  // Crop TIGHTLY around the small display area (25-50% from top, center 60% width)
-  // and upscale aggressively so Claude can read the small numbers
+  // Crop the DISPLAY ZONE — top 5-30% of photo, center 80% width, upscale 3x
   vb.innerHTML='<span class="spin"></span> Zoom sul display...';
-  var cropTop=Math.round(h*0.22);
-  var cropBot=Math.round(h*0.50);
-  var cropLeft=Math.round(w*0.15);
-  var cropRight=Math.round(w*0.85);
+  var cropTop=Math.round(h*0.03);
+  var cropBot=Math.round(h*0.30);
+  var cropLeft=Math.round(w*0.10);
+  var cropRight=Math.round(w*0.90);
   var cropW=cropRight-cropLeft;
   var cropH2=cropBot-cropTop;
   var cropC=document.createElement("canvas");
-  // Upscale to at least 1200px wide for clear OCR
-  var upscale=Math.max(3, 1200/cropW);
+  var upscale=Math.max(3, 1400/cropW);
   cropC.width=Math.round(cropW*upscale);cropC.height=Math.round(cropH2*upscale);
   cropC.getContext("2d").drawImage(canvas,cropLeft,cropTop,cropW,cropH2,0,0,cropC.width,cropC.height);
   var cropB64=cropC.toDataURL("image/jpeg",0.92);
