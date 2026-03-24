@@ -6,152 +6,479 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0e1a">
-<title>Controlli Resi Pane</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<title>Resi Pane</title>
 <style>
 :root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--av:#f59e0b;--sr:#3b82f6;--gv:#10b981;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--carmela:#ec4899;--antonio:#3b82f6}
-*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent}
-input[type="number"],input[type="date"],input[type="url"]{font-size:16px!important}button{-webkit-appearance:none;font-family:inherit;cursor:pointer}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
-.container{max-width:920px;margin:0 auto;padding:16px 12px 80px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.header-left{display:flex;align-items:center;gap:10px}
-.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:22px}
-.header h1{font-size:20px;font-weight:700}.header-sub{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.btn-set{background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:10px 14px;font-size:18px;color:var(--text)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px}
-.sc{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:8px 10px}
-.sc-l{font-size:9px;color:var(--muted);font-weight:500;margin-bottom:2px}.sc-v{font-size:14px;font-weight:700;font-family:monospace}
-.alert{border-radius:12px;padding:14px 16px;margin-bottom:12px;font-size:13px}
-.alert-w{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2)}
-.alert-d{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)}
-.alert-t{font-weight:700;margin-bottom:8px;font-size:14px}
-.pc{background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:12px 14px;margin-bottom:8px}
-.pc-h{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.pc-i{font-family:monospace;font-size:15px;font-weight:700}
-.btn-p{background:linear-gradient(135deg,#f59e0b,#ef4444);color:var(--text);border:none;border-radius:12px;padding:14px 24px;font-weight:600;font-size:15px;width:100%;margin-bottom:14px}
-.btn-s{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-weight:600;font-size:15px;width:100%}
-.btn-s:disabled{background:var(--inbg);opacity:0.4;cursor:not-allowed}
-.btn-d{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:8px;padding:10px 18px;font-weight:700;font-size:14px}
-.btn-x{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:10px 14px;font-size:13px}
-.btn-cl{background:var(--inbg);color:var(--text);border:none;border-radius:12px;padding:14px 24px;font-weight:600;font-size:15px;width:100%;margin-bottom:14px}
-.fc{background:var(--card);border-radius:14px;border:1px solid rgba(139,92,246,0.2);padding:18px;margin-bottom:14px;box-shadow:0 4px 24px rgba(139,92,246,0.08)}
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ff{grid-column:1/-1}
-.fl{font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:500;display:block}
-.fi{background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:12px 14px;color:var(--text);font-family:monospace;font-size:16px;outline:none;width:100%}
-.ob{display:flex;gap:8px;margin-bottom:14px}
-.ob button{flex:1;border-radius:10px;padding:12px 20px;font-weight:600;font-size:15px;border:1px solid var(--inbord);background:var(--inbg);color:var(--muted)}
-.ob .ac{background:linear-gradient(135deg,var(--carmela),#db2777);color:#fff;border-color:transparent}
-.ob .aa{background:linear-gradient(135deg,var(--antonio),#2563eb);color:#fff;border-color:transparent}
-.cb{margin-top:16px;border-radius:12px;padding:14px;text-align:center}
-.cb-r{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)}
-.cb-ok{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2)}
-.btn-cam{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px 28px;font-weight:700;font-size:16px;width:100%}
-.pp{width:100%;max-width:300px;border-radius:10px;cursor:pointer}
-.tabs{display:flex;gap:5px;margin-bottom:12px}
-.tb{flex:1;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500}
-.tb.a{background:var(--accent);color:#fff;border-color:var(--accent)}
-.pbs{display:flex;gap:5px;margin-bottom:14px}
-.pb{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:6px;padding:4px 12px;font-size:12px}
-.pb.a{background:#334155;color:var(--text)}
-.tw{background:var(--card);border-radius:14px;border:1px solid var(--border);overflow:hidden}
-.th{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.th span{font-weight:700;font-size:14px}
-.ts{overflow-x:auto;max-height:500px;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-family:monospace;font-size:11px}
-thead tr{background:var(--inbg);position:sticky;top:0;z-index:1}
-th{padding:8px 6px;text-align:right;font-weight:600;color:var(--muted);font-size:9px;white-space:nowrap}
-td{padding:6px;text-align:right;font-size:10px}tr{border-bottom:1px solid var(--border)}
-.rp{background:rgba(245,158,11,0.04)}.ra{background:rgba(239,68,68,0.03)}
-.cc{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px 12px 12px;margin-bottom:14px}
-.ct{font-weight:700;font-size:14px;margin-bottom:10px;padding:0 6px}
-canvas{width:100%!important}
-.stc{background:var(--card);border-radius:14px;border:1px solid rgba(139,92,246,0.2);padding:18px;margin-bottom:14px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:10000;border:1px solid #334155;display:none}
-.toast.show{display:block;animation:fu .3s}@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.po{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
-.po.show{display:flex}.po img{max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain}
-.po-c{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:24px;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center}
-.hid{display:none!important}@keyframes sp{to{transform:rotate(360deg)}}.spin{display:inline-block;width:14px;height:14px;border:2px solid #334155;border-top-color:#8b5cf6;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-left:4px}
-.btn-sy{background:var(--inbg);border:1px solid var(--inbord);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--muted)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
+input[type="number"],input[type="url"]{font-size:18px!important}
+button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
+.app{max-width:480px;margin:0 auto;padding:20px 16px 100px}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:26px}
+.hdr h1{font-size:22px;font-weight:700}
+.hdr-sub{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.btn-gear{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:20px;color:var(--text)}
+
+/* Today summary */
+.today{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px}
+.today-date{font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500}
+.today-date strong{color:var(--text);font-size:15px}
+.giri-grid{display:flex;flex-direction:column;gap:8px}
+.giro-row{display:flex;align-items:center;justify-content:space-between;background:var(--inbg);border-radius:12px;padding:12px 16px;border:1px solid var(--inbord)}
+.giro-row.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
+.giro-left{display:flex;align-items:center;gap:10px}
+.giro-dot{width:12px;height:12px;border-radius:4px}
+.giro-name{font-weight:600;font-size:15px}
+.giro-val{font-family:monospace;font-size:16px;font-weight:700}
+.giro-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
+.giro-status.waiting{color:var(--warn);background:rgba(245,158,11,0.1)}
+.giro-status.ok{color:var(--ok);background:rgba(34,197,94,0.1)}
+.giro-op{font-size:10px;color:var(--muted);margin-left:22px;margin-top:2px}
+.total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:8px}
+.total-label{font-size:13px;color:var(--muted);font-weight:600}
+.total-val{font-family:monospace;font-size:18px;font-weight:700;color:var(--text)}
+
+/* Big action button */
+.btn-action{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-action.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.btn-action.save{background:linear-gradient(135deg,#10b981,#059669)}
+.btn-action.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
+.btn-action.close{background:var(--inbg);color:var(--muted)}
+
+/* Entry flow panels */
+.panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.panel-title{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:12px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;margin-right:8px}
+
+/* Operator selection */
+.op-btns{display:flex;gap:10px}
+.op-btn{flex:1;padding:16px;border-radius:12px;font-size:16px;font-weight:600;background:var(--inbg);color:var(--muted);border:2px solid var(--inbord);text-align:center;transition:all 0.15s}
+.op-btn.sel-c{background:linear-gradient(135deg,#ec4899,#db2777);color:#fff;border-color:transparent}
+.op-btn.sel-a{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-color:transparent}
+
+/* Giro selection */
+.giro-btns{display:flex;flex-direction:column;gap:10px}
+.giro-btn{padding:18px 16px;border-radius:12px;font-size:16px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:12px;transition:all 0.15s}
+.giro-btn.sel{border-color:var(--accent);background:rgba(139,92,246,0.08)}
+.giro-btn.done-btn{opacity:0.4;cursor:not-allowed}
+.giro-btn .gdot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.giro-btn .gcheck{margin-left:auto;color:var(--ok);font-size:14px}
+
+/* Weight input */
+.weight-box{text-align:center;padding:10px 0}
+.weight-input{background:var(--inbg);border:2px solid var(--inbord);border-radius:16px;padding:20px;font-size:32px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none}
+.weight-input:focus{border-color:var(--accent)}
+.weight-unit{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* Camera */
+.cam-box{border-radius:14px;padding:20px;text-align:center;margin-top:16px}
+.cam-req{background:rgba(239,68,68,0.06);border:2px dashed rgba(239,68,68,0.3)}
+.cam-ok{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.3)}
+.cam-icon{font-size:48px;margin-bottom:10px}
+.cam-text{font-size:15px;font-weight:600;color:var(--danger);margin-bottom:12px}
+.btn-cam{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-radius:12px;padding:16px 28px;font-weight:700;font-size:16px;width:100%}
+.cam-preview{width:100%;max-width:280px;border-radius:12px;margin:0 auto;display:block}
+.cam-ok-text{font-size:13px;color:var(--ok);font-weight:600;margin-top:10px}
+.btn-reshoot{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px}
+
+/* Settings */
+.set-card{background:var(--card);border-radius:16px;border:1px solid rgba(139,92,246,0.2);padding:20px;margin-bottom:16px}
+.fi{background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:14px;color:var(--text);font-family:monospace;font-size:14px;outline:none;width:100%}
+.set-btns{display:flex;gap:8px;margin-top:12px}
+.btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;padding:12px 24px;font-weight:600;font-size:14px;flex:1}
+.btn-xx{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:10px;padding:12px 16px;font-size:14px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;z-index:10000;border:1px solid #334155;display:none;white-space:nowrap}
+.toast.show{display:block;animation:fu .3s}
+@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Photo overlay */
+.po{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.po.show{display:flex}
+.po img{max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain}
+.po-c{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);color:white;font-size:24px;width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center}
+
+.hid{display:none!important}
 </style>
 </head>
 <body>
+
 <div id="toast" class="toast"></div>
-<div id="po" class="po" onclick="closePhoto()"><button class="po-c" onclick="closePhoto()">✕</button><img id="poImg" src="" alt="Foto"/></div>
-<div class="container">
-<div class="header"><div class="header-left"><div class="logo">🍞</div><div><h1>Controlli Resi</h1><div class="header-sub"><span id="sDot" class="sync-dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span> · <span id="rCnt">0</span> record<span id="sSpin" class="spin hid"></span></div></div></div><button class="btn-set" onclick="toggleSet()">⚙️</button></div>
-<div id="setP" class="stc hid"><div style="font-weight:700;font-size:15px;margin-bottom:10px">⚙️ Configurazione Google Sheets</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Incolla l'URL dello script Google (finisce con /exec).</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:10px"><div style="display:flex;gap:8px"><button class="btn-s" style="flex:1" onclick="saveSet()">✓ Salva</button><button class="btn-x" onclick="doSync()">🔄 Sync</button></div></div>
-<div id="noUrl" class="alert alert-d"><strong style="color:var(--danger)">⚠ Google Sheets non configurato</strong><p style="color:var(--muted);margin-top:4px;font-size:12px">Tocca ⚙️ per collegare il foglio Google.</p></div>
-<div id="sGrid" class="stats"></div>
-<div id="pendSec" class="alert alert-w hid"><div class="alert-t">📋 <span id="pendN">0</span> in attesa DDT</div><div id="pendL"></div></div>
-<button id="btnAdd" class="btn-p hid" onclick="toggleForm()">+ Inserisci resi</button>
-<div id="fPanel" class="fc hid">
-<div class="ob"><button id="opC" onclick="selOp('Carmela')">👩 Carmela</button><button id="opA" onclick="selOp('Antonio')">👨 Antonio</button></div>
-<div id="fFields" class="hid">
-<div class="fg"><div class="ff"><label class="fl">Data</label><input id="fD" type="date" class="fi"></div><div><label class="fl">Avellino</label><input id="fAv" type="number" step="0.01" placeholder="0.00" class="fi" oninput="uPes()"></div><div><label class="fl">Sergio</label><input id="fSr" type="number" step="0.01" placeholder="0.00" class="fi" oninput="uPes()"></div><div><label class="fl">Giovanni</label><input id="fGv" type="number" step="0.01" placeholder="0.00" class="fi" oninput="uPes()"></div><div style="display:flex;flex-direction:column;justify-content:center"><span style="font-size:11px;color:var(--muted)">Pesata</span><span id="pVal" style="font-family:monospace;font-size:20px;font-weight:700">—</span></div></div>
-<div id="camBox" class="cb cb-r"><input id="camIn" type="file" accept="image/*" capture="environment" onchange="hPhoto(event)" style="display:none"><div id="camP"><div style="font-size:40px;margin-bottom:8px">📸</div><p style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:10px">Foto bilancia OBBLIGATORIA</p><button class="btn-cam" onclick="document.getElementById('camIn').click()">📷 Scatta foto</button></div><div id="camOk" class="hid"><img id="pImg" class="pp" onclick="viewP(this.src)"/><p style="font-size:12px;color:var(--ok);font-weight:600;margin-top:8px">✓ Foto acquisita</p><button onclick="rPhoto()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:6px">🔄 Riscatta</button></div></div>
-<button id="btnSv" class="btn-s" style="margin-top:14px" disabled onclick="saveR()">📸 Compila tutto + foto</button>
-</div></div>
-<div class="tabs"><button class="tb a" onclick="sTab('table',this)">📋 Tabella</button><button class="tb" onclick="sTab('charts',this)">📈 Grafici</button><button class="tb" onclick="sTab('diff',this)">⚖️ DDT</button></div>
-<div id="perB" class="pbs hid"><button class="pb a" onclick="sPer(30,this)">30gg</button><button class="pb" onclick="sPer(60,this)">60gg</button><button class="pb" onclick="sPer(90,this)">90gg</button><button class="pb" onclick="sPer(9999,this)">Tutti</button></div>
-<div id="tTbl" class="tw"><div class="th"><span>Dati (<span id="tCnt">0</span>)</span><button class="btn-sy" onclick="doSync()">🔄</button></div><div class="ts"><table><thead><tr><th>Data</th><th>Op.</th><th>Av.</th><th>Sr.</th><th>Gv.</th><th>Pesata</th><th>DDT</th><th>Diff.</th><th></th></tr></thead><tbody id="tBody"></tbody></table></div></div>
-<div id="tCh" class="hid"><div class="cc"><div class="ct" style="color:var(--av)">📈 Avellino</div><canvas id="cAv"></canvas></div><div class="cc"><div class="ct" style="color:var(--sr)">📈 Sergio</div><canvas id="cSr"></canvas></div><div class="cc"><div class="ct" style="color:var(--gv)">📈 Giovanni</div><canvas id="cGv"></canvas></div></div>
-<div id="tDf" class="hid"><div class="cc"><div class="ct">⚖️ DDT vs Pesata</div><div style="font-size:11px;color:var(--muted);padding:0 6px 10px">🔴 ammanco · 🟢 OK</div><canvas id="cDf"></canvas></div></div>
+<div id="po" class="po" onclick="closePhoto()"><button class="po-c" onclick="closePhoto()">✕</button><img id="poImg" src=""/></div>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="logo">🍞</div>
+      <div>
+        <h1>Resi Pane</h1>
+        <div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div>
+      </div>
+    </div>
+    <button class="btn-gear" onclick="toggleSet()">⚙️</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="setP" class="set-card hid">
+    <div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Google Sheets</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">Incolla l'URL dello script Google (finisce con /exec)</p>
+    <input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec">
+    <div class="set-btns"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div>
+  </div>
+
+  <!-- NO URL -->
+  <div id="noUrl" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px">
+    <strong style="color:var(--danger)">⚠ Configura Google Sheets</strong>
+    <p style="color:var(--muted);margin-top:4px;font-size:12px">Tocca ⚙️ per collegare il foglio.</p>
+  </div>
+
+  <!-- TODAY SUMMARY -->
+  <div id="todayPanel" class="today">
+    <div class="today-date">Oggi: <strong id="todayDate"></strong></div>
+    <div class="giri-grid">
+      <div id="rowAv" class="giro-row">
+        <div class="giro-left"><div class="giro-dot" style="background:var(--av)"></div><span class="giro-name">Avellino</span></div>
+        <span id="valAv" class="giro-val" style="color:var(--av)">—</span>
+        <span id="stAv" class="giro-status waiting">in attesa</span>
+      </div>
+      <div id="opAv" class="giro-op hid"></div>
+      <div id="rowSr" class="giro-row">
+        <div class="giro-left"><div class="giro-dot" style="background:var(--sr)"></div><span class="giro-name">Sergio</span></div>
+        <span id="valSr" class="giro-val" style="color:var(--sr)">—</span>
+        <span id="stSr" class="giro-status waiting">in attesa</span>
+      </div>
+      <div id="opSr" class="giro-op hid"></div>
+      <div id="rowGv" class="giro-row">
+        <div class="giro-left"><div class="giro-dot" style="background:var(--gv)"></div><span class="giro-name">Giovanni</span></div>
+        <span id="valGv" class="giro-val" style="color:var(--gv)">—</span>
+        <span id="stGv" class="giro-status waiting">in attesa</span>
+      </div>
+      <div id="opGv" class="giro-op hid"></div>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Totale pesata</span>
+      <span id="totVal" class="total-val">—</span>
+    </div>
+  </div>
+
+  <!-- BIG ADD BUTTON -->
+  <button id="btnAdd" class="btn-action primary hid" onclick="startEntry()">📦 Registra reso giro</button>
+
+  <!-- ═══ ENTRY FLOW ═══ -->
+  <div id="entryFlow" class="hid">
+
+    <!-- STEP 1: Operator -->
+    <div class="panel">
+      <div class="panel-title"><span class="step-num">1</span>Chi sei?</div>
+      <div class="op-btns">
+        <button id="eOpC" class="op-btn" onclick="pickOp('Carmela')">👩 Carmela</button>
+        <button id="eOpA" class="op-btn" onclick="pickOp('Antonio')">👨 Antonio</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Giro (shown after op) -->
+    <div id="step2" class="panel hid">
+      <div class="panel-title"><span class="step-num">2</span>Quale giro?</div>
+      <div class="giro-btns">
+        <button id="gBtnAv" class="giro-btn" onclick="pickGiro('avellino')"><div class="gdot" style="background:var(--av)"></div>Avellino<span class="gcheck hid" id="gChkAv">✓</span></button>
+        <button id="gBtnSr" class="giro-btn" onclick="pickGiro('sergio')"><div class="gdot" style="background:var(--sr)"></div>Sergio<span class="gcheck hid" id="gChkSr">✓</span></button>
+        <button id="gBtnGv" class="giro-btn" onclick="pickGiro('giovanni')"><div class="gdot" style="background:var(--gv)"></div>Giovanni<span class="gcheck hid" id="gChkGv">✓</span></button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Weight (shown after giro) -->
+    <div id="step3" class="panel hid">
+      <div class="panel-title"><span class="step-num">3</span>Peso cesta — <strong id="giroLabel" style="color:var(--accent)"></strong></div>
+      <div class="weight-box">
+        <input id="wInput" type="number" step="0.1" placeholder="0.0" class="weight-input" oninput="checkReady()">
+        <div class="weight-unit">chilogrammi (kg)</div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Photo (shown after weight) -->
+    <div id="step4" class="hid">
+      <div class="cam-box cam-req" id="camBox">
+        <input id="camIn" type="file" accept="image/*" capture="environment" onchange="onPhoto(event)" style="display:none">
+        <div id="camPrompt">
+          <div class="cam-icon">📸</div>
+          <p class="cam-text">Foto della cesta sulla bilancia</p>
+          <button class="btn-cam" onclick="document.getElementById('camIn').click()">📷 Scatta foto</button>
+        </div>
+        <div id="camDone" class="hid">
+          <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
+          <p class="cam-ok-text">✓ Foto OK — tocca per ingrandire</p>
+          <button class="btn-reshoot" onclick="clearPhoto()">🔄 Riscatta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVE / CANCEL -->
+    <button id="btnSave" class="btn-action save" disabled onclick="doSave()">Compila tutti i passaggi</button>
+    <button class="btn-action close" onclick="cancelEntry()">✕ Annulla</button>
+  </div>
+
 </div>
+
 <script>
-var HIST=[["2025-09-25",45.4,30,30.7,106.1,100.2,5.9],["2025-09-26",53.2,25,35,113.2,108.7,4.5],["2025-09-27",59,40,40,139,141.4,-2.4],["2025-09-28",34.2,11.7,22,67.9,70.7,-2.8],["2025-09-29",31,20.1,34,85.1,84.4,0.7],["2025-09-30",20,28.7,29.5,78.2,74.5,3.7],["2025-10-01",26.6,21,39,86.6,87.4,-0.8],["2025-10-04",38,16,33,87,80.6,6.4],["2025-10-06",31,10.5,22.7,64.2,56.8,7.4],["2025-10-08",23.3,27,38.7,89,95.7,-6.7],["2025-10-09",37,23.3,45,105.3,101.5,3.8],["2025-10-10",23.3,22.5,33.5,79.3,77.6,1.7],["2025-10-13",39.3,38.3,45,122.6,121.2,1.4],["2025-10-16",38.7,21.5,34.2,94.4,90.3,4.1],["2025-10-18",46.3,17.1,32.5,95.9,94.8,1.1],["2025-10-20",35.7,13.6,56.3,105.6,103.6,2],["2025-10-22",39.5,22.9,36.7,99.1,98.3,0.8],["2025-10-24",32.7,37,52,121.7,129.2,-7.5],["2025-10-29",38.7,17,41,96.7,92.9,3.8],["2025-10-31",20.46,22.6,36.3,79.36,72.3,7.06],["2025-11-05",32.3,21.2,25,78.5,78.5,0],["2025-11-08",47.5,22.8,36,106.3,103.7,2.6],["2025-11-11",26.3,27,40,93.3,89,4.3],["2025-11-15",47,20,42,109,111.2,-2.2],["2025-11-17",28.5,26,39,93.5,90.2,3.3],["2025-11-20",34,15.5,36,85.5,80.6,4.9],["2025-11-25",31.9,14,40,85.9,83.7,2.2],["2025-11-28",35,23.8,24.4,83.2,78.6,4.6],["2025-12-02",31,20.1,34.5,85.6,81.7,3.9],["2025-12-04",41.1,15,35.5,91.6,85.9,5.7],["2025-12-06",62.4,12.7,32.2,107.3,101.6,5.7],["2025-12-11",28,18,37.4,83.4,80.7,2.7],["2025-12-12",30,22.1,36.7,88.8,87.9,0.9],["2025-12-13",42.1,17.6,27,86.7,92.4,-5.7],["2025-12-15",29,17.8,37.5,84.3,76.5,7.8],["2025-12-16",36.8,17.6,35.3,89.7,86.7,3],["2025-12-20",40.8,14.5,54.3,109.6,113.8,-4.2],["2025-12-21",28,20.9,31.5,80.4,77.3,3.1],["2026-01-04",25,23.8,36.6,85.4,80.4,5],["2026-01-10",41.1,17,39.7,97.8,95.4,2.4],["2026-01-15",28,26,30,84,84,0],["2026-01-17",51.5,14,26.3,91.8,86.7,5.1],["2026-01-20",35,15,28.8,78.8,73.3,5.5],["2026-01-22",56,13,21.3,90.3,89.5,0.8],["2026-01-29",34,12.5,33.5,80,79.5,0.5],["2026-02-01",41,9.5,11.1,61.6,67.6,-6],["2026-02-05",32.5,15.5,30,78,76.4,1.6],["2026-02-07",40,12.5,35.5,88,85.7,2.3],["2026-02-14",33,9,20,62,59,3],["2026-02-21",28.4,8,23,59.4,63.5,-4.1],["2026-02-28",29,4.5,27,60.5,58.4,2.1],["2026-03-07",35,5,30,70,65.8,4.2],["2026-03-12",26.8,7.5,29,63.3,60.8,2.5],["2026-03-15",26,8.5,8,42.5,49.5,-7],["2026-03-20",32,8.5,30,70.5,73.1,-2.6],["2026-03-21",37.5,8,26.4,71.9,68,3.9],["2026-03-23",19.5,8,25,52.5,51.9,0.6]];
-var allData=[],cloudData=[],curOp="",curFoto=null,curTab="table",curPer=30,charts={},editDate=null;
-var fmt=function(v){return v!=null?v.toFixed(2):"—"};
-var fmtD=function(d){var p=d.split("-");return p[2]+"/"+p[1]};
-var gUrl=function(){return localStorage.getItem("gsheet-url")||""};
+// ── STATE ──
+var todayStr = new Date().toISOString().slice(0,10);
+var todayData = {avellino:null, sergio:null, giovanni:null, opAv:null, opSr:null, opGv:null};
+var entryOp = "";
+var entryGiro = "";
+var entryFoto = null;
+var gUrl = function(){ return localStorage.getItem("gsheet-url")||"" };
 
-function init(){allData=HIST.map(function(r){return{data:r[0],avellino:r[1],sergio:r[2],giovanni:r[3],pesata:r[4],ddt:r[5],differenza:r[6]}});document.getElementById("sUrl").value=gUrl();if(gUrl())doSync();else updateUI()}
+// ── INIT ──
+function init(){
+  var d = todayStr.split("-");
+  document.getElementById("todayDate").textContent = d[2]+"/"+d[1]+"/"+d[0];
+  document.getElementById("sUrl").value = gUrl();
+  // Load today's data from localStorage
+  try {
+    var saved = JSON.parse(localStorage.getItem("today-"+todayStr));
+    if (saved) todayData = saved;
+  } catch(e){}
+  if (gUrl()) doSync();
+  updateToday();
+}
 
-async function doSync(){var url=gUrl();if(!url){updateUI();return}document.getElementById("sSpin").classList.remove("hid");try{var r=await fetch(url+"?action=getAll");var j=await r.json();if(j.data){cloudData=j.data;mergeD();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Google Sheets";showT("✓ Sincronizzato")}}catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline";showT("⚠ Connessione fallita")}document.getElementById("sSpin").classList.add("hid");updateUI()}
+// ── SYNC ──
+async function doSync(){
+  var url = gUrl(); if(!url) { updateToday(); return; }
+  try {
+    var r = await fetch(url+"?action=getAll");
+    var j = await r.json();
+    if (j.data) {
+      // Find today's entries from cloud
+      j.data.forEach(function(d){
+        if (d.data === todayStr) {
+          if (d.avellino != null) { todayData.avellino = d.avellino; todayData.opAv = d.operatore; }
+          if (d.sergio != null) { todayData.sergio = d.sergio; todayData.opSr = d.operatore; }
+          if (d.giovanni != null) { todayData.giovanni = d.giovanni; todayData.opGv = d.operatore; }
+        }
+      });
+      document.getElementById("sDot").style.background = "var(--ok)";
+      document.getElementById("sLbl").textContent = "Connesso";
+      showT("✓ Sincronizzato");
+    }
+  } catch(e) {
+    document.getElementById("sDot").style.background = "var(--danger)";
+    document.getElementById("sLbl").textContent = "Offline";
+  }
+  updateToday();
+}
 
-function mergeD(){var m=new Map();HIST.map(function(r){return{data:r[0],avellino:r[1],sergio:r[2],giovanni:r[3],pesata:r[4],ddt:r[5],differenza:r[6]}}).forEach(function(d){m.set(d.data,d)});cloudData.forEach(function(d){m.set(d.data,d)});allData=Array.from(m.values()).sort(function(a,b){return a.data.localeCompare(b.data)})}
+// ── UPDATE TODAY VIEW ──
+function updateToday(){
+  var con = !!gUrl();
+  document.getElementById("noUrl").classList.toggle("hid", con);
 
-function updateUI(){var con=!!gUrl();document.getElementById("noUrl").classList.toggle("hid",con);document.getElementById("rCnt").textContent=allData.length;
-var last=allData[allData.length-1];var isA=last&&last.differenza!=null&&last.differenza<0;
-var st=[{l:"Ultimo",v:last?fmtD(last.data):"—"},{l:"Op.",v:last&&last.operatore||"—",c:last&&last.operatore==="Carmela"?"var(--carmela)":"var(--antonio)"},{l:"Av.",v:last?fmt(last.avellino):"—",c:"var(--av)"},{l:"Sr.",v:last?fmt(last.sergio):"—",c:"var(--sr)"},{l:"Gv.",v:last?fmt(last.giovanni):"—",c:"var(--gv)"},{l:isA?"⚠":"✓",v:last?fmt(last.differenza):"—",c:isA?"var(--danger)":"var(--ok)"}];
-document.getElementById("sGrid").innerHTML=st.map(function(s){return'<div class="sc"><div class="sc-l">'+s.l+'</div><div class="sc-v" style="color:'+(s.c||"var(--text)")+'">'+s.v+'</div></div>'}).join("");
-var pend=cloudData.filter(function(e){return e.ddt==null&&e.pesata>0});var ps=document.getElementById("pendSec");
-if(pend.length>0){ps.classList.remove("hid");document.getElementById("pendN").textContent=pend.length;document.getElementById("pendL").innerHTML=pend.map(function(e){return'<div class="pc"><div class="pc-h"><span class="pc-i">'+fmtD(e.data)+' — '+e.pesata+' kg</span><button class="btn-d" onclick="startDDT(\''+e.data+'\','+e.pesata+')">✏️ DDT</button></div><div id="de-'+e.data.replace(/-/g,"")+'"></div></div>'}).join("")}else{ps.classList.add("hid")}
-var ba=document.getElementById("btnAdd");if(pend.length===0&&con)ba.classList.remove("hid");else ba.classList.add("hid");
-renderTbl();document.getElementById("tCnt").textContent=allData.length}
+  var giri = [
+    {key:"avellino",id:"Av",val:todayData.avellino,op:todayData.opAv},
+    {key:"sergio",id:"Sr",val:todayData.sergio,op:todayData.opSr},
+    {key:"giovanni",id:"Gv",val:todayData.giovanni,op:todayData.opGv}
+  ];
+  var total = 0;
+  var allDone = true;
 
-function renderTbl(){var rows=allData.slice().reverse().slice(0,100);document.getElementById("tBody").innerHTML=rows.map(function(d){var a=d.differenza!=null&&d.differenza<0;var n=d.ddt==null&&d.pesata>0;var c=n?"rp":a?"ra":"";var oc=d.operatore==="Carmela"?"var(--carmela)":d.operatore==="Antonio"?"var(--antonio)":"var(--muted)";return'<tr class="'+c+'"><td style="font-weight:500">'+fmtD(d.data)+'</td><td style="text-align:center;color:'+oc+';font-size:9px">'+(d.operatore?d.operatore[0]:"—")+'</td><td style="color:var(--av)">'+fmt(d.avellino)+'</td><td style="color:var(--sr)">'+fmt(d.sergio)+'</td><td style="color:var(--gv)">'+fmt(d.giovanni)+'</td><td style="color:var(--muted)">'+fmt(d.pesata)+'</td><td>'+(n?'<span style="color:var(--warn);font-size:9px">⏳</span>':'<span style="color:var(--muted)">'+fmt(d.ddt)+'</span>')+'</td><td style="font-weight:600;color:'+(n?'var(--muted)':a?'var(--danger)':'var(--ok)')+'">'+(n?"—":fmt(d.differenza))+'</td><td style="text-align:center">'+(n?'<span style="color:var(--warn);font-size:9px">⏳</span>':a?'<span style="color:var(--danger);font-size:9px">⚠</span>':'<span style="color:var(--ok);font-size:9px">✓</span>')+'</td></tr>'}).join("")}
+  giri.forEach(function(g){
+    var isDone = g.val != null;
+    if (isDone) total += g.val; else allDone = false;
+    document.getElementById("val"+g.id).textContent = isDone ? g.val.toFixed(1)+" kg" : "—";
+    document.getElementById("row"+g.id).className = "giro-row"+(isDone?" done":"");
+    var st = document.getElementById("st"+g.id);
+    st.textContent = isDone ? "✓ "+g.val.toFixed(1)+" kg" : "in attesa";
+    st.className = "giro-status "+(isDone?"ok":"waiting");
+    var opEl = document.getElementById("op"+g.id);
+    if (isDone && g.op) { opEl.textContent = (g.op==="Carmela"?"👩":"👨")+" "+g.op; opEl.classList.remove("hid"); }
+    else { opEl.classList.add("hid"); }
+    // Update giro buttons in entry flow
+    var btn = document.getElementById("gBtn"+g.id);
+    if (btn) {
+      if (isDone) { btn.classList.add("done-btn"); document.getElementById("gChk"+g.id).classList.remove("hid"); }
+      else { btn.classList.remove("done-btn"); document.getElementById("gChk"+g.id).classList.add("hid"); }
+    }
+  });
 
-function renderCh(){var data=allData.slice(-curPer);var labels=data.map(function(d){return fmtD(d.data)});function mk(id,key,color){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type:"line",data:{labels:labels,datasets:[{data:data.map(function(d){return d[key]}),borderColor:color,backgroundColor:color+"33",fill:true,tension:0.3,pointRadius:0,borderWidth:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:9}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:9}},grid:{color:"#1e293b"}}}}})}mk("cAv","avellino","#f59e0b");mk("cSr","sergio","#3b82f6");mk("cGv","giovanni","#10b981")}
+  document.getElementById("totVal").textContent = total > 0 ? total.toFixed(1)+" kg" : "—";
 
-function renderDf(){var data=allData.slice(-curPer).filter(function(d){return d.differenza!=null});if(charts.df)charts.df.destroy();charts.df=new Chart(document.getElementById("cDf"),{type:"bar",data:{labels:data.map(function(d){return fmtD(d.data)}),datasets:[{data:data.map(function(d){return d.differenza}),backgroundColor:data.map(function(d){return d.differenza<0?"#ef4444":"#22c55e"}),borderRadius:3,maxBarThickness:10}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:9}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:9}},grid:{color:"#1e293b"}}}}})}
+  // Show add button only if connected and at least one giro is missing
+  var btn = document.getElementById("btnAdd");
+  if (con && !allDone) btn.classList.remove("hid"); else btn.classList.add("hid");
+}
 
-function toggleForm(){var p=document.getElementById("fPanel"),b=document.getElementById("btnAdd");if(p.classList.contains("hid")){p.classList.remove("hid");b.textContent="✕ Chiudi";b.className="btn-cl"}else{p.classList.add("hid");b.textContent="+ Inserisci resi";b.className="btn-p"}}
-function selOp(n){curOp=n;document.getElementById("opC").className=n==="Carmela"?"ac":"";document.getElementById("opA").className=n==="Antonio"?"aa":"";document.getElementById("fFields").classList.remove("hid");chkSv()}
-function uPes(){var a=parseFloat(document.getElementById("fAv").value)||0,s=parseFloat(document.getElementById("fSr").value)||0,g=parseFloat(document.getElementById("fGv").value)||0;var t=a+s+g;document.getElementById("pVal").textContent=t>0?t.toFixed(2)+" kg":"—";chkSv()}
-function hPhoto(e){var f=e.target.files&&e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(ev){var img=new Image();img.onload=function(){var c=document.createElement("canvas");var w=img.width,h=img.height;if(w>800){h=Math.round(h*800/w);w=800}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);curFoto=c.toDataURL("image/jpeg",0.7);document.getElementById("pImg").src=curFoto;document.getElementById("camP").classList.add("hid");document.getElementById("camOk").classList.remove("hid");document.getElementById("camBox").className="cb cb-ok";chkSv()};img.src=ev.target.result};rd.readAsDataURL(f)}
-function rPhoto(){curFoto=null;document.getElementById("camIn").value="";document.getElementById("camP").classList.remove("hid");document.getElementById("camOk").classList.add("hid");document.getElementById("camBox").className="cb cb-r";chkSv()}
-function chkSv(){var d=document.getElementById("fD").value;var hasV=parseFloat(document.getElementById("fAv").value)||parseFloat(document.getElementById("fSr").value)||parseFloat(document.getElementById("fGv").value);var ok=d&&curOp&&hasV&&curFoto;var b=document.getElementById("btnSv");b.disabled=!ok;b.textContent=ok?"✓ Salva resi":curFoto?"Compila tutti i campi":"📸 Compila tutto + foto"}
-document.getElementById("fD").addEventListener("input",chkSv);
+// ── ENTRY FLOW ──
+function startEntry(){
+  entryOp = ""; entryGiro = ""; entryFoto = null;
+  document.getElementById("entryFlow").classList.remove("hid");
+  document.getElementById("btnAdd").classList.add("hid");
+  document.getElementById("todayPanel").classList.add("hid");
+  // Reset UI
+  document.getElementById("eOpC").className = "op-btn";
+  document.getElementById("eOpA").className = "op-btn";
+  document.getElementById("step2").classList.add("hid");
+  document.getElementById("step3").classList.add("hid");
+  document.getElementById("step4").classList.add("hid");
+  document.getElementById("wInput").value = "";
+  clearPhoto();
+  checkReady();
+  // Mark done giros
+  ["Av","Sr","Gv"].forEach(function(id){
+    var key = id==="Av"?"avellino":id==="Sr"?"sergio":"giovanni";
+    var btn = document.getElementById("gBtn"+id);
+    var chk = document.getElementById("gChk"+id);
+    if (todayData[key] != null) { btn.classList.add("done-btn"); chk.classList.remove("hid"); }
+    else { btn.classList.remove("done-btn"); btn.classList.remove("sel"); chk.classList.add("hid"); }
+  });
+}
 
-async function saveR(){var entry={data:document.getElementById("fD").value,operatore:curOp,avellino:parseFloat(document.getElementById("fAv").value)||null,sergio:parseFloat(document.getElementById("fSr").value)||null,giovanni:parseFloat(document.getElementById("fGv").value)||null,pesata:parseFloat(document.getElementById("pVal").textContent)||null};document.getElementById("btnSv").textContent="⏳ Salvataggio...";document.getElementById("btnSv").disabled=true;
-try{var url=gUrl();var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(Object.assign({action:"addResi"},entry))});var j=await r.json();if(j.success&&curFoto){try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:entry.data,operatore:entry.operatore,foto:curFoto})})}catch(e){}}showT(j.success?"✓ Salvato!":"⚠ Errore")}catch(e){showT("⚠ Errore connessione")}
-document.getElementById("fD").value="";document.getElementById("fAv").value="";document.getElementById("fSr").value="";document.getElementById("fGv").value="";document.getElementById("pVal").textContent="—";rPhoto();document.getElementById("fPanel").classList.add("hid");document.getElementById("btnAdd").textContent="+ Inserisci resi";document.getElementById("btnAdd").className="btn-p";await doSync()}
+function cancelEntry(){
+  document.getElementById("entryFlow").classList.add("hid");
+  document.getElementById("todayPanel").classList.remove("hid");
+  updateToday();
+}
 
-function startDDT(date,pesata){editDate=date;var id="de-"+date.replace(/-/g,"");document.getElementById(id).innerHTML='<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px"><input id="ddtI" type="number" step="0.01" placeholder="DDT (kg)" class="fi" oninput="prevDf('+pesata+')"><div id="dfPrev"></div><button class="btn-s" onclick="saveDDT(\''+date+'\')">✓ Salva DDT</button><button class="btn-x" onclick="canDDT(\''+date+'\')">Annulla</button></div>';document.getElementById("ddtI").focus()}
-function prevDf(pesata){var v=parseFloat(document.getElementById("ddtI").value);if(isNaN(v)){document.getElementById("dfPrev").innerHTML="";return}var d=+(pesata-v).toFixed(2);document.getElementById("dfPrev").innerHTML='<span style="font-family:monospace;font-size:15px;font-weight:700">'+(d<0?"🔴":"🟢")+' Diff: <span style="color:'+(d<0?'var(--danger)':'var(--ok)')+'">'+d+' kg</span></span>'}
-async function saveDDT(date){var v=parseFloat(document.getElementById("ddtI").value);if(isNaN(v))return;try{var r=await fetch(gUrl(),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateDDT",data:date,ddt:v})});var j=await r.json();showT(j.success?"✓ DDT salvato":"⚠ Errore")}catch(e){showT("⚠ Errore")}editDate=null;await doSync()}
-function canDDT(date){document.getElementById("de-"+date.replace(/-/g,"")).innerHTML="";editDate=null}
+function pickOp(name){
+  entryOp = name;
+  document.getElementById("eOpC").className = "op-btn"+(name==="Carmela"?" sel-c":"");
+  document.getElementById("eOpA").className = "op-btn"+(name==="Antonio"?" sel-a":"");
+  document.getElementById("step2").classList.remove("hid");
+  checkReady();
+}
 
-function sTab(tab,btn){curTab=tab;document.querySelectorAll(".tb").forEach(function(b){b.classList.remove("a")});btn.classList.add("a");document.getElementById("tTbl").classList.toggle("hid",tab!=="table");document.getElementById("tCh").classList.toggle("hid",tab!=="charts");document.getElementById("tDf").classList.toggle("hid",tab!=="diff");document.getElementById("perB").classList.toggle("hid",tab==="table");if(tab==="charts")renderCh();if(tab==="diff")renderDf()}
-function sPer(n,btn){curPer=n;document.querySelectorAll(".pb").forEach(function(b){b.classList.remove("a")});btn.classList.add("a");if(curTab==="charts")renderCh();if(curTab==="diff")renderDf()}
-function toggleSet(){document.getElementById("setP").classList.toggle("hid")}
-function saveSet(){var url=document.getElementById("sUrl").value.trim();localStorage.setItem("gsheet-url",url);document.getElementById("setP").classList.add("hid");if(url)doSync();else{document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline";updateUI()}}
-function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
-function viewP(s){document.getElementById("poImg").src=s;document.getElementById("po").classList.add("show")}
-function closePhoto(){document.getElementById("po").classList.remove("show")}
+function pickGiro(giro){
+  // Can't pick already done giro
+  var key = giro==="avellino"?"Av":giro==="sergio"?"Sr":"Gv";
+  if (todayData[giro] != null) return;
+  entryGiro = giro;
+  ["Av","Sr","Gv"].forEach(function(id){
+    var g = id==="Av"?"avellino":id==="Sr"?"sergio":"giovanni";
+    var btn = document.getElementById("gBtn"+id);
+    if (todayData[g] != null) return; // skip done
+    btn.classList.toggle("sel", g === giro);
+  });
+  var labels = {avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"};
+  document.getElementById("giroLabel").textContent = labels[giro];
+  document.getElementById("step3").classList.remove("hid");
+  document.getElementById("step4").classList.remove("hid");
+  document.getElementById("wInput").focus();
+  checkReady();
+}
+
+function onPhoto(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(ev){
+    var img = new Image();
+    img.onload = function(){
+      var c = document.createElement("canvas");
+      var w = img.width, h = img.height;
+      if (w > 800) { h = Math.round(h*800/w); w = 800; }
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      entryFoto = c.toDataURL("image/jpeg",0.7);
+      document.getElementById("prevImg").src = entryFoto;
+      document.getElementById("camPrompt").classList.add("hid");
+      document.getElementById("camDone").classList.remove("hid");
+      document.getElementById("camBox").className = "cam-box cam-ok";
+      checkReady();
+    };
+    img.src = ev.target.result;
+  };
+  rd.readAsDataURL(f);
+}
+
+function clearPhoto(){
+  entryFoto = null;
+  document.getElementById("camIn").value = "";
+  document.getElementById("camPrompt").classList.remove("hid");
+  document.getElementById("camDone").classList.add("hid");
+  document.getElementById("camBox").className = "cam-box cam-req";
+  checkReady();
+}
+
+function checkReady(){
+  var w = parseFloat(document.getElementById("wInput").value);
+  var ok = entryOp && entryGiro && w > 0 && entryFoto;
+  var btn = document.getElementById("btnSave");
+  btn.disabled = !ok;
+  if (ok) {
+    btn.textContent = "✓ Salva reso "+{avellino:"Avellino",sergio:"Sergio",giovanni:"Giovanni"}[entryGiro];
+  } else if (!entryOp) {
+    btn.textContent = "① Seleziona operatore";
+  } else if (!entryGiro) {
+    btn.textContent = "② Seleziona giro";
+  } else if (!w) {
+    btn.textContent = "③ Inserisci peso";
+  } else {
+    btn.textContent = "④ Scatta foto";
+  }
+}
+
+async function doSave(){
+  var w = parseFloat(document.getElementById("wInput").value);
+  var btn = document.getElementById("btnSave");
+  btn.textContent = "⏳ Salvataggio..."; btn.disabled = true;
+
+  // Save locally
+  todayData[entryGiro] = w;
+  var opKey = "op"+entryGiro.charAt(0).toUpperCase()+entryGiro.slice(1).replace("avellino","Av").replace("sergio","Sr").replace("giovanni","Gv");
+  // Fix: use correct key
+  if (entryGiro==="avellino") todayData.opAv = entryOp;
+  if (entryGiro==="sergio") todayData.opSr = entryOp;
+  if (entryGiro==="giovanni") todayData.opGv = entryOp;
+  localStorage.setItem("today-"+todayStr, JSON.stringify(todayData));
+
+  // Save to Google Sheets
+  var url = gUrl();
+  if (url) {
+    try {
+      // Build full row with all current giro data
+      var entry = {
+        action: "addResi",
+        data: todayStr,
+        operatore: entryOp,
+        avellino: todayData.avellino,
+        sergio: todayData.sergio,
+        giovanni: todayData.giovanni,
+        pesata: (todayData.avellino||0)+(todayData.sergio||0)+(todayData.giovanni||0) || null
+      };
+      await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain"}, body:JSON.stringify(entry)});
+      // Upload photo
+      if (entryFoto) {
+        try { await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain"},
+          body:JSON.stringify({action:"uploadFoto",data:todayStr,operatore:entryOp,giro:entryGiro,foto:entryFoto})}); } catch(e){}
+      }
+      showT("✓ Reso "+entryGiro+" salvato!");
+    } catch(e) { showT("⚠ Salvato localmente"); }
+  } else {
+    showT("✓ Salvato localmente");
+  }
+
+  // Back to main
+  cancelEntry();
+}
+
+// ── SETTINGS ──
+function toggleSet(){ document.getElementById("setP").classList.toggle("hid"); }
+function saveSet(){
+  localStorage.setItem("gsheet-url", document.getElementById("sUrl").value.trim());
+  document.getElementById("setP").classList.add("hid");
+  if (gUrl()) doSync(); else updateToday();
+}
+
+// ── UTILS ──
+function showT(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(function(){t.classList.remove("show")},3000); }
+function viewP(s){ document.getElementById("poImg").src=s; document.getElementById("po").classList.add("show"); }
+function closePhoto(){ document.getElementById("po").classList.remove("show"); }
+
 init();
 </script>
 </body>
