@@ -404,14 +404,21 @@ async function verifyAndRead(b64,canvas){
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
 
-  // Crop the UPPER 60% of the photo (where the display is) and upscale for better reading
-  vb.innerHTML='<span class="spin"></span> Preparazione...';
-  var cropH=Math.round(h*0.6);
+  // Crop TIGHTLY around the small display area (25-50% from top, center 60% width)
+  // and upscale aggressively so Claude can read the small numbers
+  vb.innerHTML='<span class="spin"></span> Zoom sul display...';
+  var cropTop=Math.round(h*0.22);
+  var cropBot=Math.round(h*0.50);
+  var cropLeft=Math.round(w*0.15);
+  var cropRight=Math.round(w*0.85);
+  var cropW=cropRight-cropLeft;
+  var cropH2=cropBot-cropTop;
   var cropC=document.createElement("canvas");
-  var scale=Math.min(2,2000/w); // upscale up to 2x for better OCR
-  cropC.width=Math.round(w*scale);cropC.height=Math.round(cropH*scale);
-  cropC.getContext("2d").drawImage(canvas,0,0,w,cropH,0,0,cropC.width,cropC.height);
-  var cropB64=cropC.toDataURL("image/jpeg",0.9);
+  // Upscale to at least 1200px wide for clear OCR
+  var upscale=Math.max(3, 1200/cropW);
+  cropC.width=Math.round(cropW*upscale);cropC.height=Math.round(cropH2*upscale);
+  cropC.getContext("2d").drawImage(canvas,cropLeft,cropTop,cropW,cropH2,0,0,cropC.width,cropC.height);
+  var cropB64=cropC.toDataURL("image/jpeg",0.92);
 
   // Also send full photo at lower res for cesta verification
   var fullC=document.createElement("canvas");
