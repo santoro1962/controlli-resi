@@ -403,29 +403,11 @@ async function verifyAndRead(b64,canvas){
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
 
-  // Crop the DISPLAY ZONE — top 5-30% of photo, center 80% width, upscale 3x
-  vb.innerHTML='<span class="spin"></span> Zoom sul display...';
-  var cropTop=Math.round(h*0.03);
-  var cropBot=Math.round(h*0.30);
-  var cropLeft=Math.round(w*0.10);
-  var cropRight=Math.round(w*0.90);
-  var cropW=cropRight-cropLeft;
-  var cropH2=cropBot-cropTop;
-  var cropC=document.createElement("canvas");
-  var upscale=Math.max(3, 1400/cropW);
-  cropC.width=Math.round(cropW*upscale);cropC.height=Math.round(cropH2*upscale);
-  cropC.getContext("2d").drawImage(canvas,cropLeft,cropTop,cropW,cropH2,0,0,cropC.width,cropC.height);
-  var cropB64=cropC.toDataURL("image/jpeg",0.92);
-
-  // Also send full photo at lower res for cesta verification
-  var fullC=document.createElement("canvas");
-  var fw=w,fh=h;if(fw>1000){fh=Math.round(fh*1000/fw);fw=1000}
-  fullC.width=fw;fullC.height=fh;fullC.getContext("2d").drawImage(canvas,0,0,fw,fh);
-  var fullB64=fullC.toDataURL("image/jpeg",0.7);
-
+  // Send FULL photo at high quality — let AI find the display
   vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
+  var fullB64=canvas.toDataURL("image/jpeg",0.9);
   try{
-    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:fullB64,fotoDisplay:cropB64})});
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:fullB64})});
     var txt=await res.text();var j;
     try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore script";return}
     if(j.valid===true){
