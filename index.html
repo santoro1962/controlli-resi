@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0a0e1a">
 <title>Resi Pane</title>
 <style>
-:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981;--z5:#ec4899}
+:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
 input[type="number"],input[type="url"]{font-size:18px!important}
@@ -25,29 +25,19 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .ab.amber{background:rgba(245,158,11,0.1);border:2px solid rgba(245,158,11,0.3)}
 .ab .ai{font-size:28px;flex-shrink:0}.ab .at{font-weight:700;font-size:15px;margin-bottom:4px}.ab .ad{font-size:12px;color:var(--muted);line-height:1.5}
 .today{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px}
-.today-date{font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500}
-.today-date strong{color:var(--text);font-size:15px}
+.today-date{font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500}.today-date strong{color:var(--text);font-size:15px}
 .old-tag{background:rgba(239,68,68,0.15);color:var(--danger);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px}
 .zr{display:flex;align-items:center;justify-content:space-between;background:var(--inbg);border-radius:12px;padding:12px 16px;border:1px solid var(--inbord);margin-bottom:8px}
-.zr.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
-.zr.fest{border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.04)}
-.zr.other{opacity:0.4}
-.zr-left{display:flex;align-items:center;gap:10px}
-.zr-dot{width:12px;height:12px;border-radius:4px}.zr-name{font-weight:600;font-size:14px}.zr-sub{font-size:10px;color:var(--muted)}
+.zr.done{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}.zr.fest{border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.04)}.zr.other{opacity:0.4}
+.zr-left{display:flex;align-items:center;gap:10px}.zr-dot{width:12px;height:12px;border-radius:4px}.zr-name{font-weight:600;font-size:14px}.zr-sub{font-size:10px;color:var(--muted)}
 .zr-st{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
-.zr-st.w{color:var(--warn);background:rgba(245,158,11,0.1)}
-.zr-st.ok{color:var(--ok);background:rgba(34,197,94,0.1)}
-.zr-st.f{color:var(--muted);background:rgba(148,163,184,0.1)}
-.zr-st.oth{color:var(--muted);background:rgba(148,163,184,0.06);font-style:italic}
+.zr-st.w{color:var(--warn);background:rgba(245,158,11,0.1)}.zr-st.ok{color:var(--ok);background:rgba(34,197,94,0.1)}.zr-st.f{color:var(--muted);background:rgba(148,163,184,0.1)}.zr-st.oth{color:var(--muted);background:rgba(148,163,184,0.06);font-style:italic}
 .zr-detail{font-size:10px;color:var(--muted);margin:-4px 0 8px 22px}
 .total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:4px}
 .total-label{font-size:13px;color:var(--muted);font-weight:600}.total-val{font-family:monospace;font-size:18px;font-weight:700}
 .btn-a{width:100%;padding:18px;border-radius:14px;font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-a.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.btn-a.save{background:linear-gradient(135deg,#10b981,#059669)}
-.btn-a.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
-.btn-a.close{background:var(--inbg);color:var(--muted);font-size:15px;padding:14px}
-.btn-a.fest{background:var(--inbg);color:var(--muted);font-size:14px;padding:14px;border:1px solid var(--inbord)}
+.btn-a.primary{background:linear-gradient(135deg,#f59e0b,#ef4444)}.btn-a.save{background:linear-gradient(135deg,#10b981,#059669)}.btn-a.save:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
+.btn-a.close{background:var(--inbg);color:var(--muted);font-size:15px;padding:14px}.btn-a.fest{background:var(--inbg);color:var(--muted);font-size:14px;padding:14px;border:1px solid var(--inbord)}
 .wiz{display:none}.wiz.act{display:block}
 .wp{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;margin-bottom:16px}
 .ws{font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
@@ -55,37 +45,37 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .wq{font-size:20px;font-weight:700;margin-bottom:24px;line-height:1.3}
 .wb{display:flex;align-items:center;gap:6px;background:none;color:var(--muted);font-size:14px;padding:8px 0;margin-bottom:12px}
 .sel-btns{display:flex;flex-direction:column;gap:12px;width:100%;align-items:stretch}
-.sel-btn{padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;transition:all 0.15s;width:100%;text-align:left;box-sizing:border-box}
+.sel-btn{padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;width:100%;text-align:left;box-sizing:border-box}
 .cnt-btns{display:flex;flex-wrap:wrap;gap:10px}
 .cnt-btn{width:64px;height:64px;border-radius:14px;font-size:22px;font-weight:700;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;justify-content:center}
-.wi{background:var(--inbg);border:2px solid var(--inbord);border-radius:16px;padding:24px;font-size:36px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none}
-.wi:focus{border-color:var(--accent)}
-.wu{font-size:15px;color:var(--muted);margin-top:8px;text-align:center}
 .bn{width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:700;margin-top:20px;color:#fff;background:var(--accent)}
 .bn:disabled{background:var(--inbg);color:var(--muted);opacity:0.5;cursor:not-allowed}
 .photo-guide{background:var(--inbg);border:1px solid var(--inbord);border-radius:14px;padding:16px;margin-bottom:16px}
 .photo-guide-title{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--warn);text-align:center}
 .guide-svg-wrap{display:flex;justify-content:center;margin-bottom:14px}
 .guide-tips{font-size:13px;color:var(--muted);line-height:1.8}
-.guide-tips div{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.guide-tips .ck{color:var(--ok);font-weight:700;font-size:16px}
+.guide-tips div{display:flex;align-items:center;gap:8px;margin-bottom:4px}.guide-tips .ck{color:var(--ok);font-weight:700;font-size:16px}
 .cam-box{border-radius:14px;padding:20px;text-align:center}
 .cam-req{background:rgba(239,68,68,0.06);border:2px dashed rgba(239,68,68,0.3)}
 .cam-ok{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.3)}
 .btn-cam{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-radius:12px;padding:18px;font-weight:700;font-size:17px;width:100%}
 .cam-preview{width:100%;max-width:300px;border-radius:12px;margin:0 auto 12px;display:block}
 .verify-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;margin-top:10px;font-size:13px;font-weight:600}
-.verify-bar.checking{background:rgba(139,92,246,0.1);color:var(--accent)}
-.verify-bar.pass{background:rgba(34,197,94,0.1);color:var(--ok)}
-.verify-bar.fail{background:rgba(239,68,68,0.1);color:var(--danger)}
-@keyframes sp{to{transform:rotate(360deg)}}
-.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--inbord);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite}
+.verify-bar.checking{background:rgba(139,92,246,0.1);color:var(--accent)}.verify-bar.pass{background:rgba(34,197,94,0.1);color:var(--ok)}.verify-bar.fail{background:rgba(239,68,68,0.1);color:var(--danger)}
+@keyframes sp{to{transform:rotate(360deg)}}.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--inbord);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite}
 .cp{display:flex;gap:8px;margin-bottom:16px}
 .cp-d{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord)}
-.cp-d.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.cp-d.done{background:rgba(34,197,94,0.15);color:var(--ok);border-color:rgba(34,197,94,0.3)}
-.sum-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-.sum-row:last-child{border:none}.sum-label{font-size:14px;color:var(--muted)}.sum-val{font-size:15px;font-weight:700;font-family:monospace}
+.cp-d.active{background:var(--accent);color:#fff;border-color:var(--accent)}.cp-d.done{background:rgba(34,197,94,0.15);color:var(--ok);border-color:rgba(34,197,94,0.3)}
+/* Weight result */
+.weight-result{background:var(--inbg);border:2px solid var(--ok);border-radius:14px;padding:16px;margin-top:14px;text-align:center}
+.wr-label{font-size:12px;color:var(--muted);margin-bottom:4px}.wr-val{font-size:32px;font-weight:800;font-family:monospace;color:var(--ok)}
+.wr-row{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px}
+.wr-row span:first-child{color:var(--muted)}.wr-row span:last-child{font-weight:700;font-family:monospace}
+/* Summary */
+.sum-section{background:var(--inbg);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.sum-title{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.sum-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}.sum-row.total{border-top:2px solid var(--accent);padding-top:10px;margin-top:6px}
+.sum-row .sl{color:var(--muted)}.sum-row .sv{font-weight:700;font-family:monospace}.sum-row.total .sl{color:var(--text);font-weight:700;font-size:16px}.sum-row.total .sv{color:var(--accent);font-size:18px}
 .fp{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
 .ft{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .btn-fa{width:100%;padding:16px;border-radius:12px;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);font-size:15px;font-weight:600;margin-top:8px}
@@ -94,16 +84,13 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 .set-btns{display:flex;gap:8px;margin-top:12px}
 .btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;padding:12px 24px;font-weight:600;font-size:14px;flex:1}
 .btn-xx{background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:10px;padding:12px 16px;font-size:14px}
-/* Login */
 .login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:40px 20px}
 .login .logo-big{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:20px}
 .login h1{font-size:26px;margin-bottom:8px}.login p{color:var(--muted);font-size:14px;margin-bottom:32px}
 .login-btns{display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px}
-.login-btn{padding:22px 20px;border-radius:16px;font-size:18px;font-weight:700;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;transition:all 0.15s;width:100%}
-.login-btn:active{transform:scale(0.98)}
+.login-btn{padding:22px 20px;border-radius:16px;font-size:18px;font-weight:700;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;width:100%}
 .login-btn .lb-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .login-btn .lb-name{font-size:18px;font-weight:700}.login-btn .lb-zones{font-size:12px;color:var(--muted);margin-top:2px}
-/* User badge */
 .user-badge{display:flex;align-items:center;gap:8px;background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:8px 14px;margin-bottom:16px}
 .ub-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .ub-name{font-weight:700;font-size:14px}.ub-zones{font-size:11px;color:var(--muted)}
@@ -118,103 +105,53 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 <body>
 <div id="toast" class="toast"></div>
 <div id="po" class="po" onclick="clPo()"><button class="po-c" onclick="clPo()">✕</button><img id="poImg" src=""/></div>
-
 <div class="app">
-  <!-- ═══ LOGIN ═══ -->
+  <!-- LOGIN -->
   <div id="loginScr" class="login">
-    <div class="logo-big">🍞</div>
-    <h1>Resi Pane</h1>
-    <p>Seleziona il tuo profilo e inserisci il PIN.</p>
+    <div class="logo-big">🍞</div><h1>Resi Pane</h1><p>Seleziona il tuo profilo e inserisci il PIN.</p>
     <div class="login-btns">
-      <button class="login-btn" onclick="selUser('Giovanni')">
-        <div class="lb-icon" style="background:rgba(245,158,11,0.15)">🚚</div>
-        <div><div class="lb-name">Giovanni</div><div class="lb-zones">Zona 1 — Nocera-Salerno</div></div>
-      </button>
-      <button class="login-btn" onclick="selUser('Antonio')">
-        <div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div>
-        <div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3</div></div>
-      </button>
-      <button class="login-btn" onclick="selUser('Sergio')">
-        <div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div>
-        <div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3</div></div>
-      </button>
+      <button class="login-btn" onclick="selUser('Giovanni')"><div class="lb-icon" style="background:rgba(245,158,11,0.15)">🚚</div><div><div class="lb-name">Giovanni</div><div class="lb-zones">Zona 1 — Nocera-Salerno</div></div></button>
+      <button class="login-btn" onclick="selUser('Antonio')"><div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div><div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3</div></div></button>
+      <button class="login-btn" onclick="selUser('Sergio')"><div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div><div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3</div></div></button>
     </div>
-    <!-- PIN input (hidden until user selected) -->
     <div id="pinPanel" class="hid" style="width:100%;max-width:320px;margin-top:24px">
       <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;text-align:center">
         <p style="font-size:16px;font-weight:700;margin-bottom:4px" id="pinUser"></p>
         <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Inserisci il PIN a 4 cifre</p>
-        <input id="pinInput" type="number" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="• • • •" style="background:var(--inbg);border:2px solid var(--inbord);border-radius:14px;padding:18px;font-size:28px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none;letter-spacing:12px" oninput="chkPin()">
+        <input id="pinInput" type="number" inputmode="numeric" maxlength="4" placeholder="• • • •" style="background:var(--inbg);border:2px solid var(--inbord);border-radius:14px;padding:18px;font-size:28px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none;letter-spacing:12px" oninput="chkPin()">
         <div id="pinErr" class="hid" style="color:var(--danger);font-size:13px;font-weight:600;margin-top:10px">❌ PIN errato</div>
         <button id="pinBtn" class="bn" disabled onclick="tryPin()" style="margin-top:16px">Accedi</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ MAIN APP (hidden until login) ═══ -->
+  <!-- MAIN APP -->
   <div id="mainApp" class="hid">
     <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><button class="btn-gear" onclick="openSet()">⚙️</button></div>
+    <div class="user-badge"><div class="ub-icon" id="ubIcon">🚚</div><div><div class="ub-name" id="ubName"></div><div class="ub-zones" id="ubZones"></div></div></div>
+    <div id="setP" class="set-card hid"><div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Impostazioni</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px">URL Google Sheets</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec" style="margin-bottom:10px"><div class="set-btns" style="margin-top:0;margin-bottom:14px"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div><div style="border-top:1px solid var(--border);padding-top:14px"><button class="btn-xx" style="width:100%" onclick="changeUser()">👤 Cambia profilo</button></div></div>
+    <div id="noUrl" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px"><strong style="color:var(--warn)">ℹ️ Modalità locale</strong><p style="color:var(--muted);margin-top:4px;font-size:12px">Per la verifica AI collega Google Sheets (⚙️).</p></div>
 
-    <!-- User badge -->
-    <div class="user-badge" id="userBadge"><div class="ub-icon" id="ubIcon">🚚</div><div><div class="ub-name" id="ubName"></div><div class="ub-zones" id="ubZones"></div></div></div>
-
-    <div id="setP" class="set-card hid">
-      <div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Impostazioni</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">URL Google Sheets (finisce con /exec)</p>
-      <input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec" style="margin-bottom:10px">
-      <div class="set-btns" style="margin-top:0;margin-bottom:14px"><button class="btn-ok" onclick="saveSet()">✓ Salva URL</button><button class="btn-xx" onclick="doSync()">🔄</button></div>
-      <div style="border-top:1px solid var(--border);padding-top:14px">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cambia autista su questo tablet:</p>
-        <button class="btn-xx" style="width:100%" onclick="changeUser()">👤 Cambia profilo autista</button>
-      </div>
-    </div>
-
-    <div id="noUrl" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px"><strong style="color:var(--warn)">ℹ️ Modalità locale</strong><p style="color:var(--muted);margin-top:4px;font-size:12px">Per sincronizzare tra tablet, collega Google Sheets (⚙️).</p></div>
-
-    <!-- MAIN SCREEN -->
     <div id="mainScr">
       <div id="overdueAl" class="ab red hid"><div class="ai">🚨</div><div><div class="at">Resi non completati!</div><div class="ad" id="ovTxt"></div></div></div>
-      <div id="pmAl" class="ab amber hid"><div class="ai">⏰</div><div><div class="at">Promemoria</div><div class="ad">Zone ancora da registrare!</div></div></div>
-      <div class="today">
-        <div class="today-date"><span id="dayLbl">Oggi</span>: <strong id="todayDt"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div>
-        <div id="zoneGrid"></div>
-        <div class="total-row"><span class="total-label">Totale giornata</span><span id="totVal" class="total-val">—</span></div>
-      </div>
+      <div id="pmAl" class="ab amber hid"><div class="ai">⏰</div><div><div class="at">Promemoria</div><div class="ad">Zone da registrare!</div></div></div>
+      <div class="today"><div class="today-date"><span id="dayLbl">Oggi</span>: <strong id="todayDt"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div><div id="zoneGrid"></div><div class="total-row"><span class="total-label">Totale netto giornata</span><span id="totVal" class="total-val">—</span></div></div>
       <button id="btnAdd" class="btn-a primary hid" onclick="startWiz()">📦 Registra reso</button>
       <button id="btnFest" class="btn-a fest hid" onclick="showFest()">🏖️ Segna festivo</button>
     </div>
 
     <!-- FESTIVO -->
-    <div id="festScr" class="hid">
-      <button class="wb" onclick="clFest()">← Indietro</button>
-      <div class="fp"><div class="ft">🏖️ Segna festivo</div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona la zona che non esce oggi:</p><div id="festList"></div>
-        <button id="btnFConf" class="bn hid" style="margin-top:16px;background:var(--muted)">Seleziona una zona</button>
-        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Giornata chiusura — tutte le mie zone</button></div>
-      </div>
-      <button class="btn-a close" onclick="clFest()">✕ Annulla</button>
-    </div>
+    <div id="festScr" class="hid"><button class="wb" onclick="clFest()">← Indietro</button><div class="fp"><div class="ft">🏖️ Segna festivo</div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona la zona:</p><div id="festList"></div><button id="btnFConf" class="bn hid" style="margin-top:16px;background:var(--muted)">Seleziona</button><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Tutte le mie zone festive</button></div></div><button class="btn-a close" onclick="clFest()">✕ Annulla</button></div>
 
-    <!-- W1: Zona (autista già noto) -->
+    <!-- W1: Zona -->
     <div id="w1" class="wiz"><button class="wb" onclick="cancelWiz()">← Annulla</button><div class="wp"><div class="ws"><span class="sn">1</span>ZONA</div><div class="wq">Quale zona?</div><div class="sel-btns" id="wZoneList"></div></div></div>
-
-    <!-- W2: Quante ceste -->
+    <!-- W2: Ceste -->
     <div id="w2" class="wiz"><button class="wb" onclick="wGo(1)">← Indietro</button><div class="wp"><div class="ws"><span class="sn">2</span>CESTE</div><div class="wq">Quante ceste di reso?</div><div class="cnt-btns" id="wCntBtns"></div></div></div>
-
-    <!-- W3: Peso -->
-    <div id="w3" class="wiz"><button class="wb" onclick="wBackW()">← Indietro</button><div class="wp">
+    <!-- W3: Foto + AI peso -->
+    <div id="w3" class="wiz"><button class="wb" onclick="wBackP()">← Indietro</button><div class="wp">
       <div class="cp" id="cpD1"></div>
       <div class="ws"><span class="sn" id="w3sn">3</span><span id="w3st"></span></div>
-      <div class="wq">Peso cesta <span id="w3n"></span> — <span id="w3z" style="color:var(--accent)"></span></div>
-      <input id="wW" type="number" step="0.1" placeholder="0.0" class="wi" oninput="wChkW()">
-      <div class="wu">chilogrammi (kg)</div>
-      <button id="btnNW" class="bn" disabled onclick="wNxtW()">Avanti →</button>
-    </div></div>
-
-    <!-- W4: Foto -->
-    <div id="w4" class="wiz"><button class="wb" onclick="wGo(3)">← Indietro</button><div class="wp">
-      <div class="cp" id="cpD2"></div>
-      <div class="ws"><span class="sn" id="w4sn">4</span><span id="w4st"></span></div>
-      <div class="wq">📸 Foto cesta <span id="w4n"></span> sulla bilancia</div>
+      <div class="wq">📸 Foto cesta <span id="w3n"></span> — <span id="w3z" style="color:var(--accent)"></span></div>
       <div class="photo-guide" id="pGuide">
         <div class="photo-guide-title">📐 Inquadra così la bilancia</div>
         <div class="guide-svg-wrap">
@@ -231,21 +168,18 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
             <text x="180" y="108" fill="#f59e0b" font-size="7" font-weight="700">PESO</text>
             <text x="180" y="118" fill="#f59e0b" font-size="7" font-weight="700">QUI ←</text>
             <text x="120" y="155" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="700">ORIPAN</text>
-            <text x="120" y="168" text-anchor="middle" fill="#94a3b8" font-size="7">Ex ATEX</text>
             <line x1="30" y1="230" x2="210" y2="230" stroke="#94a3b8" stroke-width="2"/>
             <line x1="35" y1="230" x2="35" y2="310" stroke="#94a3b8" stroke-width="2"/>
             <line x1="205" y1="230" x2="205" y2="310" stroke="#94a3b8" stroke-width="2"/>
             <rect x="55" y="245" width="130" height="65" fill="#ef4444" rx="6" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="5,3" opacity="0.7"/>
-            <rect x="70" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="85" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="100" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="115" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="130" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="145" y="255" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/>
-            <rect x="70" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="85" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="100" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="115" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="130" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/><rect x="145" y="270" width="8" height="8" fill="#dc2626" rx="2" opacity="0.5"/>
-            <text x="120" y="300" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="700">CESTA RESO QUI</text>
+            <text x="120" y="285" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="700">CESTA ROSSA QUI</text>
           </svg>
         </div>
         <div class="guide-tips">
+          <div><span class="ck">✓</span> Cesta ROSSA visibile sulla piattaforma</div>
+          <div><span class="ck">✓</span> Bilancia ORIPAN riconoscibile</div>
           <div><span class="ck">✓</span> Display peso leggibile (schermino piccolo)</div>
-          <div><span class="ck">✓</span> Cesta visibile sulla piattaforma</div>
-          <div><span class="ck">✓</span> Inquadra frontalmente la bilancia ORIPAN</div>
-          <div><span class="ck">✓</span> Foto non sfocata e ben illuminata</div>
+          <div><span class="ck">✓</span> L'AI leggerà il peso automaticamente!</div>
         </div>
       </div>
       <div id="camBox" class="cam-box cam-req">
@@ -253,204 +187,127 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
         <div id="camP"><div style="font-size:48px;margin-bottom:12px">📷</div><button class="btn-cam" onclick="document.getElementById('camIn').click()">Scatta foto cesta</button></div>
         <div id="camD" class="hid">
           <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
-          <div id="vBar" class="verify-bar checking hid"><span class="spin"></span> Verifica foto...</div>
-          <p id="camOk" class="hid" style="font-size:13px;color:var(--ok);font-weight:600;margin-top:10px">✓ Foto verificata</p>
-          <button onclick="wClrP()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:8px">🔄 Riscatta</button>
+          <div id="vBar" class="verify-bar checking hid"></div>
+          <div id="weightRes" class="weight-result hid">
+            <div class="wr-label">Peso letto dal display</div>
+            <div class="wr-val" id="wrVal"></div>
+            <div class="wr-row"><span>Tara cesta rossa</span><span>−2.66 kg</span></div>
+            <div class="wr-row"><span>Peso netto reso</span><span id="wrNet" style="color:var(--ok)"></span></div>
+          </div>
+          <button onclick="wClrP()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:12px">🔄 Riscatta</button>
         </div>
       </div>
       <button id="btnNP" class="bn" disabled onclick="wNxtP()" style="margin-top:16px">📸 Scatta foto per continuare</button>
     </div></div>
 
-    <!-- W5: Riepilogo -->
-    <div id="w5" class="wiz"><button class="wb" onclick="wGo(3)">← Indietro</button><div class="wp">
+    <!-- W4: Riepilogo -->
+    <div id="w4" class="wiz"><button class="wb" onclick="wGo(3)">← Indietro</button><div class="wp">
       <div class="ws"><span class="sn">✓</span>RIEPILOGO</div>
-      <div class="wq">Conferma reso <span id="w5z" style="color:var(--accent)"></span></div>
+      <div class="wq">Conferma reso <span id="w4z" style="color:var(--accent)"></span></div>
       <div id="sumB"></div>
-      <div class="sum-row" style="border-top:2px solid var(--accent);margin-top:8px;padding-top:12px"><span class="sum-label" style="font-size:16px;font-weight:700;color:var(--text)">TOTALE</span><span id="sumT" class="sum-val" style="font-size:20px;color:var(--accent)"></span></div>
     </div>
       <button id="btnSF" class="btn-a save" onclick="wSave()">✓ Conferma e salva</button>
       <button class="btn-a close" onclick="cancelWiz()">✕ Annulla</button>
     </div>
-  </div><!-- /mainApp -->
+  </div>
 </div>
 
 <script>
+var TARA=2.66;
 var todayStr=new Date().toISOString().slice(0,10);
 var activeDate=todayStr;
 var dayData={};
 var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"var(--z1)"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"var(--z2)"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"var(--z3)"}];
 var AUTISTA_ZONES={Giovanni:["z1"],Antonio:["z3"],Sergio:["z2","z3"]};
-var curUser=""; // current logged-in autista
+var PINS={Giovanni:"4821",Antonio:"7539",Sergio:"6347"};
+var curUser="";
 var gUrl=function(){return localStorage.getItem("gsheet-url")||""};
-var wZone=null,wNC=0,wCC=0,wCeste=[];
+var wZone=null,wNC=0,wCC=0,wCeste=[]; // ceste: [{foto,pesoLordo,pesoNetto}]
 
 function getDay(d){if(!dayData[d])dayData[d]={};return dayData[d]}
 function zDone(d,z){return getDay(d)[z]!=null}
-function zFest(d,z){return getDay(d)[z]==="festivo"}
-function zGetTot(d,z){var v=getDay(d)[z];if(!v||v==="festivo")return 0;if(v.ceste){var t=0;v.ceste.forEach(function(c){t+=c.peso||0});return t}return typeof v==="number"?v:0}
+function zGetNet(d,z){var v=getDay(d)[z];if(!v||v==="festivo")return 0;if(v.totaleNetto)return v.totaleNetto;return 0}
 function myZones(){return AUTISTA_ZONES[curUser]||[]}
 function myPendZ(d){return ZONES.filter(function(z){return myZones().indexOf(z.id)>=0&&!zDone(d,z.id)})}
-function allDayOk(d){return ZONES.every(function(z){return zDone(d,z.id)})}
 function myDayOk(d){return myZones().every(function(z){return zDone(d,z)})}
 function fmtDt(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function saveL(){localStorage.setItem("dayData",JSON.stringify(dayData))}
 function zoneById(id){return ZONES.find(function(z){return z.id===id})}
 
-// ── LOGIN ──
-var PINS={Giovanni:"4821",Antonio:"7539",Sergio:"6347"};
+// LOGIN
 var loginSel="";
-function selUser(name){
-  loginSel=name;
-  document.getElementById("pinPanel").classList.remove("hid");
-  document.getElementById("pinUser").textContent="🚚 "+name;
-  document.getElementById("pinInput").value="";
-  document.getElementById("pinErr").classList.add("hid");
-  document.getElementById("pinBtn").disabled=true;
-  setTimeout(function(){document.getElementById("pinInput").focus()},100);
-}
-function chkPin(){
-  var v=document.getElementById("pinInput").value;
-  document.getElementById("pinBtn").disabled=v.length<4;
-  document.getElementById("pinErr").classList.add("hid");
-}
-function tryPin(){
-  var v=document.getElementById("pinInput").value;
-  if(v===PINS[loginSel]){doLogin(loginSel)}
-  else{document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinInput").value="";document.getElementById("pinBtn").disabled=true}
-}
-function doLogin(name){
-  curUser=name;localStorage.setItem("autista",name);
-  document.getElementById("loginScr").classList.add("hid");
-  document.getElementById("mainApp").classList.remove("hid");
-  initApp();
-}
-function changeUser(){
-  if(!confirm("Cambiare profilo autista su questo tablet?"))return;
-  localStorage.removeItem("autista");curUser="";
-  document.getElementById("mainApp").classList.add("hid");
-  document.getElementById("setP").classList.add("hid");
-  document.getElementById("loginScr").classList.remove("hid");
-}
+function selUser(n){loginSel=n;document.getElementById("pinPanel").classList.remove("hid");document.getElementById("pinUser").textContent="🚚 "+n;document.getElementById("pinInput").value="";document.getElementById("pinErr").classList.add("hid");document.getElementById("pinBtn").disabled=true;setTimeout(function(){document.getElementById("pinInput").focus()},100)}
+function chkPin(){document.getElementById("pinBtn").disabled=document.getElementById("pinInput").value.length<4;document.getElementById("pinErr").classList.add("hid")}
+function tryPin(){if(document.getElementById("pinInput").value===PINS[loginSel])doLogin(loginSel);else{document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinInput").value="";document.getElementById("pinBtn").disabled=true}}
+function doLogin(n){curUser=n;localStorage.setItem("autista",n);document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}
+function changeUser(){if(!confirm("Cambiare profilo?"))return;localStorage.removeItem("autista");curUser="";document.getElementById("mainApp").classList.add("hid");document.getElementById("setP").classList.add("hid");document.getElementById("loginScr").classList.remove("hid")}
 
-// ── INIT ──
-function init(){
-  // Check saved user
-  var saved=localStorage.getItem("autista");
-  if(saved&&AUTISTA_ZONES[saved]){
-    curUser=saved;
-    document.getElementById("loginScr").classList.add("hid");
-    document.getElementById("mainApp").classList.remove("hid");
-    initApp();
-  }
-}
+function init(){var s=localStorage.getItem("autista");if(s&&AUTISTA_ZONES[s]){curUser=s;document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}}
 function initApp(){
   document.getElementById("sUrl").value=gUrl();
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
-  delete dayData["2026-03-24"];delete dayData["2026-03-25"];delete dayData[todayStr];saveL();
-  // User badge
+  delete dayData["2026-03-24"];delete dayData["2026-03-25"];saveL();
   var mz=myZones().map(function(id){var z=zoneById(id);return z?z.name:id}).join(", ");
-  document.getElementById("ubName").textContent="🚚 "+curUser;
-  document.getElementById("ubZones").textContent=mz;
-  document.getElementById("ubIcon").style.background=
-    curUser==="Giovanni"?"rgba(245,158,11,0.15)":curUser==="Antonio"?"rgba(59,130,246,0.15)":"rgba(16,185,97,0.15)";
-  findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000);
-}
-function findAct(){var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);
-  activeDate=(dayData[y]&&!myDayOk(y))?y:todayStr}
+  document.getElementById("ubName").textContent="🚚 "+curUser;document.getElementById("ubZones").textContent=mz;
+  findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000)}
+function findAct(){var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);activeDate=(dayData[y]&&!myDayOk(y))?y:todayStr}
 
-// ── SYNC ──
-async function doSync(){
-  var url=gUrl();if(!url){updUI();return}
-  try{var r=await fetch(url+"?action=getAll");var j=await r.json();
-    if(j.data){j.data.forEach(function(d){if(!d.data)return;var day=getDay(d.data);
-      if(d.avellino!=null&&!day.z3)day.z3={ceste:[{peso:d.avellino}],autista:d.operatore,totale:d.avellino};
-      if(d.sergio!=null&&!day.z2)day.z2={ceste:[{peso:d.sergio}],autista:d.operatore,totale:d.sergio};
-      if(d.giovanni!=null&&!day.z1)day.z1={ceste:[{peso:d.giovanni}],autista:d.operatore,totale:d.giovanni};
-    });saveL();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso";showT("✓ Sincronizzato")}
-  }catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline"}
-  findAct();updUI()}
+async function doSync(){var url=gUrl();if(!url){updUI();return}try{var r=await fetch(url+"?action=getAll");var j=await r.json();if(j.data){j.data.forEach(function(d){if(!d.data)return;var day=getDay(d.data);if(d.zona&&d.peso!=null){day[d.zona]={totaleNetto:d.peso,autista:d.operatore}}});saveL();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso";showT("✓ Sincronizzato")}}catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline"}findAct();updUI()}
+function chkPM(){var h=new Date().getHours();document.getElementById("pmAl").classList.toggle("hid",!(h>=14&&myPendZ(todayStr).length>0&&activeDate===todayStr))}
 
-function chkPM(){var h=new Date().getHours();var p=myPendZ(todayStr);
-  document.getElementById("pmAl").classList.toggle("hid",!(h>=14&&p.length>0&&activeDate===todayStr))}
-
-// ── UI ──
 function updUI(){
   var con=!!gUrl();document.getElementById("noUrl").classList.toggle("hid",con);
   var isOld=activeDate!==todayStr;
   document.getElementById("dayLbl").textContent=isOld?"⚠️ Da completare":"Oggi";
-  document.getElementById("todayDt").textContent=fmtDt(activeDate);
-  document.getElementById("oldTag").classList.toggle("hid",!isOld);
-  var ov=document.getElementById("overdueAl");
-  if(isOld){ov.classList.remove("hid");document.getElementById("ovTxt").textContent="Completa "+fmtDt(activeDate)+" prima."}else{ov.classList.add("hid")}
-  var html="",total=0;
-  var myZ=myZones();
+  document.getElementById("todayDt").textContent=fmtDt(activeDate);document.getElementById("oldTag").classList.toggle("hid",!isOld);
+  var ov=document.getElementById("overdueAl");if(isOld){ov.classList.remove("hid");document.getElementById("ovTxt").textContent="Completa "+fmtDt(activeDate)}else{ov.classList.add("hid")}
+  var html="",total=0,myZ=myZones();
   ZONES.forEach(function(z){
     var v=getDay(activeDate)[z.id],done=v!=null,fest=v==="festivo",hasD=done&&!fest;
-    var tot=zGetTot(activeDate,z.id);
-    if(hasD)total+=tot;
+    var net=zGetNet(activeDate,z.id);if(hasD)total+=net;
     var isMine=myZ.indexOf(z.id)>=0;
-    var cls=hasD?"done":fest?"fest":"";
-    if(!isMine&&!done)cls="other";
+    var cls=hasD?"done":fest?"fest":!isMine?"other":"";
     var st,sc;
-    if(hasD){st="✓ "+tot.toFixed(1)+" kg";sc="ok"}
+    if(hasD){st="✓ "+net.toFixed(1)+" kg netto";sc="ok"}
     else if(fest){st="🏖️ festivo";sc="f"}
     else if(!isMine){st="altro autista";sc="oth"}
     else{st="in attesa";sc="w"}
     html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div><div class="zr-sub">'+z.area+'</div></div></div><span class="zr-st '+sc+'">'+st+'</span></div>';
     if(hasD&&v.autista)html+='<div class="zr-detail">🚚 '+v.autista+(v.ceste?' · '+v.ceste.length+' cest'+(v.ceste.length>1?'e':'a'):'')+'</div>';
   });
-  document.getElementById("zoneGrid").innerHTML=html;
-  document.getElementById("totVal").textContent=total>0?total.toFixed(1)+" kg":"—";
-  var pend=myPendZ(activeDate);
-  document.getElementById("btnAdd").classList.toggle("hid",pend.length===0);
-  document.getElementById("btnFest").classList.toggle("hid",pend.length===0);
-  if(myDayOk(activeDate)&&isOld){activeDate=todayStr;showT("✓ Completato!");updUI();return}
-  chkPM()}
+  document.getElementById("zoneGrid").innerHTML=html;document.getElementById("totVal").textContent=total>0?total.toFixed(1)+" kg":"—";
+  var pend=myPendZ(activeDate);document.getElementById("btnAdd").classList.toggle("hid",pend.length===0);document.getElementById("btnFest").classList.toggle("hid",pend.length===0);
+  if(myDayOk(activeDate)&&isOld){activeDate=todayStr;showT("✓ Completato!");updUI();return}chkPM()}
 
-// ── FESTIVO ──
+// FESTIVO
 var festSel=null;
-function showFest(){document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");festSel=null;
-  var p=myPendZ(activeDate);
-  document.getElementById("festList").innerHTML=p.map(function(z){
-    return'<div id="fb-'+z.id+'" onclick="festPick(\''+z.id+'\')" style="padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;margin-bottom:12px;cursor:pointer"><div style="width:16px;height:16px;border-radius:5px;flex-shrink:0;background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></div>';
-  }).join("");
-  document.getElementById("btnFConf").classList.add("hid");
-  document.getElementById("btnFA").classList.toggle("hid",p.length<=1)}
-function festPick(zid){festSel=zid;var p=myPendZ(activeDate);
-  p.forEach(function(z){var el=document.getElementById("fb-"+z.id);if(el){el.style.borderColor=z.id===zid?"var(--accent)":"var(--inbord)";el.style.background=z.id===zid?"rgba(139,92,246,0.12)":"var(--inbg)"}});
-  var z=zoneById(zid);var btn=document.getElementById("btnFConf");btn.classList.remove("hid");
-  btn.textContent="🏖️ Conferma "+z.name+" festivo";btn.style.background="var(--accent)";btn.disabled=false;btn.onclick=festConfirm}
-function festConfirm(){if(!festSel)return;var z=zoneById(festSel);
-  getDay(activeDate)[festSel]="festivo";saveL();showT("🏖️ "+z.name+" festiva");festSel=null;clFest()}
+function showFest(){document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");festSel=null;var p=myPendZ(activeDate);
+  document.getElementById("festList").innerHTML=p.map(function(z){return'<div id="fb-'+z.id+'" onclick="festPick(\''+z.id+'\')" style="padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;margin-bottom:12px;cursor:pointer"><div style="width:16px;height:16px;border-radius:5px;flex-shrink:0;background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></div>'}).join("");
+  document.getElementById("btnFConf").classList.add("hid");document.getElementById("btnFA").classList.toggle("hid",p.length<=1)}
+function festPick(zid){festSel=zid;myPendZ(activeDate).forEach(function(z){var el=document.getElementById("fb-"+z.id);if(el){el.style.borderColor=z.id===zid?"var(--accent)":"var(--inbord)";el.style.background=z.id===zid?"rgba(139,92,246,0.12)":"var(--inbg)"}});
+  var z=zoneById(zid);var btn=document.getElementById("btnFConf");btn.classList.remove("hid");btn.textContent="🏖️ Conferma "+z.name+" festivo";btn.style.background="var(--accent)";btn.disabled=false;btn.onclick=festConfirm}
+function festConfirm(){if(!festSel)return;getDay(activeDate)[festSel]="festivo";saveL();showT("🏖️ Festivo");festSel=null;clFest()}
 function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");festSel=null;updUI()}
-function festAll(){if(!confirm("Tutte le tue zone festive oggi?"))return;myPendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
+function festAll(){if(!confirm("Tutte festive?"))return;myPendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
 
-// ── WIZARD (step numbers shifted: no autista step) ──
+// WIZARD
 function startWiz(){wZone=null;wNC=0;wCC=0;wCeste=[];document.getElementById("mainScr").classList.add("hid");wGo(1)}
-function cancelWiz(){[1,2,3,4,5].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("mainScr").classList.remove("hid");updUI()}
-function wGo(s){[1,2,3,4,5].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("w"+s).classList.add("act");
-  if(s===1)wBldZ();if(s===2)wBldC();if(s===3)wSetW();if(s===4)wSetP();if(s===5)wBldSum()}
-
-function wBldZ(){var p=myPendZ(activeDate);
-  // If only 1 zone, skip selection
-  if(p.length===1){wZone=p[0];wGo(2);return}
+function cancelWiz(){[1,2,3,4].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("mainScr").classList.remove("hid");updUI()}
+function wGo(s){[1,2,3,4].forEach(function(n){document.getElementById("w"+n).classList.remove("act")});document.getElementById("w"+s).classList.add("act");
+  if(s===1)wBldZ();if(s===2)wBldC();if(s===3)wSetP();if(s===4)wBldSum()}
+function wBldZ(){var p=myPendZ(activeDate);if(p.length===1){wZone=p[0];wGo(2);return}
   document.getElementById("wZoneList").innerHTML=p.map(function(z){return'<button class="sel-btn" onclick="wPickZ(\''+z.id+'\')"><div class="sd" style="background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></button>'}).join("")}
 function wPickZ(zid){wZone=zoneById(zid);wGo(2)}
 function wBldC(){var h="";for(var i=1;i<=6;i++)h+='<button class="cnt-btn" onclick="wPickC('+i+')">'+i+'</button>';document.getElementById("wCntBtns").innerHTML=h}
 function wPickC(n){wNC=n;wCC=0;wCeste=[];wGo(3)}
-function wSetW(){
-  var n=wCC+1;document.getElementById("w3sn").textContent=n;document.getElementById("w3st").textContent="CESTA "+n+" DI "+wNC;
-  document.getElementById("w3n").textContent=n;document.getElementById("w3z").textContent=wZone.name;
-  document.getElementById("wW").value="";document.getElementById("btnNW").disabled=true;bldCP("cpD1");
-  setTimeout(function(){document.getElementById("wW").focus()},100)}
-function wChkW(){document.getElementById("btnNW").disabled=!(parseFloat(document.getElementById("wW").value)>0)}
-function wNxtW(){var w=parseFloat(document.getElementById("wW").value);if(!wCeste[wCC])wCeste[wCC]={};wCeste[wCC].peso=w;wGo(4)}
-function wBackW(){if(wCC===0)wGo(2);else{wCC--;wGo(4)}}
 
 function wSetP(){
-  var n=wCC+1;document.getElementById("w4sn").textContent=n;document.getElementById("w4st").textContent="FOTO CESTA "+n+" DI "+wNC;
-  document.getElementById("w4n").textContent=n;document.getElementById("pGuide").classList.remove("hid");wClrP();
-  document.getElementById("btnNP").disabled=true;document.getElementById("btnNP").textContent="📸 Scatta foto per continuare";bldCP("cpD2")}
+  var n=wCC+1;document.getElementById("w3sn").textContent=n;document.getElementById("w3st").textContent="CESTA "+n+" DI "+wNC;
+  document.getElementById("w3n").textContent=n;document.getElementById("w3z").textContent=wZone.name;
+  document.getElementById("pGuide").classList.remove("hid");wClrP();
+  document.getElementById("btnNP").disabled=true;document.getElementById("btnNP").textContent="📸 Scatta foto per continuare";
+  document.getElementById("weightRes").classList.add("hid");bldCP("cpD1")}
+function wBackP(){if(wCC===0)wGo(2);else{wCC--;wGo(3)}}
 
 function wPhoto(e){
   var f=e.target.files&&e.target.files[0];if(!f)return;
@@ -459,120 +316,98 @@ function wPhoto(e){
     if(w>800){h=Math.round(h*800/w);w=800}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
     var b64=c.toDataURL("image/jpeg",0.7);
     if(!wCeste[wCC])wCeste[wCC]={};wCeste[wCC].foto=b64;
-    document.getElementById("prevImg").src=b64;
-    document.getElementById("camP").classList.add("hid");document.getElementById("camD").classList.remove("hid");
-    document.getElementById("camBox").className="cam-box cam-ok";document.getElementById("pGuide").classList.add("hid");
-    verifyPhoto(b64,c);
+    document.getElementById("prevImg").src=b64;document.getElementById("camP").classList.add("hid");
+    document.getElementById("camD").classList.remove("hid");document.getElementById("camBox").className="cam-box cam-ok";
+    document.getElementById("pGuide").classList.add("hid");
+    verifyAndRead(b64,c);
   };img.src=ev.target.result};rd.readAsDataURL(f)}
 
 function wClrP(){
-  var oldIn=document.getElementById("camIn");
-  var newIn=document.createElement("input");
-  newIn.id="camIn";newIn.type="file";newIn.accept="image/*";
-  newIn.setAttribute("capture","environment");newIn.style.display="none";
-  newIn.onchange=function(e){wPhoto(e)};
-  oldIn.parentNode.replaceChild(newIn,oldIn);
+  var o=document.getElementById("camIn");var n=document.createElement("input");
+  n.id="camIn";n.type="file";n.accept="image/*";n.setAttribute("capture","environment");n.style.display="none";n.onchange=function(e){wPhoto(e)};
+  o.parentNode.replaceChild(n,o);
   document.getElementById("camP").classList.remove("hid");document.getElementById("camD").classList.add("hid");
-  document.getElementById("camBox").className="cam-box cam-req";
-  document.getElementById("vBar").classList.add("hid");document.getElementById("camOk").classList.add("hid");
+  document.getElementById("camBox").className="cam-box cam-req";document.getElementById("vBar").classList.add("hid");
+  document.getElementById("weightRes").classList.add("hid");
   document.getElementById("btnNP").disabled=true;document.getElementById("btnNP").textContent="📸 Scatta foto per continuare";
   document.getElementById("pGuide").classList.remove("hid")}
 
-async function verifyPhoto(b64,canvas){
-  var vb=document.getElementById("vBar"),ok=document.getElementById("camOk"),btn=document.getElementById("btnNP");
+async function verifyAndRead(b64,canvas){
+  var vb=document.getElementById("vBar"),btn=document.getElementById("btnNP"),wr=document.getElementById("weightRes");
   vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Controllo foto...';vb.classList.remove("hid");
-  ok.classList.add("hid");btn.disabled=true;
-
-  // Offline checks
+  btn.disabled=true;wr.classList.add("hid");
+  // Basic checks
   var cx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
-  var px=cx.getImageData(0,0,w,h).data,totalPx=w*h,brightness=0,sumSq=0;
-  for(var i=0;i<px.length;i+=4){var lum=(px[i]+px[i+1]+px[i+2])/3;brightness+=lum;sumSq+=lum*lum}
-  brightness/=totalPx;var variance=(sumSq/totalPx)-(brightness*brightness);
-  if(brightness<30){vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo scura";btn.textContent="❌ Riscatta";return}
-  if(brightness>235){vb.className="verify-bar fail";vb.innerHTML="❌ Foto troppo chiara";btn.textContent="❌ Riscatta";return}
-  if(variance<200){vb.className="verify-bar fail";vb.innerHTML="❌ Inquadra la bilancia con la cesta";btn.textContent="❌ Riscatta";return}
-  if(w<300||h<300){vb.className="verify-bar fail";vb.innerHTML="❌ Usa la fotocamera";btn.textContent="❌ Riscatta";return}
-
-  // AI verification
+  var px=cx.getImageData(0,0,w,h).data,tp=w*h,br=0,sq=0;
+  for(var i=0;i<px.length;i+=4){var l=(px[i]+px[i+1]+px[i+2])/3;br+=l;sq+=l*l}
+  br/=tp;var va=(sq/tp)-(br*br);
+  if(br<30){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo scura";btn.textContent="❌ Riscatta";return}
+  if(br>235){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo chiara";btn.textContent="❌ Riscatta";return}
+  if(va<200){vb.className="verify-bar fail";vb.innerHTML="❌ Inquadra bilancia con cesta";btn.textContent="❌ Riscatta";return}
+  // AI
   var url=gUrl();
-  if(!url){
-    vb.className="verify-bar pass";vb.innerHTML="✓ Controllo base OK (AI non attiva)";
-    ok.classList.remove("hid");btn.disabled=false;
-    btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
-    return;
-  }
-
-  // Create small thumbnail for AI (400px max - much smaller payload)
-  vb.innerHTML='<span class="spin"></span> Preparazione foto per AI...';
-  var thumbC=document.createElement("canvas");
-  var tw=canvas.width,th=canvas.height;
-  if(tw>400){th=Math.round(th*400/tw);tw=400}
-  thumbC.width=tw;thumbC.height=th;
-  thumbC.getContext("2d").drawImage(canvas,0,0,tw,th);
-  var thumbB64=thumbC.toDataURL("image/jpeg",0.5);
-
-  vb.innerHTML='<span class="spin"></span> Invio a verifica AI...';
-
+  if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
+  // Thumbnail
+  var tc=document.createElement("canvas"),tw=w,th=h;if(tw>400){th=Math.round(th*400/tw);tw=400}
+  tc.width=tw;tc.height=th;tc.getContext("2d").drawImage(canvas,0,0,tw,th);
+  var tb=tc.toDataURL("image/jpeg",0.5);
+  vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
   try{
-    var res=await fetch(url,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain"},
-      body:JSON.stringify({action:"verifyPhoto",foto:thumbB64})
-    });
-
-    vb.innerHTML='<span class="spin"></span> Analisi AI in corso...';
-    var txt=await res.text();
-    var j;
-    try{ j=JSON.parse(txt); }catch(pe){
-      vb.className="verify-bar fail";
-      vb.innerHTML="❌ Risposta script non valida — aggiorna lo script Google";
-      btn.textContent="❌ Errore script";return;
-    }
-
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:tb})});
+    var txt=await res.text();var j;
+    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore script";return}
     if(j.valid===true){
-      vb.className="verify-bar pass";vb.innerHTML="✓ Foto verificata da AI";
-      ok.classList.remove("hid");btn.disabled=false;
-      btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+      var pesoLordo=j.peso;
+      if(pesoLordo!=null&&pesoLordo>0){
+        var pesoNetto=Math.max(0,+(pesoLordo-TARA).toFixed(2));
+        wCeste[wCC].pesoLordo=pesoLordo;wCeste[wCC].pesoNetto=pesoNetto;
+        vb.className="verify-bar pass";vb.innerHTML="✓ Foto OK — peso letto dal display";
+        document.getElementById("wrVal").textContent=pesoLordo.toFixed(2)+" kg";
+        document.getElementById("wrNet").textContent=pesoNetto.toFixed(2)+" kg";
+        wr.classList.remove("hid");btn.disabled=false;
+        btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+      } else {
+        // Valid photo but can't read weight
+        vb.className="verify-bar fail";vb.innerHTML="❌ Peso non leggibile dal display — riscatta più nitida";
+        btn.textContent="❌ Riscatta più nitida";
+      }
     } else if(j.valid===false){
-      vb.className="verify-bar fail";
-      vb.innerHTML="❌ "+(j.reason||"Foto non valida — serve cesta su bilancia");
-      btn.textContent="❌ Riscatta";
+      vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");btn.textContent="❌ Riscatta";
     } else if(j.error){
-      vb.className="verify-bar fail";
-      vb.innerHTML="❌ Errore: "+(j.error||"sconosciuto")+" — aggiorna script Google";
-      btn.textContent="❌ Errore";
-    } else {
-      vb.className="verify-bar fail";
-      vb.innerHTML="❌ Risposta imprevista — aggiorna lo script Google";
-      btn.textContent="❌ Errore";
-    }
-  }catch(e){
-    vb.className="verify-bar fail";
-    vb.innerHTML="❌ Connessione fallita: "+e.message;
-    btn.textContent="❌ Riprova";
-  }
-}
+      vb.className="verify-bar fail";vb.innerHTML="❌ "+j.error;btn.textContent="❌ Errore";
+    } else{vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore"}
+  }catch(e){vb.className="verify-bar fail";vb.innerHTML="❌ Connessione: "+e.message;btn.textContent="❌ Riprova"}}
 
-function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(5)}}
+function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(4)}}
 function bldCP(id){var h="";for(var i=0;i<wNC;i++){var c=i<wCC?"done":i===wCC?"active":"";h+='<div class="cp-d '+c+'">'+(i<wCC?"✓":(i+1))+'</div>'}document.getElementById(id).innerHTML=h}
 
 function wBldSum(){
-  document.getElementById("w5z").textContent=wZone.name+" — "+wZone.area;
-  var h='<div class="sum-row"><span class="sum-label">Autista</span><span class="sum-val">🚚 '+curUser+'</span></div>';
-  var tot=0;wCeste.forEach(function(c,i){tot+=c.peso;h+='<div class="sum-row"><span class="sum-label">Cesta '+(i+1)+'</span><span class="sum-val">'+c.peso.toFixed(1)+' kg '+(c.foto?'📷':'')+'</span></div>'});
-  document.getElementById("sumB").innerHTML=h;document.getElementById("sumT").textContent=tot.toFixed(1)+" kg"}
+  document.getElementById("w4z").textContent=wZone.name+" — "+wZone.area;
+  var h='<div class="sum-section"><div class="sum-title">Autista</div><div class="sum-row"><span class="sl">🚚 '+curUser+'</span><span class="sv"></span></div></div>';
+  var totLordo=0,totNetto=0;
+  wCeste.forEach(function(c,i){
+    var lordo=c.pesoLordo||0;var netto=c.pesoNetto||0;totLordo+=lordo;totNetto+=netto;
+    h+='<div class="sum-section"><div class="sum-title">Cesta '+(i+1)+' 📷</div>';
+    h+='<div class="sum-row"><span class="sl">Peso lordo (display)</span><span class="sv">'+lordo.toFixed(2)+' kg</span></div>';
+    h+='<div class="sum-row"><span class="sl">Tara cesta rossa</span><span class="sv">−'+TARA.toFixed(2)+' kg</span></div>';
+    h+='<div class="sum-row"><span class="sl">Peso netto reso</span><span class="sv" style="color:var(--ok)">'+netto.toFixed(2)+' kg</span></div></div>';
+  });
+  h+='<div class="sum-section"><div class="sum-row total"><span class="sl">TOTALE NETTO</span><span class="sv">'+totNetto.toFixed(2)+' kg</span></div>';
+  if(wCeste.length>1)h+='<div class="sum-row"><span class="sl">Totale lordo</span><span class="sv" style="color:var(--muted)">'+totLordo.toFixed(2)+' kg</span></div><div class="sum-row"><span class="sl">Tara ('+wCeste.length+' ceste)</span><span class="sv" style="color:var(--muted)">−'+(TARA*wCeste.length).toFixed(2)+' kg</span></div>';
+  h+='</div>';
+  document.getElementById("sumB").innerHTML=h}
 
 async function wSave(){
   var btn=document.getElementById("btnSF");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
-  var tot=0;wCeste.forEach(function(c){tot+=c.peso});
-  getDay(activeDate)[wZone.id]={ceste:wCeste.map(function(c){return{peso:c.peso}}),autista:curUser,totale:tot};saveL();
+  var totNetto=0;wCeste.forEach(function(c){totNetto+=c.pesoNetto||0});
+  getDay(activeDate)[wZone.id]={ceste:wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}}),autista:curUser,totaleNetto:totNetto};saveL();
   var url=gUrl();if(url){
-    try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:tot,nceste:wNC,ceste:wCeste.map(function(c,i){return{n:i+1,peso:c.peso}})})});
-      for(var i=0;i<wCeste.length;i++){if(wCeste[i].foto){try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:activeDate,operatore:curUser,giro:wZone.id,cesta:i+1,foto:wCeste[i].foto})})}catch(e){}}}
-      showT("✓ "+wZone.name+" — "+tot.toFixed(1)+" kg")}catch(e){showT("⚠ Salvato localmente")}}else{showT("✓ Salvato localmente")}
+    try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:totNetto,nceste:wNC,ceste:wCeste.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+      for(var i=0;i<wCeste.length;i++){if(wCeste[i].foto){try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:activeDate,operatore:curUser,zona:wZone.id,cesta:i+1,foto:wCeste[i].foto})})}catch(e){}}}
+      showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto")}catch(e){showT("⚠ Salvato localmente")}}else{showT("✓ Salvato localmente")}
   cancelWiz()}
 
-function openSet(){var p=prompt("Password impostazioni:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
+function openSet(){var p=prompt("Password:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
 function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updUI()}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
 function viewP(s){document.getElementById("poImg").src=s;document.getElementById("po").classList.add("show")}
