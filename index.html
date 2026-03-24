@@ -348,9 +348,9 @@ async function verifyAndRead(b64,canvas){
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
   // Thumbnail
-  var tc=document.createElement("canvas"),tw=w,th=h;if(tw>400){th=Math.round(th*400/tw);tw=400}
+  var tc=document.createElement("canvas"),tw=w,th=h;if(tw>800){th=Math.round(th*800/tw);tw=800}
   tc.width=tw;tc.height=th;tc.getContext("2d").drawImage(canvas,0,0,tw,th);
-  var tb=tc.toDataURL("image/jpeg",0.5);
+  var tb=tc.toDataURL("image/jpeg",0.8);
   vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
   try{
     var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:tb})});
@@ -361,15 +361,18 @@ async function verifyAndRead(b64,canvas){
       if(pesoLordo!=null&&pesoLordo>0){
         var pesoNetto=Math.max(0,+(pesoLordo-TARA).toFixed(2));
         wCeste[wCC].pesoLordo=pesoLordo;wCeste[wCC].pesoNetto=pesoNetto;
-        vb.className="verify-bar pass";vb.innerHTML="✓ Foto OK — peso letto dal display";
+        vb.className="verify-bar pass";vb.innerHTML="✓ Peso letto: "+pesoLordo.toFixed(2)+" kg";
         document.getElementById("wrVal").textContent=pesoLordo.toFixed(2)+" kg";
         document.getElementById("wrNet").textContent=pesoNetto.toFixed(2)+" kg";
         wr.classList.remove("hid");btn.disabled=false;
         btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
       } else {
-        // Valid photo but can't read weight
-        vb.className="verify-bar fail";vb.innerHTML="❌ Peso non leggibile dal display — riscatta più nitida";
-        btn.textContent="❌ Riscatta più nitida";
+        // Valid photo but can't read weight — manual fallback
+        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile — inserisci manualmente:";
+        wr.classList.remove("hid");
+        document.getElementById("wrVal").innerHTML='<input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:var(--inbg);border:2px solid var(--warn);border-radius:10px;padding:10px;font-size:24px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:140px;outline:none" oninput="manualWChk()">';
+        document.getElementById("wrNet").textContent="—";
+        btn.disabled=true;btn.textContent="Inserisci il peso dal display";
       }
     } else if(j.valid===false){
       vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");btn.textContent="❌ Riscatta";
@@ -379,6 +382,16 @@ async function verifyAndRead(b64,canvas){
   }catch(e){vb.className="verify-bar fail";vb.innerHTML="❌ Connessione: "+e.message;btn.textContent="❌ Riprova"}}
 
 function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(4)}}
+function manualWChk(){
+  var v=parseFloat(document.getElementById("manualW").value);
+  var btn=document.getElementById("btnNP");
+  if(v>0){
+    var netto=Math.max(0,+(v-TARA).toFixed(2));
+    wCeste[wCC].pesoLordo=v;wCeste[wCC].pesoNetto=netto;
+    document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
+    btn.disabled=false;btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+  } else {btn.disabled=true;btn.textContent="Inserisci il peso";document.getElementById("wrNet").textContent="—"}
+}
 function bldCP(id){var h="";for(var i=0;i<wNC;i++){var c=i<wCC?"done":i===wCC?"active":"";h+='<div class="cp-d '+c+'">'+(i<wCC?"✓":(i+1))+'</div>'}document.getElementById(id).innerHTML=h}
 
 function wBldSum(){
