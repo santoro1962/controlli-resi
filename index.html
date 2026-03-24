@@ -496,20 +496,28 @@ async function verifyPhoto(b64,canvas){
   // AI verification
   var url=gUrl();
   if(!url){
-    // No Google Sheets = no AI, pass with basic checks only
     vb.className="verify-bar pass";vb.innerHTML="✓ Controllo base OK (AI non attiva)";
     ok.classList.remove("hid");btn.disabled=false;
     btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
     return;
   }
 
-  vb.innerHTML='<span class="spin"></span> Invio foto a verifica AI...';
+  // Create small thumbnail for AI (400px max - much smaller payload)
+  vb.innerHTML='<span class="spin"></span> Preparazione foto per AI...';
+  var thumbC=document.createElement("canvas");
+  var tw=canvas.width,th=canvas.height;
+  if(tw>400){th=Math.round(th*400/tw);tw=400}
+  thumbC.width=tw;thumbC.height=th;
+  thumbC.getContext("2d").drawImage(canvas,0,0,tw,th);
+  var thumbB64=thumbC.toDataURL("image/jpeg",0.5);
+
+  vb.innerHTML='<span class="spin"></span> Invio a verifica AI...';
 
   try{
     var res=await fetch(url,{
       method:"POST",
       headers:{"Content-Type":"text/plain"},
-      body:JSON.stringify({action:"verifyPhoto",foto:b64})
+      body:JSON.stringify({action:"verifyPhoto",foto:thumbB64})
     });
 
     vb.innerHTML='<span class="spin"></span> Analisi AI in corso...';
@@ -531,8 +539,8 @@ async function verifyPhoto(b64,canvas){
       btn.textContent="❌ Riscatta";
     } else if(j.error){
       vb.className="verify-bar fail";
-      vb.innerHTML="❌ Errore script: "+(j.error||"sconosciuto");
-      btn.textContent="❌ Errore — riprova";
+      vb.innerHTML="❌ Errore: "+(j.error||"sconosciuto")+" — aggiorna script Google";
+      btn.textContent="❌ Errore";
     } else {
       vb.className="verify-bar fail";
       vb.innerHTML="❌ Risposta imprevista — aggiorna lo script Google";
