@@ -306,7 +306,7 @@ function initApp(){
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
   delete dayData["2026-03-24"];delete dayData["2026-03-25"];saveL();
   var mz=myZones().map(function(id){var z=zoneById(id);return z?z.name:id}).join(", ");
-  document.getElementById("ubName").textContent="🚚 "+curUser;document.getElementById("ubZones").textContent=mz;
+  document.getElementById("ubName").textContent=curUser;document.getElementById("ubZones").textContent=mz;
   findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000)}
 function findAct(){var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);activeDate=(dayData[y]&&!myDayOk(y))?y:todayStr}
 
