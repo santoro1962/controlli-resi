@@ -350,15 +350,34 @@ async function doSync(){
   var url=gUrl();if(!url){showT("⚠ Configura Google Sheets nelle Impostazioni");return}
   document.getElementById("sDot").style.background="var(--warn)";document.getElementById("sLbl").textContent="Sincronizzazione...";
   try{
-    var r=await fetch(url+"?action=getAll");var j=await r.json();
-    if(j.data){allData=j.data;processData();
-      // Validate approvals — remove any for zones that no longer have data in sheet
+    var r=await fetch(url+"?action=getAll&t="+Date.now(),{redirect:"follow",cache:"no-store"});
+    var txt=await r.text();
+    var j;
+    try{j=JSON.parse(txt)}catch(pe){
+      document.getElementById("sDot").style.background="var(--danger)";
+      document.getElementById("sLbl").textContent="Risposta non JSON";
+      showT("❌ Risposta non JSON — controlla URL script");
+      console.log("Risposta ricevuta:",txt.substring(0,200));return}
+    if(j.data){
+      allData=j.data;processData();
       var today=dailyData[todayStr];
       Object.keys(approvals).forEach(function(zid){if(!today||!today.zones[zid])delete approvals[zid]});
       Object.keys(festivi).forEach(function(zid){if(today&&today.zones[zid])delete festivi[zid]});
       saveApprovals();saveFestivi();
-      document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso — "+allData.length+" record";showT("✓ Aggiornato")}
-  }catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Errore";showT("❌ Connessione fallita")}
+      document.getElementById("sDot").style.background="var(--ok)";
+      document.getElementById("sLbl").textContent="Connesso — "+allData.length+" record";
+      showT("✓ "+allData.length+" record caricati");
+    } else {
+      document.getElementById("sDot").style.background="var(--warn)";
+      document.getElementById("sLbl").textContent="Nessun dato";
+      showT("⚠ Nessun dato nel foglio");
+    }
+  }catch(e){
+    document.getElementById("sDot").style.background="var(--danger)";
+    document.getElementById("sLbl").textContent="Errore: "+e.message;
+    showT("❌ "+e.message);
+    console.log("Errore sync:",e);
+  }
   updUI();
 }
 
