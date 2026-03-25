@@ -498,42 +498,52 @@ async function wSave(){
   var cesteData=wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}});
   getDay(activeDate)[wZone.id]={ceste:cesteData,autista:curUser,totaleNetto:totNetto};saveL();
   showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto");
-  // 2) Prepare photos for Drive upload — reduce to 1200px (still good for dashboard viewing)
-  // NOTE: AI verification already happened at full 1600px resolution BEFORE this step
+  // 2) Collect photos — use original capture directly (no re-encode to avoid failures)
   var photosToSync=[];
   for(var pi=0;pi<wCeste.length;pi++){
     if(wCeste[pi].foto){
-      var fotoUpload=await new Promise(function(resolve){
-        var img2=new Image();
-        img2.onload=function(){
-          var c2=document.createElement("canvas"),w2=img2.width,h2=img2.height;
-          if(w2>1200){h2=Math.round(h2*1200/w2);w2=1200}
-          c2.width=w2;c2.height=h2;c2.getContext("2d").drawImage(img2,0,0,w2,h2);
-          resolve(c2.toDataURL("image/jpeg",0.6));
-        };img2.onerror=function(){resolve(null)};
-        img2.src=wCeste[pi].foto;
-      });
-      if(fotoUpload)photosToSync.push({cesta:pi+1,foto:fotoUpload});
+      // Reduce to 800px quality 0.5 for reliable upload
+      try{
+        var img2=document.createElement("canvas");
+        var srcImg=new Image();
+        var photoData=await new Promise(function(resolve){
+          srcImg.onload=function(){
+            var w2=srcImg.width,h2=srcImg.height;
+            if(w2>800){h2=Math.round(h2*800/w2);w2=800}
+            img2.width=w2;img2.height=h2;
+            img2.getContext("2d").drawImage(srcImg,0,0,w2,h2);
+            resolve(img2.toDataURL("image/jpeg",0.5));
+          };
+          srcImg.onerror=function(){resolve(null)};
+          srcImg.src=wCeste[pi].foto;
+        });
+        if(photoData)photosToSync.push({cesta:pi+1,foto:photoData});
+      }catch(e){/* skip photo on error */}
     }
   }
   var syncZone=wZone;var syncDate=activeDate;
   // 3) Return to main immediately
   cancelWiz();
-  // 4) BACKGROUND SYNC — data first (fast), then photos (slow)
+  // 4) BACKGROUND SYNC — data first (fast), then photos one by one
   var url=gUrl();if(!url)return;
   try{
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:photosToSync.length||wCeste.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:wCeste.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
   }catch(e){showT("⚠ Dati non sincronizzati")}
-  // Photos in background one by one
+  // Upload photos one at a time with delay between each
   var fotoOk=0;
   for(var i=0;i<photosToSync.length;i++){
     try{
+      showT("📷 Caricamento foto "+(i+1)+"/"+photosToSync.length+"...");
       var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})});
-      var j=await r.json();if(j.success)fotoOk++;
-    }catch(e){}
+      var j=await r.json();
+      if(j.success)fotoOk++;
+      else if(j.error)console.log("Upload foto "+(i+1)+" errore:",j.error);
+    }catch(e){console.log("Upload foto "+(i+1)+" fallito:",e.message)}
+    // Small delay between uploads
+    if(i<photosToSync.length-1)await new Promise(function(r){setTimeout(r,1000)});
   }
   if(photosToSync.length>0){
-    if(fotoOk===photosToSync.length)showT("📷 "+fotoOk+" foto salvate");
+    if(fotoOk===photosToSync.length)showT("📷 "+fotoOk+" foto salvate ✓");
     else showT("⚠ "+fotoOk+"/"+photosToSync.length+" foto salvate");
   }
 }
