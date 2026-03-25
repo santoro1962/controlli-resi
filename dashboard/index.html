@@ -189,7 +189,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <div id="statsRow" class="stats"></div>
     <!-- Approval -->
     <div id="approvalSection" class="approval-section">
-      <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
+      <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span><button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetApprovals()">🔄 Reset</button></div>
       <div id="zoneCards"></div>
       <div id="festSection" class="hid" style="margin-top:12px">
         <div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px 20px">
@@ -324,8 +324,7 @@ document.getElementById("dashPin").addEventListener("keydown",function(e){if(e.k
 function init(){
   document.getElementById("sUrl").value=gUrl();
   document.getElementById("todayDt").textContent=fmtD(todayStr);
-  try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
-  try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
+  // approvals and festivi are session-only — fresh start every time
   if(gUrl()) doSync(); else updUI();
 }
 
@@ -335,6 +334,8 @@ async function doSync(){
   try{
     var r=await fetch(url+"?action=getAll");var j=await r.json();
     if(j.data){allData=j.data;processData();
+      // Reset approvals — fresh data from sheet
+      approvals={};festivi={};window._expanded={};
       document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso — "+allData.length+" record";showT("✓ Aggiornato")}
   }catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Errore";showT("❌ Connessione fallita")}
   updUI();
@@ -347,8 +348,8 @@ function processData(){
     if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza});
 }
 function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
-function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
-function saveFestivi(){localStorage.setItem("festivi-"+todayStr,JSON.stringify(festivi))}
+function saveApprovals(){/* in-memory only — no localStorage */}
+function saveFestivi(){/* in-memory only — no localStorage */}
 function allApproved(){var today=dailyData[todayStr];if(!today)return false;
   // Every zone must be either: has data + approved, OR festivo
   return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id])||festivi[z.id]});
@@ -491,6 +492,7 @@ function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive
 function approveZone(zid,netto,lordo){approvals[zid]={netto:netto,lordo:lordo,approved:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" approvata")}
 function correctZone(zid,nceste){var v=parseFloat(document.getElementById("correct-"+zid).value);if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}var n=Math.max(0,+(v-TARA*nceste).toFixed(2));approvals[zid]={netto:n,lordo:v,approved:true,corrected:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ Corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg")}
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
+function resetApprovals(){if(!confirm("Reset tutte le approvazioni di oggi?"))return;approvals={};festivi={};window._expanded={};updUI();showT("🔄 Approvazioni resettate")}
 function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
   if(v>0){var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});var diff=+(totNet-v).toFixed(2);el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";btn.disabled=false}else{el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}}
 async function saveDDT(){var v=parseFloat(document.getElementById("ddtInput").value);if(!v)return;var btn=document.getElementById("ddtSaveBtn");btn.textContent="⏳ Salvataggio...";btn.disabled=true;var url=gUrl();if(!url){showT("❌ Configura Google Sheets");return}
