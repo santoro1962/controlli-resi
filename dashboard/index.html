@@ -329,15 +329,33 @@ function updToday(){
       var photoUrls=zd.foto?zd.foto.split(" | "):[];
 
       if(isApproved){
-        // ══ COMPACT ROW ══
-        html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(34,197,94,0.3);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+        var isExpanded=!!window._expanded&&window._expanded[z.id];
+        // ══ COMPACT ROW (click to expand) ══
+        html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(34,197,94,0.3);margin-bottom:10px;overflow:hidden">';
+        html+='<div onclick="toggleExpand(\''+z.id+'\')" style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer">';
         html+='<div style="display:flex;align-items:center;gap:10px;min-width:200px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">🚚 '+zd.operatore+'</span></div>';
         html+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
         html+='<span style="font-size:13px">Lordo: <strong style="font-family:monospace;color:var(--text)">'+dL.toFixed(2)+' kg</strong>'+(approvals[z.id].corrected?' <span style="color:var(--warn)">✏️</span>':'')+'</span>';
         html+='<span style="font-size:13px">Netto: <strong style="font-family:monospace;color:var(--ok)">'+dN.toFixed(2)+' kg</strong></span>';
         html+='<span class="badge badge-ok">✓</span>';
-        html+='<button class="btn btn-ghost btn-sm" onclick="unapproveZone(\''+z.id+'\')">↩ Rivedi</button>';
+        html+='<span style="font-size:12px;color:var(--muted)">'+(isExpanded?'▲ Chiudi':'▼ Dettagli')+'</span>';
         html+='</div></div>';
+        // Expandable detail (read-only)
+        if(isExpanded){
+          html+='<div style="padding:0 20px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;padding-top:16px">';
+          html+='<div class="zc-photo">';
+          if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="margin-bottom:8px"/><a href="'+u.trim()+'" target="_blank" style="display:none;width:220px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:13px;text-decoration:underline">📷 Apri foto</a>'});}
+          else{html+='<div style="width:220px;height:140px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)">Nessuna foto</div>'}
+          html+='</div><div class="zc-details">';
+          html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
+          html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value" style="font-size:16px">'+dL.toFixed(2)+' kg'+(approvals[z.id].corrected?' <span style="color:var(--warn);font-size:11px">✏️ corretto</span>':'')+'</span></div>';
+          html+='<div class="zc-row"><span class="label">Tara ('+nc+'×'+TARA+')</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+dN.toFixed(2)+' kg</span></div>';
+          if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
+          html+='</div></div>';
+        }
+        html+='</div>';
       } else {
         // ══ FULL CARD — da verificare ══
         html+='<div class="zone-card waiting"><div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
@@ -356,7 +374,7 @@ function updToday(){
         html+='<div class="zc-actions">';
         html+='<button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso lordo corretto</button>';
         html+='<div class="zc-correct"><span style="font-size:13px;color:var(--muted)">oppure correggi il lordo:</span>';
-        html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg">';
+        html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg"/>';
         html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button></div></div></div>';
       }
     } else {
@@ -399,8 +417,10 @@ function correctZone(zid,nceste){
   saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" corretta: lordo "+lordoCorretto.toFixed(2)+" → netto "+nettoCorretto.toFixed(2)+" kg");
 }
 
-function unapproveZone(zid){
-  delete approvals[zid];saveApprovals();updUI();
+function toggleExpand(zid){
+  if(!window._expanded)window._expanded={};
+  window._expanded[zid]=!window._expanded[zid];
+  updUI();
 }
 
 function ddtPreview(){
