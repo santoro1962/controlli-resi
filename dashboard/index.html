@@ -139,8 +139,20 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 <div id="toast" class="toast"></div>
 <div id="modal" class="modal" onclick="clModal()"><button class="modal-close" onclick="clModal()">✕</button><img id="modalImg" src=""/></div>
 
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScr" style="display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%;background:var(--bg)">
+  <div style="text-align:center;max-width:360px;padding:40px 20px">
+    <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 20px">🍞</div>
+    <h1 style="font-size:26px;margin-bottom:6px">Panificio Santoro</h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:32px">Dashboard — Inserisci il PIN</p>
+    <input id="dashPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="background:var(--inbg);border:2px solid var(--inbord);border-radius:14px;padding:18px;font-size:28px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:100%;outline:none;letter-spacing:12px" oninput="chkDashPin()">
+    <div id="dashPinErr" style="color:var(--danger);font-size:13px;font-weight:600;margin-top:10px;display:none">❌ PIN errato</div>
+    <button id="dashPinBtn" onclick="tryDashPin()" disabled style="width:100%;padding:16px;border-radius:12px;font-size:16px;font-weight:700;margin-top:16px;color:#fff;background:var(--inbg);border:none;cursor:not-allowed;opacity:0.5">Accedi</button>
+  </div>
+</div>
+
 <!-- ═══ SIDEBAR ═══ -->
-<nav class="sidebar" id="sidebar">
+<nav class="sidebar" id="sidebar" style="display:none">
   <div class="sb-logo">
     <div class="sb-logo-icon">🍞</div>
     <div class="sb-logo-text">Panificio Santoro</div>
@@ -161,7 +173,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 </nav>
 
 <!-- ═══ MAIN CONTENT ═══ -->
-<div class="main">
+<div class="main" id="mainArea" style="display:none">
 <div class="main-content">
 
   <!-- ═══ MODULE: RESI ═══ -->
@@ -291,6 +303,16 @@ function toggleSidebar(){
   var sb=document.getElementById("sidebar");sb.classList.toggle("collapsed");
   document.getElementById("sbTogIcon").textContent=sb.classList.contains("collapsed")?"▶":"◀";
 }
+
+var DASH_PIN="3164";
+function chkDashPin(){var v=document.getElementById("dashPin").value;var btn=document.getElementById("dashPinBtn");
+  btn.disabled=v.length<4;btn.style.opacity=v.length>=4?"1":"0.5";btn.style.cursor=v.length>=4?"pointer":"not-allowed";
+  btn.style.background=v.length>=4?"linear-gradient(135deg,#f59e0b,#ef4444)":"var(--inbg)";
+  document.getElementById("dashPinErr").style.display="none"}
+function tryDashPin(){if(document.getElementById("dashPin").value===DASH_PIN){
+  document.getElementById("loginScr").style.display="none";document.getElementById("sidebar").style.display="";document.getElementById("mainArea").style.display="";init()
+}else{document.getElementById("dashPinErr").style.display="block";document.getElementById("dashPin").value="";chkDashPin()}}
+document.getElementById("dashPin").addEventListener("keydown",function(e){if(e.key==="Enter"&&document.getElementById("dashPin").value.length>=4)tryDashPin()});
 
 function init(){
   document.getElementById("sUrl").value=gUrl();
@@ -476,7 +498,6 @@ function saveUrl(){localStorage.setItem("dash-gsheet-url",document.getElementByI
 function viewPhoto(url){document.getElementById("modalImg").src=url;document.getElementById("modal").classList.add("show")}
 function clModal(){document.getElementById("modal").classList.remove("show")}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
-init();
 </script>
 </body>
 </html>
