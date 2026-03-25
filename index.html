@@ -137,11 +137,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
       <div id="pmAl" class="ab amber hid"><div class="ai">⏰</div><div><div class="at">Promemoria</div><div class="ad">Zone da registrare!</div></div></div>
       <div class="today"><div class="today-date"><span id="dayLbl">Oggi</span>: <strong id="todayDt"></strong><span id="oldTag" class="old-tag hid">DA COMPLETARE</span></div><div id="zoneGrid"></div><div class="total-row"><span class="total-label">Totale netto giornata</span><span id="totVal" class="total-val">—</span></div></div>
       <button id="btnAdd" class="btn-a primary hid" onclick="startWiz()">📦 Registra reso</button>
-      <button id="btnFest" class="btn-a fest hid" onclick="showFest()">🏖️ Segna festivo</button>
     </div>
-
-    <!-- FESTIVO -->
-    <div id="festScr" class="hid"><button class="wb" onclick="clFest()">← Indietro</button><div class="fp"><div class="ft">🏖️ Segna festivo</div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Seleziona la zona:</p><div id="festList"></div><button id="btnFConf" class="bn hid" style="margin-top:16px;background:var(--muted)">Seleziona</button><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><button class="btn-fa" id="btnFA" onclick="festAll()">🏖️ Tutte le mie zone festive</button></div></div><button class="btn-a close" onclick="clFest()">✕ Annulla</button></div>
 
     <!-- W1: Zona -->
     <div id="w1" class="wiz"><button class="wb" onclick="cancelWiz()">← Annulla</button><div class="wp"><div class="ws"><span class="sn">1</span>ZONA</div><div class="wq">Quale zona?</div><div class="sel-btns" id="wZoneList"></div></div></div>
@@ -332,19 +328,8 @@ function updUI(){
     if(hasD&&v.autista)html+='<div class="zr-detail">🚚 '+v.autista+(v.ceste?' · '+v.ceste.length+' cest'+(v.ceste.length>1?'e':'a'):'')+'</div>';
   });
   document.getElementById("zoneGrid").innerHTML=html;document.getElementById("totVal").textContent=total>0?total.toFixed(1)+" kg":"—";
-  var pend=myPendZ(activeDate);document.getElementById("btnAdd").classList.toggle("hid",pend.length===0);document.getElementById("btnFest").classList.toggle("hid",pend.length===0);
+  var pend=myPendZ(activeDate);document.getElementById("btnAdd").classList.toggle("hid",pend.length===0);
   if(myDayOk(activeDate)&&isOld){activeDate=todayStr;showT("✓ Completato!");updUI();return}chkPM()}
-
-// FESTIVO
-var festSel=null;
-function showFest(){document.getElementById("mainScr").classList.add("hid");document.getElementById("festScr").classList.remove("hid");festSel=null;var p=myPendZ(activeDate);
-  document.getElementById("festList").innerHTML=p.map(function(z){return'<div id="fb-'+z.id+'" onclick="festPick(\''+z.id+'\')" style="padding:20px 18px;border-radius:14px;font-size:17px;font-weight:600;background:var(--inbg);color:var(--text);border:2px solid var(--inbord);display:flex;align-items:center;gap:14px;margin-bottom:12px;cursor:pointer"><div style="width:16px;height:16px;border-radius:5px;flex-shrink:0;background:'+z.clr+'"></div><div><div style="font-weight:700">'+z.name+'</div><div style="font-size:13px;color:var(--muted)">'+z.area+'</div></div></div>'}).join("");
-  document.getElementById("btnFConf").classList.add("hid");document.getElementById("btnFA").classList.toggle("hid",p.length<=1)}
-function festPick(zid){festSel=zid;myPendZ(activeDate).forEach(function(z){var el=document.getElementById("fb-"+z.id);if(el){el.style.borderColor=z.id===zid?"var(--accent)":"var(--inbord)";el.style.background=z.id===zid?"rgba(139,92,246,0.12)":"var(--inbg)"}});
-  var z=zoneById(zid);var btn=document.getElementById("btnFConf");btn.classList.remove("hid");btn.textContent="🏖️ Conferma "+z.name+" festivo";btn.style.background="var(--accent)";btn.disabled=false;btn.onclick=festConfirm}
-function festConfirm(){if(!festSel)return;getDay(activeDate)[festSel]="festivo";saveL();showT("🏖️ Festivo");festSel=null;clFest()}
-function clFest(){document.getElementById("festScr").classList.add("hid");document.getElementById("mainScr").classList.remove("hid");festSel=null;updUI()}
-function festAll(){if(!confirm("Tutte festive?"))return;myPendZ(activeDate).forEach(function(z){getDay(activeDate)[z.id]="festivo"});saveL();showT("🏖️ Tutto festivo");clFest()}
 
 // WIZARD
 function startWiz(){wZone=null;wNC=0;wCC=0;wCeste=[];document.getElementById("mainScr").classList.add("hid");wGo(1)}
