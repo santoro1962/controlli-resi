@@ -455,19 +455,43 @@ async function wSave(){
   var cesteData=wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}});
   getDay(activeDate)[wZone.id]={ceste:cesteData,autista:curUser,totaleNetto:totNetto};saveL();
   showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto");
-  // 2) Save photos for background upload
-  var photosToSync=wCeste.map(function(c,i){return{cesta:i+1,foto:c.foto}}).filter(function(p){return p.foto});
+  // 2) Prepare photos for Drive upload — reduce to 1200px (still good for dashboard viewing)
+  // NOTE: AI verification already happened at full 1600px resolution BEFORE this step
+  var photosToSync=[];
+  for(var pi=0;pi<wCeste.length;pi++){
+    if(wCeste[pi].foto){
+      var fotoUpload=await new Promise(function(resolve){
+        var img2=new Image();
+        img2.onload=function(){
+          var c2=document.createElement("canvas"),w2=img2.width,h2=img2.height;
+          if(w2>1200){h2=Math.round(h2*1200/w2);w2=1200}
+          c2.width=w2;c2.height=h2;c2.getContext("2d").drawImage(img2,0,0,w2,h2);
+          resolve(c2.toDataURL("image/jpeg",0.6));
+        };img2.onerror=function(){resolve(null)};
+        img2.src=wCeste[pi].foto;
+      });
+      if(fotoUpload)photosToSync.push({cesta:pi+1,foto:fotoUpload});
+    }
+  }
   var syncZone=wZone;var syncDate=activeDate;
   // 3) Return to main immediately
   cancelWiz();
   // 4) BACKGROUND SYNC — data first (fast), then photos (slow)
   var url=gUrl();if(!url)return;
   try{
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:photosToSync.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
-  }catch(e){}
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:photosToSync.length||wCeste.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+  }catch(e){showT("⚠ Dati non sincronizzati")}
   // Photos in background one by one
+  var fotoOk=0;
   for(var i=0;i<photosToSync.length;i++){
-    try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})})}catch(e){}
+    try{
+      var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})});
+      var j=await r.json();if(j.success)fotoOk++;
+    }catch(e){}
+  }
+  if(photosToSync.length>0){
+    if(fotoOk===photosToSync.length)showT("📷 "+fotoOk+" foto salvate");
+    else showT("⚠ "+fotoOk+"/"+photosToSync.length+" foto salvate");
   }
 }
 
