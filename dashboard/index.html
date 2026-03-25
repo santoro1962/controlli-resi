@@ -99,9 +99,11 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 .zc-zone{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
 .zc-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px}
 .zc-body{padding:20px;display:flex;gap:20px;flex-wrap:wrap}
-.zc-photo{flex:0 0 220px}
-.zc-photo img{width:220px;height:auto;max-height:350px;object-fit:contain;border-radius:12px;border:2px solid var(--inbord);cursor:pointer;background:var(--inbg)}
-.zc-photo img:hover{border-color:var(--accent)}
+.zc-photo{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:10px}
+.zc-photo-item{width:180px}
+.zc-photo-item img{width:180px;height:auto;max-height:300px;object-fit:contain;border-radius:12px;border:2px solid var(--inbord);cursor:pointer;background:var(--inbg);display:block}
+.zc-photo-item img:hover{border-color:var(--accent)}
+.zc-photo-item .photo-label{font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;font-weight:600}
 .zc-details{flex:1;min-width:250px}
 .zc-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
 .zc-row:last-child{border:none}.zc-row .label{color:var(--muted)}.zc-row .value{font-weight:700;font-family:monospace}
@@ -286,7 +288,21 @@ var todayStr=new Date().toISOString().slice(0,10);
 var gUrl=function(){return localStorage.getItem("dash-gsheet-url")||""};
 function fmtD(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function fmtDs(d){var p=d.split("-");return p[2]+"/"+p[1]}
-function driveImgUrl(url){if(!url)return"";var id=null;var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);if(m)id=m[1];if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w1200";return url}
+function driveImgUrl(url){if(!url)return"";var id=null;var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);if(m)id=m[1];if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w800";return url}
+function renderPhotos(photoUrls){
+  var h='<div class="zc-photo">';
+  if(photoUrls.length>0){
+    photoUrls.forEach(function(u,i){
+      var imgU=driveImgUrl(u.trim());
+      h+='<div class="zc-photo-item"><div class="photo-label">📷 Cesta '+(i+1)+'</div>';
+      h+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU.replace(/'/g,"\\'")+'\')" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.photo-fallback\').style.display=\'flex\'"/>';
+      h+='<a class="photo-fallback" href="'+u.trim()+'" target="_blank" style="display:none;width:180px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:12px;text-decoration:underline;border:1px solid var(--inbord)">📷 Apri foto '+(i+1)+'</a></div>';
+    });
+  } else {
+    h+='<div class="zc-photo-item"><div style="width:180px;height:120px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">Nessuna foto</div></div>';
+  }
+  h+='</div>';return h;
+}
 
 // ═══ SIDEBAR NAVIGATION ═══
 function goModule(mod,el){
@@ -324,7 +340,9 @@ document.getElementById("dashPin").addEventListener("keydown",function(e){if(e.k
 function init(){
   document.getElementById("sUrl").value=gUrl();
   document.getElementById("todayDt").textContent=fmtD(todayStr);
-  // approvals and festivi are session-only — fresh start every time
+  // Load approvals from localStorage, validate against sheet data
+  try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
+  try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
   if(gUrl()) doSync(); else updUI();
 }
 
@@ -334,6 +352,11 @@ async function doSync(){
   try{
     var r=await fetch(url+"?action=getAll");var j=await r.json();
     if(j.data){allData=j.data;processData();
+      // Validate approvals — remove any for zones that no longer have data in sheet
+      var today=dailyData[todayStr];
+      Object.keys(approvals).forEach(function(zid){if(!today||!today.zones[zid])delete approvals[zid]});
+      Object.keys(festivi).forEach(function(zid){if(today&&today.zones[zid])delete festivi[zid]});
+      saveApprovals();saveFestivi();
       document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso — "+allData.length+" record";showT("✓ Aggiornato")}
   }catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Errore";showT("❌ Connessione fallita")}
   updUI();
@@ -346,8 +369,8 @@ function processData(){
     if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza});
 }
 function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
-function saveApprovals(){/* in-memory only — no localStorage */}
-function saveFestivi(){/* in-memory only — no localStorage */}
+function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
+function saveFestivi(){localStorage.setItem("festivi-"+todayStr,JSON.stringify(festivi))}
 function allApproved(){var today=dailyData[todayStr];if(!today)return false;
   // Every zone must be either: has data + approved, OR festivo
   return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id])||festivi[z.id]});
@@ -421,10 +444,8 @@ function updToday(){
         html+='</div></div>';
         if(isExp){
           html+='<div style="padding:0 20px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;padding-top:16px">';
-          html+='<div class="zc-photo">';
-          if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="margin-bottom:8px"/><a href="'+u.trim()+'" target="_blank" style="display:none;width:220px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:13px;text-decoration:underline">📷 Apri foto</a>'});}
-          else{html+='<div style="width:220px;height:140px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)">Nessuna foto</div>'}
-          html+='</div><div class="zc-details">';
+          html+=renderPhotos(photoUrls);
+          html+='<div class="zc-details">';
           html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
           html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
           html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value">'+dL.toFixed(2)+' kg'+(approvals[z.id].corrected?' <span style="color:var(--warn);font-size:11px">✏️</span>':'')+'</span></div>';
@@ -436,10 +457,9 @@ function updToday(){
       } else {
         html+='<div class="zone-card waiting"><div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
         html+='<span class="zc-badge" style="background:rgba(245,158,11,0.1);color:var(--warn)">⏳ Da verificare</span></div>';
-        html+='<div class="zc-body"><div class="zc-photo">';
-        if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="margin-bottom:8px"/><a href="'+u.trim()+'" target="_blank" style="display:none;width:220px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:13px;text-decoration:underline">📷 Apri foto</a>'});}
-        else{html+='<div style="width:220px;height:140px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)">Nessuna foto</div>'}
-        html+='</div><div class="zc-details">';
+        html+='<div class="zc-body">';
+        html+=renderPhotos(photoUrls);
+        html+='<div class="zc-details">';
         html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
         html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
         html+='<div class="zc-row"><span class="label">Peso lordo (display)</span><span class="value" style="font-size:16px">'+lordo.toFixed(2)+' kg</span></div>';
