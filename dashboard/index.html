@@ -61,8 +61,8 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 .zc-zone{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
 .zc-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px}
 .zc-body{padding:20px;display:flex;gap:20px;flex-wrap:wrap}
-.zc-photo{flex:0 0 200px}
-.zc-photo img{width:200px;height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--inbord);cursor:pointer}
+.zc-photo{flex:0 0 220px}
+.zc-photo img{width:220px;height:auto;max-height:350px;object-fit:contain;border-radius:12px;border:2px solid var(--inbord);cursor:pointer;background:var(--inbg)}
 .zc-photo img:hover{border-color:var(--accent)}
 .zc-details{flex:1;min-width:250px}
 .zc-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
@@ -207,7 +207,7 @@ function driveImgUrl(url){
   var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if(m)id=m[1];
   if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}
-  if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w800";
+  if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w1200";
   return url;
 }
 
