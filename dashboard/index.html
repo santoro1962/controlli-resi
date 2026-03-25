@@ -3,25 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Resi — Carmela</title>
+<title>Panificio Santoro — Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
-:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981}
-*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.app{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
-.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.hdr-left{display:flex;align-items:center;gap:14px}
-.logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:28px}
-.hdr h1{font-size:24px;font-weight:700}.hdr-sub{font-size:13px;color:var(--muted);margin-top:2px}
+:root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981;--sidebar:#0d1117;--sidebar-w:220px;--sidebar-collapsed:68px}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;min-height:100vh}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:width .2s}
+.sidebar.collapsed{width:var(--sidebar-collapsed)}
+.sb-logo{padding:20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.sb-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sb-logo-text{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden}
+.sidebar.collapsed .sb-logo-text{display:none}
+.sb-nav{flex:1;padding:12px 8px}
+.sb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:14px;font-weight:500;margin-bottom:4px;transition:all .15s;white-space:nowrap;overflow:hidden;border:none;background:none;width:100%;text-align:left}
+.sb-item:hover{background:var(--inbg);color:var(--text)}
+.sb-item.active{background:rgba(139,92,246,0.15);color:var(--accent);font-weight:600}
+.sb-item .sb-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sb-item .sb-label{overflow:hidden}
+.sidebar.collapsed .sb-label{display:none}
+.sb-item .sb-badge{font-size:10px;font-weight:700;background:var(--danger);color:#fff;padding:2px 6px;border-radius:8px;margin-left:auto}
+.sidebar.collapsed .sb-badge{display:none}
+.sb-divider{height:1px;background:var(--border);margin:12px 8px}
+.sb-section{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 14px;font-weight:600}
+.sidebar.collapsed .sb-section{display:none}
+.sb-bottom{padding:12px 8px;border-top:1px solid var(--border)}
+.sb-toggle{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:13px;border:none;background:none;width:100%}
+.sb-toggle:hover{background:var(--inbg)}
+.sidebar.collapsed .sb-toggle-label{display:none}
+.sb-coming{font-size:9px;color:var(--warn);background:rgba(245,158,11,0.1);padding:2px 6px;border-radius:6px;margin-left:auto;font-weight:600}
+.sidebar.collapsed .sb-coming{display:none}
+
+/* ═══ MAIN ═══ */
+.main{margin-left:var(--sidebar-w);flex:1;transition:margin-left .2s}
+.sidebar.collapsed~.main{margin-left:var(--sidebar-collapsed)}
+.main-content{max-width:1100px;padding:24px 28px 60px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px}
+.page-sub{font-size:13px;color:var(--muted);margin-top:2px}
 .hdr-right{display:flex;align-items:center;gap:10px}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 .btn{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--accent);color:#fff}.btn-ghost{background:var(--inbg);color:var(--muted);border:1px solid var(--inbord)}
-.btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff}.btn-danger{background:var(--danger);color:#fff}
+.btn-ok{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
 .btn-sm{padding:6px 14px;font-size:12px;border-radius:8px}.btn:disabled{opacity:0.4;cursor:not-allowed}
-.setup{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px;margin-bottom:20px}
-.setup-row{display:flex;gap:10px;align-items:center}
 .fi{background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:12px 14px;color:var(--text);font-family:monospace;font-size:14px;outline:none;flex:1}
+
+/* ═══ MODULE PAGES ═══ */
+.module{display:none}.module.active{display:block}
+
+/* ═══ SHARED COMPONENTS ═══ */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .stat{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px 16px}
 .stat-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
@@ -49,13 +81,10 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 .badge-ok{background:rgba(34,197,94,0.1);color:var(--ok)}.badge-danger{background:rgba(239,68,68,0.1);color:var(--danger)}
 .badge-warn{background:rgba(245,158,11,0.1);color:var(--warn)}.badge-muted{background:rgba(148,163,184,0.1);color:var(--muted)}
 .zone-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
-
-/* Approval cards */
 .approval-section{margin-bottom:24px}
 .approval-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .approval-step{font-size:12px;color:var(--accent);font-weight:600;background:rgba(139,92,246,0.1);padding:4px 12px;border-radius:8px}
 .zone-card{background:var(--card);border-radius:16px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
-.zone-card.approved{border-color:rgba(34,197,94,0.3)}
 .zone-card.waiting{border-color:rgba(245,158,11,0.3)}
 .zc-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .zc-zone{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
@@ -66,86 +95,84 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 .zc-photo img:hover{border-color:var(--accent)}
 .zc-details{flex:1;min-width:250px}
 .zc-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
-.zc-row:last-child{border:none}
-.zc-row .label{color:var(--muted)}.zc-row .value{font-weight:700;font-family:monospace}
+.zc-row:last-child{border:none}.zc-row .label{color:var(--muted)}.zc-row .value{font-weight:700;font-family:monospace}
 .zc-actions{padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .zc-correct{display:flex;align-items:center;gap:8px}
 .correct-input{background:var(--inbg);border:2px solid var(--warn);border-radius:8px;padding:8px 12px;color:var(--text);font-family:monospace;font-size:16px;width:120px;outline:none;text-align:center}
-.zc-waiting{padding:20px;text-align:center;color:var(--warn);font-size:15px;font-weight:600}
-
-/* DDT panel */
 .ddt-panel{background:var(--card);border-radius:16px;border:2px solid var(--accent);padding:24px;margin-bottom:24px}
 .ddt-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .ddt-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
 .ddt-box{background:var(--inbg);border-radius:12px;padding:16px;text-align:center}
 .ddt-box-label{font-size:12px;color:var(--muted);margin-bottom:6px}.ddt-box-val{font-size:28px;font-weight:800;font-family:monospace}
-.ddt-input-row{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap}
 .ddt-input{background:var(--inbg);border:2px solid var(--accent);border-radius:12px;padding:14px 20px;color:var(--text);font-family:monospace;font-size:24px;width:200px;outline:none;text-align:center}
 .ddt-input:focus{border-color:var(--ok)}
-.ddt-diff{font-family:monospace;font-size:24px;font-weight:800}
-
-/* Completed banner */
+.ddt-input-row{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap}
 .completed{background:rgba(34,197,94,0.06);border:2px solid rgba(34,197,94,0.2);border-radius:16px;padding:24px;text-align:center;margin-bottom:24px}
 .completed-icon{font-size:48px;margin-bottom:10px}.completed-title{font-size:20px;font-weight:700;color:var(--ok);margin-bottom:6px}
 .completed-sub{font-size:14px;color:var(--muted)}
-
 .chart-card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:16px}
 .chart-title{font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .chart-wrap{position:relative;height:280px}
-
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex}.modal img{max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain}
 .modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:24px;width:48px;height:48px;border-radius:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#e2e8f0;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;z-index:10000;border:1px solid #334155;display:none}
 .toast.show{display:block;animation:fu .3s}@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* Coming soon placeholder */
+.coming-soon{text-align:center;padding:80px 40px}
+.coming-soon-icon{font-size:64px;margin-bottom:20px}.coming-soon-title{font-size:24px;font-weight:700;margin-bottom:10px;color:var(--muted)}
+.coming-soon-sub{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto;line-height:1.6}
 .hid{display:none!important}
+@media(max-width:768px){.sidebar{width:var(--sidebar-collapsed)}.sidebar .sb-label,.sidebar .sb-section,.sidebar .sb-coming,.sidebar .sb-toggle-label,.sidebar .sb-logo-text,.sidebar .sb-badge{display:none}.main{margin-left:var(--sidebar-collapsed)}}
 </style>
 </head>
 <body>
 <div id="toast" class="toast"></div>
 <div id="modal" class="modal" onclick="clModal()"><button class="modal-close" onclick="clModal()">✕</button><img id="modalImg" src=""/></div>
 
-<div class="app">
-  <div class="hdr">
-    <div class="hdr-left"><div class="logo">🍞</div><div><h1>Dashboard Resi</h1><div class="hdr-sub">👩 Carmela — Verifica e Controllo</div></div></div>
-    <div class="hdr-right">
-      <span class="dot" id="sDot" style="background:var(--danger)"></span><span id="sLbl" style="font-size:13px;color:var(--muted)">Non connesso</span>
-      <button class="btn btn-ghost" onclick="toggleSetup()">⚙️</button>
-      <button class="btn btn-primary" onclick="doSync()">🔄 Aggiorna</button>
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">🍞</div>
+    <div class="sb-logo-text">Panificio Santoro</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Operazioni</div>
+    <button class="sb-item active" onclick="goModule('resi',this)"><span class="sb-icon">📦</span><span class="sb-label">Resi Pane</span></button>
+    <button class="sb-item" onclick="goModule('costi',this)"><span class="sb-icon">💰</span><span class="sb-label">Controllo Costi</span><span class="sb-coming">SOON</span></button>
+    <div class="sb-divider"></div>
+    <div class="sb-section">Analisi</div>
+    <button class="sb-item" onclick="goModule('storico',this)"><span class="sb-icon">📊</span><span class="sb-label">Storico</span></button>
+    <button class="sb-item" onclick="goModule('grafici',this)"><span class="sb-icon">📈</span><span class="sb-label">Grafici</span></button>
+    <button class="sb-item" onclick="goModule('ddtTab',this)"><span class="sb-icon">⚖️</span><span class="sb-label">DDT</span><span class="sb-badge" id="sbAmm" style="display:none"></span></button>
+  </div>
+  <div class="sb-bottom">
+    <button class="sb-item" onclick="goModule('settings',this)"><span class="sb-icon">⚙️</span><span class="sb-label">Impostazioni</span></button>
+    <button class="sb-toggle" onclick="toggleSidebar()"><span class="sb-icon" style="font-size:16px" id="sbTogIcon">◀</span><span class="sb-toggle-label">Comprimi</span></button>
+  </div>
+</nav>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="main">
+<div class="main-content">
+
+  <!-- ═══ MODULE: RESI ═══ -->
+  <div id="mod-resi" class="module active">
+    <div class="page-header">
+      <div><div class="page-title">📦 Resi Pane — Verifica Giornaliera</div><div class="page-sub">👩 Carmela · <span id="todayDt"></span></div></div>
+      <div class="hdr-right">
+        <span class="dot" id="sDot" style="background:var(--danger)"></span><span id="sLbl" style="font-size:13px;color:var(--muted)">Non connesso</span>
+        <button class="btn btn-primary" onclick="doSync()">🔄 Aggiorna</button>
+      </div>
     </div>
-  </div>
-
-  <div id="setupP" class="setup hid">
-    <div style="font-weight:700;font-size:16px;margin-bottom:12px">⚙️ Google Sheets</div>
-    <div class="setup-row"><input id="sUrl" class="fi" placeholder="URL script Google (.../exec)"><button class="btn btn-ok" onclick="saveUrl()">✓ Salva</button></div>
-  </div>
-
-  <div id="alertBox"></div>
-  <div id="statsRow" class="stats"></div>
-
-  <div class="tabs">
-    <div class="tab active" onclick="sTab('today',this)">📋 Oggi — Verifica</div>
-    <div class="tab" onclick="sTab('history',this)">📊 Storico</div>
-    <div class="tab" onclick="sTab('charts',this)">📈 Grafici</div>
-    <div class="tab" onclick="sTab('ddt',this)">⚖️ DDT</div>
-  </div>
-
-  <div id="periodBar" class="period hid">
-    <button class="pbtn active" onclick="sPer(30,this)">30gg</button>
-    <button class="pbtn" onclick="sPer(60,this)">60gg</button>
-    <button class="pbtn" onclick="sPer(90,this)">90gg</button>
-    <button class="pbtn" onclick="sPer(9999,this)">Tutti</button>
-  </div>
-
-  <!-- ═══ TODAY: APPROVAL WORKFLOW ═══ -->
-  <div id="tabToday">
-    <!-- Step 1: Approve zones -->
+    <div id="alertBox"></div>
+    <div id="statsRow" class="stats"></div>
+    <!-- Approval -->
     <div id="approvalSection" class="approval-section">
-      <div class="approval-title">📋 Verifica resi di oggi — <span id="todayDt"></span> <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
+      <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
       <div id="zoneCards"></div>
     </div>
-
-    <!-- Step 2: DDT (shown after all zones approved) -->
+    <!-- DDT -->
     <div id="ddtSection" class="hid">
       <div class="ddt-panel">
         <div class="ddt-title">⚖️ Inserisci Resi da DDT <span class="approval-step">STEP 2: Resi da DDT</span></div>
@@ -154,61 +181,98 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
           <div class="ddt-box"><div class="ddt-box-label">DDT</div><div class="ddt-box-val"><input id="ddtInput" class="ddt-input" type="number" step="0.01" placeholder="0.00" oninput="ddtPreview()"></div></div>
           <div class="ddt-box"><div class="ddt-box-label">Differenza</div><div class="ddt-box-val" id="ddtDiffVal" style="color:var(--muted)">—</div></div>
         </div>
-        <div class="ddt-input-row">
-          <button id="ddtSaveBtn" class="btn btn-ok" style="font-size:16px;padding:14px 40px" onclick="saveDDT()" disabled>✓ Salva Resi da DDT</button>
-        </div>
+        <div class="ddt-input-row"><button id="ddtSaveBtn" class="btn btn-ok" style="font-size:16px;padding:14px 40px" onclick="saveDDT()" disabled>✓ Salva Resi da DDT</button></div>
       </div>
     </div>
-
-    <!-- Completed banner -->
+    <!-- Completed -->
     <div id="completedBanner" class="completed hid">
-      <div class="completed-icon">✅</div>
-      <div class="completed-title">Giornata completata</div>
-      <div class="completed-sub" id="completedSub"></div>
+      <div class="completed-icon">✅</div><div class="completed-title">Giornata completata</div><div class="completed-sub" id="completedSub"></div>
     </div>
   </div>
 
-  <!-- HISTORY -->
-  <div id="tabHistory" class="hid">
-    <div class="table-wrap"><div class="table-header"><span>📊 Storico Resi</span></div>
+  <!-- ═══ MODULE: STORICO ═══ -->
+  <div id="mod-storico" class="module">
+    <div class="page-header"><div><div class="page-title">📊 Storico Resi</div></div></div>
+    <div class="period" id="periodHist">
+      <button class="pbtn active" onclick="sPer(30,this)">30gg</button><button class="pbtn" onclick="sPer(60,this)">60gg</button><button class="pbtn" onclick="sPer(90,this)">90gg</button><button class="pbtn" onclick="sPer(9999,this)">Tutti</button>
+    </div>
+    <div class="table-wrap"><div class="table-header"><span>Storico completo</span></div>
       <div class="table-scroll"><table><thead><tr><th>Data</th><th>Zona 1</th><th>Zona 2</th><th>Zona 3</th><th>Tot. Netto</th><th>DDT</th><th>Diff.</th><th>Stato</th></tr></thead><tbody id="histBody"></tbody></table></div>
     </div>
   </div>
 
-  <!-- CHARTS -->
-  <div id="tabCharts" class="hid">
+  <!-- ═══ MODULE: GRAFICI ═══ -->
+  <div id="mod-grafici" class="module">
+    <div class="page-header"><div><div class="page-title">📈 Grafici Andamento</div></div></div>
+    <div class="period" id="periodChart">
+      <button class="pbtn active" onclick="sPer(30,this)">30gg</button><button class="pbtn" onclick="sPer(60,this)">60gg</button><button class="pbtn" onclick="sPer(90,this)">90gg</button><button class="pbtn" onclick="sPer(9999,this)">Tutti</button>
+    </div>
     <div class="chart-card"><div class="chart-title"><span class="zone-dot" style="background:var(--z1)"></span>Zona 1 — Nocera-Salerno</div><div class="chart-wrap"><canvas id="chZ1"></canvas></div></div>
     <div class="chart-card"><div class="chart-title"><span class="zone-dot" style="background:var(--z2)"></span>Zona 2 — Montoro-Solofra</div><div class="chart-wrap"><canvas id="chZ2"></canvas></div></div>
     <div class="chart-card"><div class="chart-title"><span class="zone-dot" style="background:var(--z3)"></span>Zona 3 — Avellino-Benevento</div><div class="chart-wrap"><canvas id="chZ3"></canvas></div></div>
   </div>
 
-  <!-- DDT CHART -->
-  <div id="tabDdt" class="hid">
-    <div class="chart-card"><div class="chart-title">⚖️ Differenze DDT vs Pesata</div><div class="chart-wrap"><canvas id="chDdt"></canvas></div></div>
-    <div class="table-wrap"><div class="table-header"><span>⚖️ Dettaglio DDT</span></div>
+  <!-- ═══ MODULE: DDT ═══ -->
+  <div id="mod-ddtTab" class="module">
+    <div class="page-header"><div><div class="page-title">⚖️ Controllo DDT</div></div></div>
+    <div class="period" id="periodDdt">
+      <button class="pbtn active" onclick="sPer(30,this)">30gg</button><button class="pbtn" onclick="sPer(60,this)">60gg</button><button class="pbtn" onclick="sPer(90,this)">90gg</button><button class="pbtn" onclick="sPer(9999,this)">Tutti</button>
+    </div>
+    <div class="chart-card"><div class="chart-title">Differenze DDT vs Pesata</div><div class="chart-wrap"><canvas id="chDdt"></canvas></div></div>
+    <div class="table-wrap"><div class="table-header"><span>Dettaglio DDT</span></div>
       <div class="table-scroll"><table><thead><tr><th>Data</th><th>Pesata Netta</th><th>DDT</th><th>Differenza</th><th>Stato</th></tr></thead><tbody id="ddtBody"></tbody></table></div>
     </div>
   </div>
+
+  <!-- ═══ MODULE: CONTROLLO COSTI ═══ -->
+  <div id="mod-costi" class="module">
+    <div class="page-header"><div><div class="page-title">💰 Controllo Costi</div></div></div>
+    <div class="coming-soon">
+      <div class="coming-soon-icon">💰</div>
+      <div class="coming-soon-title">In arrivo</div>
+      <div class="coming-soon-sub">Il modulo Controllo Costi è in fase di sviluppo. Qui potrai monitorare costi materie prime, margini per prodotto, spese di trasporto e analisi economiche.</div>
+    </div>
+  </div>
+
+  <!-- ═══ MODULE: IMPOSTAZIONI ═══ -->
+  <div id="mod-settings" class="module">
+    <div class="page-header"><div><div class="page-title">⚙️ Impostazioni</div></div></div>
+    <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px;max-width:600px">
+      <div style="font-weight:700;font-size:16px;margin-bottom:16px">Google Sheets</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">URL dello script Google Apps (lo stesso usato dall'app mobile)</p>
+      <div style="display:flex;gap:10px;align-items:center"><input id="sUrl" class="fi" placeholder="https://script.google.com/.../exec"><button class="btn btn-ok" onclick="saveUrl()">✓ Salva</button></div>
+      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
+        <div style="font-weight:700;font-size:16px;margin-bottom:12px">Info Sistema</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.8">Tara cesta rossa: <strong style="color:var(--text)">2.66 kg</strong><br>Zone attive: <strong style="color:var(--text)">3</strong> (Nocera-Salerno, Montoro-Solofra, Avellino-Benevento)<br>Versione dashboard: <strong style="color:var(--text)">2.0</strong></p>
+      </div>
+    </div>
+  </div>
+
+</div>
 </div>
 
 <script>
 var TARA=2.66;
 var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"#f59e0b"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"#3b82f6"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"#10b981"}];
-var allData=[];var dailyData={};var approvals={};var curTab="today";var curPer=30;var charts={};
+var allData=[];var dailyData={};var approvals={};var curModule="resi";var curPer=30;var charts={};
 var todayStr=new Date().toISOString().slice(0,10);
 var gUrl=function(){return localStorage.getItem("dash-gsheet-url")||""};
 function fmtD(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function fmtDs(d){var p=d.split("-");return p[2]+"/"+p[1]}
-// Convert Google Drive file URL to displayable image URL
-function driveImgUrl(url){
-  if(!url)return"";
-  var id=null;
-  // Extract file ID from various Drive URL formats
-  var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(m)id=m[1];
-  if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}
-  if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w1200";
-  return url;
+function driveImgUrl(url){if(!url)return"";var id=null;var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);if(m)id=m[1];if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w1200";return url}
+
+// ═══ SIDEBAR NAVIGATION ═══
+function goModule(mod,el){
+  curModule=mod;
+  document.querySelectorAll(".sb-item").forEach(function(b){b.classList.remove("active")});
+  if(el)el.classList.add("active");
+  document.querySelectorAll(".module").forEach(function(m){m.classList.remove("active")});
+  var target=document.getElementById("mod-"+mod);if(target)target.classList.add("active");
+  if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();
+}
+function toggleSidebar(){
+  var sb=document.getElementById("sidebar");sb.classList.toggle("collapsed");
+  document.getElementById("sbTogIcon").textContent=sb.classList.contains("collapsed")?"▶":"◀";
 }
 
 function init(){
@@ -219,7 +283,7 @@ function init(){
 }
 
 async function doSync(){
-  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
+  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets nelle Impostazioni");return}
   document.getElementById("sDot").style.background="var(--warn)";document.getElementById("sLbl").textContent="Sincronizzazione...";
   try{
     var r=await fetch(url+"?action=getAll");var j=await r.json();
@@ -231,46 +295,23 @@ async function doSync(){
 
 function processData(){
   dailyData={};
-  allData.forEach(function(r){
-    if(!r.data)return;
-    if(!dailyData[r.data])dailyData[r.data]={zones:{},ddt:null,diff:null};
-    var day=dailyData[r.data];
+  allData.forEach(function(r){if(!r.data)return;if(!dailyData[r.data])dailyData[r.data]={zones:{},ddt:null,diff:null};var day=dailyData[r.data];
     if(r.zona)day.zones[r.zona]={peso:r.peso||0,operatore:r.operatore,nceste:r.nceste,foto:r.foto,timestamp:r.timestamp};
-    if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;
-    if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza;
-  });
+    if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza});
 }
-
-function getDayNetto(d){
-  if(!dailyData[d])return 0;var t=0;
-  ZONES.forEach(function(z){
-    var zd=dailyData[d].zones[z.id];
-    if(zd) t+=zd.peso||0; // peso is already netto from app
-  });return t;
-}
-
+function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
 function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
-function allApproved(){
-  var today=dailyData[todayStr];if(!today)return false;
-  // Count zones with data
-  var zonesWithData=ZONES.filter(function(z){return today.zones[z.id]});
-  if(zonesWithData.length<ZONES.length)return false; // not all zones have data yet
-  // All zones with data must be approved
-  return zonesWithData.every(function(z){return approvals[z.id]});
-}
-function missingInfo(){
-  var today=dailyData[todayStr];
-  var missing=[];var unapproved=[];
-  ZONES.forEach(function(z){
-    if(!today||!today.zones[z.id])missing.push(z.name);
-    else if(!approvals[z.id])unapproved.push(z.name);
-  });
-  return{missing:missing,unapproved:unapproved};
-}
+function allApproved(){var today=dailyData[todayStr];if(!today)return false;var zwd=ZONES.filter(function(z){return today.zones[z.id]});if(zwd.length<ZONES.length)return false;return zwd.every(function(z){return approvals[z.id]})}
+function missingInfo(){var today=dailyData[todayStr];var m=[],u=[];ZONES.forEach(function(z){if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id])u.push(z.name)});return{missing:m,unapproved:u}}
 function todayComplete(){var today=dailyData[todayStr];return today&&today.ddt!=null}
 
-function updUI(){updStats();updAlerts();updToday();
-  if(curTab==="history")updHist();if(curTab==="charts")updCharts();if(curTab==="ddt")updDDTTab()}
+function updUI(){
+  updStats();updAlerts();updToday();
+  // Update sidebar badge
+  var amm=0;Object.keys(dailyData).forEach(function(d){var day=dailyData[d];if(day.ddt!=null&&getDayNetto(d)-day.ddt<0)amm++});
+  var badge=document.getElementById("sbAmm");if(amm>0){badge.textContent=amm;badge.style.display=""}else{badge.style.display="none"}
+  if(curModule==="storico")updHist();if(curModule==="grafici")updCharts();if(curModule==="ddtTab")updDDTTab();
+}
 
 function updStats(){
   var today=dailyData[todayStr];var totNet=getDayNetto(todayStr);
@@ -290,8 +331,7 @@ function updStats(){
 }
 
 function updAlerts(){
-  var html="";
-  var recent=Object.keys(dailyData).sort().reverse().slice(0,7);
+  var html="";var recent=Object.keys(dailyData).sort().reverse().slice(0,7);
   var ra=[];recent.forEach(function(d){var day=dailyData[d];if(day.ddt!=null){var diff=getDayNetto(d)-day.ddt;if(diff<0)ra.push({d:d,diff:diff.toFixed(2)})}});
   if(ra.length>0)html+='<div class="alert alert-danger"><span class="alert-icon">🚨</span><span class="alert-text">'+ra.length+' ammanco/i ultimi 7gg: '+ra.map(function(a){return fmtDs(a.d)+" ("+a.diff+"kg)"}).join(", ")+'</span></div>';
   var miss=Object.keys(dailyData).filter(function(d){return dailyData[d].ddt==null&&getDayNetto(d)>0}).sort().reverse().slice(0,5);
@@ -300,37 +340,24 @@ function updAlerts(){
 }
 
 function updToday(){
-  var today=dailyData[todayStr];
-  var html="";
-  var hasZones=false;
-
-  // Check if day is already completed
+  var today=dailyData[todayStr];var html="";var hasZones=false;
   if(todayComplete()){
-    document.getElementById("approvalSection").classList.add("hid");
-    document.getElementById("ddtSection").classList.add("hid");
+    document.getElementById("approvalSection").classList.add("hid");document.getElementById("ddtSection").classList.add("hid");
     var totNet=getDayNetto(todayStr);var diff=+(totNet-today.ddt).toFixed(2);
     document.getElementById("completedBanner").classList.remove("hid");
-    document.getElementById("completedSub").textContent="Pesata: "+totNet.toFixed(2)+" kg · DDT: "+today.ddt.toFixed(2)+" kg · Diff: "+diff.toFixed(2)+" kg "+(diff<0?"⚠ AMMANCO":"✓ OK");
-    return;
-  }
-  document.getElementById("completedBanner").classList.add("hid");
-  document.getElementById("approvalSection").classList.remove("hid");
-
+    document.getElementById("completedSub").textContent="Pesata: "+totNet.toFixed(2)+" kg · DDT: "+today.ddt.toFixed(2)+" kg · Diff: "+diff.toFixed(2)+" kg "+(diff<0?"⚠ AMMANCO":"✓ OK");return}
+  document.getElementById("completedBanner").classList.add("hid");document.getElementById("approvalSection").classList.remove("hid");
   ZONES.forEach(function(z){
-    var zd=today&&today.zones[z.id];
-    var isApproved=!!approvals[z.id];
+    var zd=today&&today.zones[z.id];var isApproved=!!approvals[z.id];
     if(zd){
-      hasZones=true;
-      var pesoSalvato=zd.peso||0;var nc=zd.nceste||1;
+      hasZones=true;var pesoSalvato=zd.peso||0;var nc=zd.nceste||1;
       var netto=pesoSalvato;var lordo=pesoSalvato+TARA*nc;
       var dL=lordo,dN=netto;
       if(isApproved){dL=approvals[z.id].lordo||lordo;dN=approvals[z.id].netto}
       var time=zd.timestamp?zd.timestamp.split(" ")[1]||"":"";
       var photoUrls=zd.foto?zd.foto.split(" | "):[];
-
       if(isApproved){
-        var isExpanded=!!window._expanded&&window._expanded[z.id];
-        // ══ COMPACT ROW (click to expand) ══
+        var isExp=!!window._expanded&&window._expanded[z.id];
         html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(34,197,94,0.3);margin-bottom:10px;overflow:hidden">';
         html+='<div onclick="toggleExpand(\''+z.id+'\')" style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer">';
         html+='<div style="display:flex;align-items:center;gap:10px;min-width:200px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">🚚 '+zd.operatore+'</span></div>';
@@ -338,10 +365,9 @@ function updToday(){
         html+='<span style="font-size:13px">Lordo: <strong style="font-family:monospace;color:var(--text)">'+dL.toFixed(2)+' kg</strong>'+(approvals[z.id].corrected?' <span style="color:var(--warn)">✏️</span>':'')+'</span>';
         html+='<span style="font-size:13px">Netto: <strong style="font-family:monospace;color:var(--ok)">'+dN.toFixed(2)+' kg</strong></span>';
         html+='<span class="badge badge-ok">✓</span>';
-        html+='<span style="font-size:12px;color:var(--muted)">'+(isExpanded?'▲ Chiudi':'▼ Dettagli')+'</span>';
+        html+='<span style="font-size:12px;color:var(--muted)">'+(isExp?'▲ Chiudi':'▼ Dettagli')+'</span>';
         html+='</div></div>';
-        // Expandable detail (read-only)
-        if(isExpanded){
+        if(isExp){
           html+='<div style="padding:0 20px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;padding-top:16px">';
           html+='<div class="zc-photo">';
           if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="margin-bottom:8px"/><a href="'+u.trim()+'" target="_blank" style="display:none;width:220px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:13px;text-decoration:underline">📷 Apri foto</a>'});}
@@ -349,15 +375,13 @@ function updToday(){
           html+='</div><div class="zc-details">';
           html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
           html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
-          html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value" style="font-size:16px">'+dL.toFixed(2)+' kg'+(approvals[z.id].corrected?' <span style="color:var(--warn);font-size:11px">✏️ corretto</span>':'')+'</span></div>';
-          html+='<div class="zc-row"><span class="label">Tara ('+nc+'×'+TARA+')</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value">'+dL.toFixed(2)+' kg'+(approvals[z.id].corrected?' <span style="color:var(--warn);font-size:11px">✏️</span>':'')+'</span></div>';
+          html+='<div class="zc-row"><span class="label">Tara</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
           html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+dN.toFixed(2)+' kg</span></div>';
           if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
-          html+='</div></div>';
-        }
+          html+='</div></div>'}
         html+='</div>';
       } else {
-        // ══ FULL CARD — da verificare ══
         html+='<div class="zone-card waiting"><div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
         html+='<span class="zc-badge" style="background:rgba(245,158,11,0.1);color:var(--warn)">⏳ Da verificare</span></div>';
         html+='<div class="zc-body"><div class="zc-photo">';
@@ -371,143 +395,67 @@ function updToday(){
         html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+netto.toFixed(2)+' kg</span></div>';
         if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
         html+='</div></div>';
-        html+='<div class="zc-actions">';
-        html+='<button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso lordo corretto</button>';
+        html+='<div class="zc-actions"><button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso lordo corretto</button>';
         html+='<div class="zc-correct"><span style="font-size:13px;color:var(--muted)">oppure correggi il lordo:</span>';
         html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg"/>';
         html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button></div></div></div>';
       }
     } else {
-      // ══ COMPACT ROW — in attesa ══
       html+='<div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">';
       html+='<div style="display:flex;align-items:center;gap:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">'+z.area+'</span></div>';
       html+='<span class="badge badge-muted">⏳ In attesa autista</span></div>';
     }
   });
-
   document.getElementById("zoneCards").innerHTML=html;
-
-  // Show/hide DDT section
-  var aAll=allApproved();
-  document.getElementById("ddtSection").classList.toggle("hid",!aAll);
-  if(aAll){
-    document.getElementById("stepLabel").textContent="STEP 2: Inserisci Resi da DDT";
-    var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});
-    document.getElementById("ddtTotNetto").textContent=totNet.toFixed(2)+" kg";
-  } else {
-    var info=missingInfo();
-    var msg="STEP 1: Verifica pesate";
-    if(info.missing.length>0)msg+=" — in attesa: "+info.missing.join(", ");
-    else if(info.unapproved.length>0)msg+=" — da approvare: "+info.unapproved.join(", ");
-    document.getElementById("stepLabel").textContent=msg;
-  }
+  var aAll=allApproved();document.getElementById("ddtSection").classList.toggle("hid",!aAll);
+  if(aAll){document.getElementById("stepLabel").textContent="STEP 2: Inserisci Resi da DDT";
+    var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});document.getElementById("ddtTotNetto").textContent=totNet.toFixed(2)+" kg";
+  } else {var info=missingInfo();var msg="STEP 1: Verifica pesate";
+    if(info.missing.length>0)msg+=" — in attesa: "+info.missing.join(", ");else if(info.unapproved.length>0)msg+=" — da approvare: "+info.unapproved.join(", ");
+    document.getElementById("stepLabel").textContent=msg}
 }
 
-function approveZone(zid,netto,lordo){
-  approvals[zid]={netto:netto,lordo:lordo,approved:true,time:new Date().toISOString()};
-  saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" approvata");
-}
+function approveZone(zid,netto,lordo){approvals[zid]={netto:netto,lordo:lordo,approved:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" approvata")}
+function correctZone(zid,nceste){var v=parseFloat(document.getElementById("correct-"+zid).value);if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}var n=Math.max(0,+(v-TARA*nceste).toFixed(2));approvals[zid]={netto:n,lordo:v,approved:true,corrected:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ Corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg")}
+function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
+function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
+  if(v>0){var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});var diff=+(totNet-v).toFixed(2);el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";btn.disabled=false}else{el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}}
+async function saveDDT(){var v=parseFloat(document.getElementById("ddtInput").value);if(!v)return;var btn=document.getElementById("ddtSaveBtn");btn.textContent="⏳ Salvataggio...";btn.disabled=true;var url=gUrl();if(!url){showT("❌ Configura Google Sheets");return}
+  try{var today=dailyData[todayStr];var fz="";ZONES.forEach(function(z){if(today&&today.zones[z.id]&&!fz)fz=z.id});
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateDDT",data:todayStr,zona:fz,ddt:v})});
+    for(var zid in approvals){if(approvals[zid].corrected){var t2=dailyData[todayStr];var nc=t2&&t2.zones[zid]?t2.zones[zid].nceste||1:1;var cL=approvals[zid].netto+TARA*nc;
+      await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:todayStr,operatore:t2.zones[zid].operatore||"",zona:zid,peso:cL,nceste:nc,zonaName:ZONES.find(function(z){return z.id===zid}).name})})}}
+    showT("✓ DDT salvato — giornata completata!");await doSync()}catch(e){showT("❌ Errore salvataggio")}
+  btn.textContent="✓ Salva Resi da DDT";btn.disabled=false}
 
-function correctZone(zid,nceste){
-  var lordoCorretto=parseFloat(document.getElementById("correct-"+zid).value);
-  if(!lordoCorretto||lordoCorretto<=0){showT("⚠ Inserisci il peso lordo dal display");return}
-  var taraT=TARA*nceste;
-  var nettoCorretto=Math.max(0,+(lordoCorretto-taraT).toFixed(2));
-  approvals[zid]={netto:nettoCorretto,lordo:lordoCorretto,approved:true,corrected:true,time:new Date().toISOString()};
-  saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" corretta: lordo "+lordoCorretto.toFixed(2)+" → netto "+nettoCorretto.toFixed(2)+" kg");
-}
+function updHist(){var days=Object.keys(dailyData).sort().reverse().slice(0,curPer);var html="";days.forEach(function(d){var day=dailyData[d];var totNet=getDayNetto(d);
+  var ddt=day.ddt;var diff=ddt!=null?+(totNet-ddt).toFixed(2):null;var amm=diff!=null&&diff<0;
+  html+='<tr class="'+(amm?"ammanco":"")+'"><td style="font-weight:600">'+fmtD(d)+'</td>';
+  ZONES.forEach(function(z){var zd=day.zones[z.id];if(zd){html+='<td style="font-family:monospace;color:'+z.clr+'">'+(zd.peso||0).toFixed(1)+'</td>'}else html+='<td style="color:var(--muted)">—</td>'});
+  html+='<td style="font-family:monospace;font-weight:700">'+totNet.toFixed(1)+'</td><td style="font-family:monospace">'+(ddt!=null?ddt.toFixed(1):'<span style="color:var(--warn)">—</span>')+'</td>';
+  html+='<td style="font-family:monospace;font-weight:600;color:'+(diff!=null?(amm?"var(--danger)":"var(--ok)"):"var(--muted)")+'">'+(diff!=null?diff.toFixed(2):"—")+'</td>';
+  html+='<td>'+(diff!=null?(amm?'<span class="badge badge-danger">⚠</span>':'<span class="badge badge-ok">✓</span>'):'<span class="badge badge-warn">DDT?</span>')+'</td></tr>'});
+  document.getElementById("histBody").innerHTML=html}
 
-function toggleExpand(zid){
-  if(!window._expanded)window._expanded={};
-  window._expanded[zid]=!window._expanded[zid];
-  updUI();
-}
-
-function ddtPreview(){
-  var v=parseFloat(document.getElementById("ddtInput").value);
-  var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
-  if(v>0){
-    var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});
-    var diff=+(totNet-v).toFixed(2);
-    el.textContent=diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";
-    el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";
-    btn.disabled=false;
-  } else {el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}
-}
-
-async function saveDDT(){
-  var v=parseFloat(document.getElementById("ddtInput").value);if(!v)return;
-  var btn=document.getElementById("ddtSaveBtn");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
-  var url=gUrl();if(!url){showT("❌ Configura Google Sheets");return}
-  try{
-    // Find first zone to attach DDT
-    var today=dailyData[todayStr];var firstZone="";
-    ZONES.forEach(function(z){if(today&&today.zones[z.id]&&!firstZone)firstZone=z.id});
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateDDT",data:todayStr,zona:firstZone,ddt:v})});
-    
-    // Also save any corrections
-    for(var zid in approvals){
-      if(approvals[zid].corrected){
-        var today2=dailyData[todayStr];var origPeso=today2&&today2.zones[zid]?today2.zones[zid].peso:0;
-        var correctedNetto=approvals[zid].netto;
-        // Save corrected peso (netto + tara back)
-        var nc=today2&&today2.zones[zid]?today2.zones[zid].nceste||1:1;
-        var correctedLordo=correctedNetto+TARA*nc;
-        await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:todayStr,operatore:today2.zones[zid].operatore||"",zona:zid,peso:correctedLordo,nceste:nc,zonaName:ZONES.find(function(z){return z.id===zid}).name})});
-      }
-    }
-    showT("✓ DDT salvato — giornata completata!");await doSync();
-  }catch(e){showT("❌ Errore salvataggio")}
-  btn.textContent="✓ Salva Resi da DDT";btn.disabled=false;
-}
-
-function updHist(){
-  var days=Object.keys(dailyData).sort().reverse().slice(0,curPer);
-  var html="";days.forEach(function(d){
-    var day=dailyData[d];var totNet=getDayNetto(d);
-    var ddt=day.ddt;var diff=ddt!=null?+(totNet-ddt).toFixed(2):null;var amm=diff!=null&&diff<0;
-    html+='<tr class="'+(amm?"ammanco":"")+'"><td style="font-weight:600">'+fmtD(d)+'</td>';
-    ZONES.forEach(function(z){var zd=day.zones[z.id];
-      if(zd){html+='<td style="font-family:monospace;color:'+z.clr+'">'+(zd.peso||0).toFixed(1)+'</td>'}
-      else html+='<td style="color:var(--muted)">—</td>'});
-    html+='<td style="font-family:monospace;font-weight:700">'+totNet.toFixed(1)+'</td>';
-    html+='<td style="font-family:monospace">'+(ddt!=null?ddt.toFixed(1):'<span style="color:var(--warn)">—</span>')+'</td>';
-    html+='<td style="font-family:monospace;font-weight:600;color:'+(diff!=null?(amm?"var(--danger)":"var(--ok)"):"var(--muted)")+'">'+(diff!=null?diff.toFixed(2):"—")+'</td>';
-    html+='<td>'+(diff!=null?(amm?'<span class="badge badge-danger">⚠</span>':'<span class="badge badge-ok">✓</span>'):'<span class="badge badge-warn">DDT?</span>')+'</td></tr>';
-  });document.getElementById("histBody").innerHTML=html;
-}
-
-function updCharts(){
-  var days=Object.keys(dailyData).sort().slice(-curPer);var labels=days.map(fmtDs);
-  ZONES.forEach(function(z){
-    var key="ch"+z.id.charAt(0).toUpperCase()+z.id.slice(1);
+function updCharts(){var days=Object.keys(dailyData).sort().slice(-curPer);var labels=days.map(fmtDs);
+  ZONES.forEach(function(z){var key="ch"+z.id.charAt(0).toUpperCase()+z.id.slice(1);
     var vals=days.map(function(d){var zd=dailyData[d]&&dailyData[d].zones[z.id];return zd?(zd.peso||0):null});
     if(charts[key])charts[key].destroy();
     charts[key]=new Chart(document.getElementById(key),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:z.clr,backgroundColor:z.clr+"33",fill:true,tension:0.3,pointRadius:2,borderWidth:2,spanGaps:true}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}}}}});
-  });
-}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}}}}})})}
 
-function updDDTTab(){
-  var days=Object.keys(dailyData).sort().slice(-curPer);var labels=[];var vals=[];var html="";
+function updDDTTab(){var days=Object.keys(dailyData).sort().slice(-curPer);var labels=[];var vals=[];var html="";
   days.forEach(function(d){var day=dailyData[d];var totNet=getDayNetto(d);
     if(day.ddt!=null){var diff=+(totNet-day.ddt).toFixed(2);labels.push(fmtDs(d));vals.push(diff);var amm=diff<0;
-      html+='<tr class="'+(amm?"ammanco":"")+'"><td style="font-weight:600">'+fmtD(d)+'</td><td style="font-family:monospace">'+totNet.toFixed(2)+'</td><td style="font-family:monospace">'+day.ddt.toFixed(2)+'</td><td style="font-family:monospace;font-weight:700;color:'+(amm?"var(--danger)":"var(--ok)")+'">'+diff.toFixed(2)+'</td><td>'+(amm?'<span class="badge badge-danger">⚠ AMMANCO</span>':'<span class="badge badge-ok">✓</span>')+'</td></tr>'}
-  });document.getElementById("ddtBody").innerHTML=html;
+      html+='<tr class="'+(amm?"ammanco":"")+'"><td style="font-weight:600">'+fmtD(d)+'</td><td style="font-family:monospace">'+totNet.toFixed(2)+'</td><td style="font-family:monospace">'+day.ddt.toFixed(2)+'</td><td style="font-family:monospace;font-weight:700;color:'+(amm?"var(--danger)":"var(--ok)")+'">'+diff.toFixed(2)+'</td><td>'+(amm?'<span class="badge badge-danger">⚠ AMMANCO</span>':'<span class="badge badge-ok">✓</span>')+'</td></tr>'}});
+  document.getElementById("ddtBody").innerHTML=html;
   if(charts.ddt)charts.ddt.destroy();
   charts.ddt=new Chart(document.getElementById("chDdt"),{type:"bar",data:{labels:labels,datasets:[{data:vals,backgroundColor:vals.map(function(v){return v<0?"#ef4444":"#22c55e"}),borderRadius:4,maxBarThickness:16}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}}}}});
-}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}}}}})}
 
-function sTab(t,el){curTab=t;document.querySelectorAll(".tab").forEach(function(b){b.classList.remove("active")});el.classList.add("active");
-  document.getElementById("tabToday").classList.toggle("hid",t!=="today");document.getElementById("tabHistory").classList.toggle("hid",t!=="history");
-  document.getElementById("tabCharts").classList.toggle("hid",t!=="charts");document.getElementById("tabDdt").classList.toggle("hid",t!=="ddt");
-  document.getElementById("periodBar").classList.toggle("hid",t==="today");
-  if(t==="history")updHist();if(t==="charts")updCharts();if(t==="ddt")updDDTTab()}
 function sPer(n,el){curPer=n;document.querySelectorAll(".pbtn").forEach(function(b){b.classList.remove("active")});el.classList.add("active");
-  if(curTab==="history")updHist();if(curTab==="charts")updCharts();if(curTab==="ddt")updDDTTab()}
-function toggleSetup(){document.getElementById("setupP").classList.toggle("hid")}
-function saveUrl(){localStorage.setItem("dash-gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setupP").classList.add("hid");if(gUrl())doSync()}
+  if(curModule==="storico")updHist();if(curModule==="grafici")updCharts();if(curModule==="ddtTab")updDDTTab()}
+function saveUrl(){localStorage.setItem("dash-gsheet-url",document.getElementById("sUrl").value.trim());goModule("resi",document.querySelector('.sb-item'));if(gUrl())doSync()}
 function viewPhoto(url){document.getElementById("modalImg").src=url;document.getElementById("modal").classList.add("show")}
 function clModal(){document.getElementById("modal").classList.remove("show")}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
