@@ -355,7 +355,7 @@ function wPhoto(e){
   var rd=new FileReader();rd.onload=function(ev){var img=new Image();img.onload=function(){
     var c=document.createElement("canvas"),w=img.width,h=img.height;
     if(w>1600){h=Math.round(h*1600/w);w=1600}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
-    var b64=c.toDataURL("image/jpeg",0.7);
+    var b64=c.toDataURL("image/jpeg",0.85);
     if(!wCeste[wCC])wCeste[wCC]={};wCeste[wCC].foto=b64;
     document.getElementById("prevImg").src=b64;document.getElementById("camP").classList.add("hid");
     document.getElementById("camD").classList.remove("hid");document.getElementById("camBox").className="cam-box cam-ok";
@@ -388,11 +388,10 @@ async function verifyAndRead(b64,canvas){
   var url=gUrl();
   if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
 
-  // Send FULL photo at high quality — let AI find the display
+  // Send FULL photo — use the already captured b64 (1600px, quality 0.7)
   vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
-  var fullB64=canvas.toDataURL("image/jpeg",0.9);
   try{
-    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:fullB64})});
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:b64})});
     var txt=await res.text();var j;
     try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore script";return}
     if(j.valid===true){
