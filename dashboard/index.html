@@ -344,6 +344,8 @@ function init(){
   try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
   try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
   if(gUrl()) doSync(); else updUI();
+  // Auto-refresh every 60 seconds
+  setInterval(function(){if(gUrl())doSync()},60000);
 }
 
 async function doSync(){
@@ -384,7 +386,11 @@ async function doSync(){
 function processData(){
   dailyData={};
   allData.forEach(function(r){if(!r.data)return;if(!dailyData[r.data])dailyData[r.data]={zones:{},ddt:null,diff:null};var day=dailyData[r.data];
-    if(r.zona)day.zones[r.zona]={peso:r.peso||0,operatore:r.operatore,nceste:r.nceste,foto:r.foto,timestamp:r.timestamp};
+    if(r.zona){
+      var cesteDetail=null;
+      if(r.ceste){try{cesteDetail=typeof r.ceste==="string"?JSON.parse(r.ceste):r.ceste}catch(e){}}
+      day.zones[r.zona]={peso:r.peso||0,operatore:r.operatore,nceste:r.nceste,foto:r.foto,timestamp:r.timestamp,cesteDetail:cesteDetail};
+    }
     if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza});
 }
 function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
@@ -462,32 +468,75 @@ function updToday(){
         html+='<span style="font-size:12px;color:var(--muted)">'+(isExp?'▲ Chiudi':'▼ Dettagli')+'</span>';
         html+='</div></div>';
         if(isExp){
-          html+='<div style="padding:0 20px 16px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;padding-top:16px">';
-          html+=renderPhotos(photoUrls);
-          html+='<div class="zc-details">';
+          var cdExp=zd.cesteDetail||[];
+          html+='<div style="padding:12px 20px 16px;border-top:1px solid var(--border)">';
           html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
-          html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
-          html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value">'+dL.toFixed(2)+' kg'+(approvals[z.id].corrected?' <span style="color:var(--warn);font-size:11px">✏️</span>':'')+'</span></div>';
-          html+='<div class="zc-row"><span class="label">Tara</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
-          html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+dN.toFixed(2)+' kg</span></div>';
           if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
+          for(var ei=0;ei<Math.max(nc,cdExp.length,photoUrls.length);ei++){
+            var eD=cdExp[ei]||{};var eP=photoUrls[ei]?driveImgUrl(photoUrls[ei].trim()):null;
+            html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
+            html+='<div style="font-weight:600;font-size:12px;color:var(--accent);margin-bottom:8px">📦 Cesta '+(ei+1)+'</div>';
+            html+='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">';
+            if(eP){html+='<div class="zc-photo-item"><img src="'+eP+'" onclick="viewPhoto(\''+eP.replace(/'/g,"\\'")+'\')" onerror="this.style.display=\'none\'"/></div>'}
+            html+='<div style="flex:1;min-width:180px">';
+            html+='<div class="zc-row"><span class="label">Lordo</span><span class="value">'+(eD.lordo||0).toFixed(2)+' kg</span></div>';
+            html+='<div class="zc-row"><span class="label">Tara</span><span class="value" style="color:var(--muted)">−'+TARA.toFixed(2)+' kg</span></div>';
+            html+='<div class="zc-row"><span class="label">Netto</span><span class="value" style="color:var(--ok)">'+(eD.netto||0).toFixed(2)+' kg</span></div>';
+            html+='</div></div></div>';
+          }
+          html+='<div style="margin-top:10px;padding-top:10px;border-top:2px solid var(--accent)">';
+          html+='<div class="zc-row"><span class="label" style="font-weight:700">TOTALE</span><span class="value" style="color:var(--ok);font-size:18px">'+dN.toFixed(2)+' kg</span></div>';
           html+='</div></div>'}
         html+='</div>';
       } else {
+        // Build ceste info — match photos with ceste details
+        var cesteInfo=[];
+        var cd=zd.cesteDetail||[];
+        for(var ci=0;ci<Math.max(nc,cd.length,photoUrls.length);ci++){
+          var cDetail=cd[ci]||{};
+          var cPhoto=photoUrls[ci]?driveImgUrl(photoUrls[ci].trim()):null;
+          var cPhotoRaw=photoUrls[ci]?photoUrls[ci].trim():null;
+          var cLordo=cDetail.lordo||0;
+          var cNetto=cDetail.netto||0;
+          cesteInfo.push({n:ci+1,lordo:cLordo,netto:cNetto,foto:cPhoto,fotoRaw:cPhotoRaw});
+        }
+
         html+='<div class="zone-card waiting"><div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
-        html+='<span class="zc-badge" style="background:rgba(245,158,11,0.1);color:var(--warn)">⏳ Da verificare</span></div>';
-        html+='<div class="zc-body">';
-        html+=renderPhotos(photoUrls);
-        html+='<div class="zc-details">';
+        html+='<span class="zc-badge" style="background:rgba(245,158,11,0.1);color:var(--warn)">⏳ Da verificare — '+nc+' cest'+(nc>1?'e':'a')+'</span></div>';
+        html+='<div style="padding:16px 20px">';
         html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
-        html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
-        html+='<div class="zc-row"><span class="label">Peso lordo (display)</span><span class="value" style="font-size:16px">'+lordo.toFixed(2)+' kg</span></div>';
-        html+='<div class="zc-row"><span class="label">Tara ('+nc+'×'+TARA+')</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
-        html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+netto.toFixed(2)+' kg</span></div>';
         if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
-        html+='</div></div>';
-        html+='<div class="zc-actions"><button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso lordo corretto</button>';
-        html+='<div class="zc-correct"><span style="font-size:13px;color:var(--muted)">oppure correggi il lordo:</span>';
+        html+='</div>';
+
+        // Show each cesta
+        cesteInfo.forEach(function(c){
+          html+='<div style="padding:12px 20px;border-top:1px solid var(--border)">';
+          html+='<div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:10px">📦 Cesta '+c.n+'</div>';
+          html+='<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
+          // Photo
+          if(c.foto){
+            html+='<div class="zc-photo-item">';
+            html+='<img src="'+c.foto+'" alt="Cesta '+c.n+'" onclick="viewPhoto(\''+c.foto.replace(/'/g,"\\'")+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>';
+            html+='<a class="photo-fallback" href="'+(c.fotoRaw||c.foto)+'" target="_blank" style="display:none;width:180px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:12px;text-decoration:underline;border:1px solid var(--inbord)">📷 Apri foto '+c.n+'</a></div>';
+          } else {
+            html+='<div style="width:180px;height:100px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">📷 Foto non caricata</div>';
+          }
+          // Weight details
+          html+='<div style="flex:1;min-width:200px">';
+          html+='<div class="zc-row"><span class="label">Peso lordo (display)</span><span class="value" style="font-size:16px">'+c.lordo.toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Tara cesta</span><span class="value" style="color:var(--muted)">−'+TARA.toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:16px">'+c.netto.toFixed(2)+' kg</span></div>';
+          html+='</div></div></div>';
+        });
+
+        // Totals
+        html+='<div style="padding:12px 20px;border-top:2px solid var(--accent);background:rgba(139,92,246,0.04)">';
+        html+='<div class="zc-row"><span class="label" style="font-weight:700">TOTALE ZONA</span><span class="value" style="color:var(--accent);font-size:18px">'+netto.toFixed(2)+' kg netto</span></div>';
+        html+='</div>';
+
+        // Actions
+        html+='<div class="zc-actions"><button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — pesi corretti</button>';
+        html+='<div class="zc-correct"><span style="font-size:13px;color:var(--muted)">oppure correggi il lordo totale:</span>';
         html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg"/>';
         html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button></div></div></div>';
       }
