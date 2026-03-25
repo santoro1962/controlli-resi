@@ -191,6 +191,13 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <div id="approvalSection" class="approval-section">
       <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
       <div id="zoneCards"></div>
+      <div id="festSection" class="hid" style="margin-top:12px">
+        <div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px 20px">
+          <div style="font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">🏖️ Segna festivo (zone senza consegna oggi)</div>
+          <div id="festBtns" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          <button id="festAllBtn" class="btn btn-ghost btn-sm" onclick="festAllDash()" style="margin-top:10px;display:none">🏖️ Tutte festive oggi</button>
+        </div>
+      </div>
     </div>
     <!-- DDT -->
     <div id="ddtSection" class="hid">
@@ -274,7 +281,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 <script>
 var TARA=2.66;
 var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"#f59e0b"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"#3b82f6"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"#10b981"}];
-var allData=[];var dailyData={};var approvals={};var curModule="resi";var curPer=30;var charts={};
+var allData=[];var dailyData={};var approvals={};var festivi={};var curModule="resi";var curPer=30;var charts={};
 var todayStr=new Date().toISOString().slice(0,10);
 var gUrl=function(){return localStorage.getItem("dash-gsheet-url")||""};
 function fmtD(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
@@ -318,6 +325,7 @@ function init(){
   document.getElementById("sUrl").value=gUrl();
   document.getElementById("todayDt").textContent=fmtD(todayStr);
   try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
+  try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
   if(gUrl()) doSync(); else updUI();
 }
 
@@ -340,8 +348,14 @@ function processData(){
 }
 function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
 function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
-function allApproved(){var today=dailyData[todayStr];if(!today)return false;var zwd=ZONES.filter(function(z){return today.zones[z.id]});if(zwd.length<ZONES.length)return false;return zwd.every(function(z){return approvals[z.id]})}
-function missingInfo(){var today=dailyData[todayStr];var m=[],u=[];ZONES.forEach(function(z){if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id])u.push(z.name)});return{missing:m,unapproved:u}}
+function saveFestivi(){localStorage.setItem("festivi-"+todayStr,JSON.stringify(festivi))}
+function allApproved(){var today=dailyData[todayStr];if(!today)return false;
+  // Every zone must be either: has data + approved, OR festivo
+  return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id])||festivi[z.id]});
+}
+function missingInfo(){var today=dailyData[todayStr];var m=[],u=[];ZONES.forEach(function(z){
+  if(festivi[z.id])return; // skip festivo
+  if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id])u.push(z.name)});return{missing:m,unapproved:u}}
 function todayComplete(){var today=dailyData[todayStr];return today&&today.ddt!=null}
 
 function updUI(){
@@ -439,6 +453,12 @@ function updToday(){
         html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg"/>';
         html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button></div></div></div>';
       }
+    } else if(festivi[z.id]){
+      // ══ FESTIVO ROW ══
+      html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(148,163,184,0.2);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">';
+      html+='<div style="display:flex;align-items:center;gap:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">'+z.area+'</span></div>';
+      html+='<div style="display:flex;align-items:center;gap:8px"><span class="badge badge-muted">🏖️ Festivo</span>';
+      html+='<button class="btn btn-ghost btn-sm" onclick="unfestZone(\''+z.id+'\')">✕</button></div></div>';
     } else {
       html+='<div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">';
       html+='<div style="display:flex;align-items:center;gap:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">'+z.area+'</span></div>';
@@ -446,6 +466,17 @@ function updToday(){
     }
   });
   document.getElementById("zoneCards").innerHTML=html;
+
+  // Festivo buttons for zones without data and not yet festivo
+  var pendingZones=ZONES.filter(function(z){return!(today&&today.zones[z.id])&&!festivi[z.id]});
+  var festSec=document.getElementById("festSection");
+  if(pendingZones.length>0){
+    festSec.classList.remove("hid");
+    document.getElementById("festBtns").innerHTML=pendingZones.map(function(z){
+      return'<button class="btn btn-ghost" onclick="festZone(\''+z.id+'\')" style="gap:8px"><span class="zone-dot" style="background:'+z.clr+'"></span>🏖️ '+z.name+'</button>'}).join("");
+    document.getElementById("festAllBtn").style.display=pendingZones.length>1?"":"none";
+  } else {festSec.classList.add("hid")}
+
   var aAll=allApproved();document.getElementById("ddtSection").classList.toggle("hid",!aAll);
   if(aAll){document.getElementById("stepLabel").textContent="STEP 2: Inserisci Resi da DDT";
     var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});document.getElementById("ddtTotNetto").textContent=totNet.toFixed(2)+" kg";
@@ -454,6 +485,9 @@ function updToday(){
     document.getElementById("stepLabel").textContent=msg}
 }
 
+function festZone(zid){festivi[zid]=true;saveFestivi();updUI();showT("🏖️ "+ZONES.find(function(z){return z.id===zid}).name+" — festivo")}
+function unfestZone(zid){delete festivi[zid];saveFestivi();updUI()}
+function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive?"))return;ZONES.forEach(function(z){var today=dailyData[todayStr];if(!(today&&today.zones[z.id])&&!festivi[z.id])festivi[z.id]=true});saveFestivi();updUI();showT("🏖️ Tutte festive")}
 function approveZone(zid,netto,lordo){approvals[zid]={netto:netto,lordo:lordo,approved:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" approvata")}
 function correctZone(zid,nceste){var v=parseFloat(document.getElementById("correct-"+zid).value);if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}var n=Math.max(0,+(v-TARA*nceste).toFixed(2));approvals[zid]={netto:n,lordo:v,approved:true,corrected:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ Corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg")}
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
