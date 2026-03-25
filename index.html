@@ -239,9 +239,15 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
         <div id="camP"><div style="font-size:48px;margin-bottom:12px">📷</div><button class="btn-cam" onclick="document.getElementById('camIn').click()">Scatta foto cesta</button></div>
         <div id="camD" class="hid">
           <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
+          <!-- Weight input -->
+          <div id="weightInput" style="background:var(--inbg);border:2px solid var(--warn);border-radius:14px;padding:16px;margin-top:12px;text-align:center">
+            <div style="font-size:13px;color:var(--warn);font-weight:600;margin-bottom:8px">⚖️ Inserisci il peso dal display piccolo (lordo)</div>
+            <input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:#0a0e1a;border:2px solid var(--inbord);border-radius:10px;padding:12px;font-size:28px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:160px;outline:none" oninput="onWeightInput()">
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">kg</div>
+          </div>
           <div id="vBar" class="verify-bar checking hid"></div>
           <div id="weightRes" class="weight-result hid">
-            <div class="wr-label">Peso letto dal display</div>
+            <div class="wr-label">Peso lordo (dal display)</div>
             <div class="wr-val" id="wrVal"></div>
             <div class="wr-row"><span>Tara cesta rossa</span><span>−2.66 kg</span></div>
             <div class="wr-row"><span>Peso netto reso</span><span id="wrNet" style="color:var(--ok)"></span></div>
@@ -356,12 +362,103 @@ function wPhoto(e){
     var c=document.createElement("canvas"),w=img.width,h=img.height;
     if(w>1600){h=Math.round(h*1600/w);w=1600}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
     var b64=c.toDataURL("image/jpeg",0.85);
-    if(!wCeste[wCC])wCeste[wCC]={};wCeste[wCC].foto=b64;
+    if(!wCeste[wCC])wCeste[wCC]={};wCeste[wCC].foto=b64;wCeste[wCC]._canvas=c;
     document.getElementById("prevImg").src=b64;document.getElementById("camP").classList.add("hid");
     document.getElementById("camD").classList.remove("hid");document.getElementById("camBox").className="cam-box cam-ok";
     document.getElementById("pGuide").classList.add("hid");
-    verifyAndRead(b64,c);
+    document.getElementById("vBar").classList.add("hid");
+    document.getElementById("weightRes").classList.add("hid");
+    document.getElementById("manualW").value="";
+    document.getElementById("btnNP").disabled=true;
+    document.getElementById("btnNP").textContent="⚖️ Inserisci il peso e verifica";
   };img.src=ev.target.result};rd.readAsDataURL(f)}
+
+function onWeightInput(){
+  var v=parseFloat(document.getElementById("manualW").value);
+  var btn=document.getElementById("btnNP");
+  if(v>0){
+    btn.disabled=false;
+    btn.textContent="✓ Verifica peso con AI";
+    btn.onclick=function(){verifyWeight(v)};
+  } else {
+    btn.disabled=true;
+    btn.textContent="⚖️ Inserisci il peso e verifica";
+    btn.onclick=function(){wNxtP()};
+  }
+}
+
+async function verifyWeight(declaredWeight){
+  var vb=document.getElementById("vBar"),btn=document.getElementById("btnNP"),wr=document.getElementById("weightRes");
+  btn.disabled=true;
+  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica AI in corso...';vb.classList.remove("hid");
+
+  var url=gUrl();
+  if(!url){
+    // No AI — accept directly
+    acceptWeight(declaredWeight);return;
+  }
+
+  // Reduce photo for sending
+  var canvas=wCeste[wCC]._canvas;
+  var sendC=document.createElement("canvas"),sw=canvas.width,sh=canvas.height;
+  if(sw>1000){sh=Math.round(sh*1000/sw);sw=1000}
+  sendC.width=sw;sendC.height=sh;sendC.getContext("2d").drawImage(canvas,0,0,sw,sh);
+  var sendB64=sendC.toDataURL("image/jpeg",0.7);
+
+  try{
+    var controller=new AbortController();
+    var tid=setTimeout(function(){controller.abort()},45000);
+    var res=await fetch(url,{
+      method:"POST",headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify({action:"verifyPhoto",foto:sendB64,pesoOperatore:declaredWeight}),
+      signal:controller.signal
+    });
+    clearTimeout(tid);
+    var txt=await res.text();var j;
+    try{j=JSON.parse(txt)}catch(pe){
+      vb.className="verify-bar fail";vb.innerHTML="❌ Errore script: "+txt.substring(0,80);return}
+
+    if(j.valid===true){
+      if(j.match===false){
+        vb.className="verify-bar fail";
+        vb.innerHTML="❌ AI: il peso nella foto NON corrisponde a "+declaredWeight.toFixed(2)+" kg"+(j.reason?" — "+j.reason:"");
+        btn.disabled=false;btn.textContent="❌ Correggi peso o riscatta";
+        btn.onclick=function(){verifyWeight(parseFloat(document.getElementById("manualW").value))};
+      } else {
+        vb.className="verify-bar pass";vb.innerHTML="✓ AI conferma: peso "+declaredWeight.toFixed(2)+" kg verificato";
+        acceptWeight(declaredWeight);
+      }
+    } else if(j.valid===false){
+      vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida — serve cesta rossa su bilancia");
+      btn.disabled=false;btn.textContent="❌ Riscatta";btn.onclick=function(){wClrP()};
+    } else {
+      // Fallback — accept anyway
+      vb.className="verify-bar checking";vb.innerHTML="⚠️ AI non disponibile — peso accettato";
+      acceptWeight(declaredWeight);
+    }
+  }catch(e){
+    if(e.name==="AbortError"){
+      vb.className="verify-bar checking";vb.innerHTML="⚠️ Timeout AI — peso accettato";
+    } else {
+      vb.className="verify-bar checking";vb.innerHTML="⚠️ Errore rete — peso accettato";
+    }
+    acceptWeight(declaredWeight);
+  }
+}
+
+function acceptWeight(lordo){
+  var netto=Math.max(0,+(lordo-TARA).toFixed(2));
+  wCeste[wCC].pesoLordo=lordo;wCeste[wCC].pesoNetto=netto;
+  var wr=document.getElementById("weightRes");
+  document.getElementById("wrVal").textContent=lordo.toFixed(2)+" kg";
+  document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
+  wr.classList.remove("hid");
+  document.getElementById("weightInput").style.display="none";
+  var btn=document.getElementById("btnNP");
+  btn.disabled=false;
+  btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+  btn.onclick=function(){wNxtP()};
+}
 
 function wClrP(){
   var o=document.getElementById("camIn");var n=document.createElement("input");
@@ -370,67 +467,12 @@ function wClrP(){
   document.getElementById("camP").classList.remove("hid");document.getElementById("camD").classList.add("hid");
   document.getElementById("camBox").className="cam-box cam-req";document.getElementById("vBar").classList.add("hid");
   document.getElementById("weightRes").classList.add("hid");
+  var wi=document.getElementById("weightInput");if(wi)wi.style.display="";
   document.getElementById("btnNP").disabled=true;document.getElementById("btnNP").textContent="📸 Scatta foto per continuare";
+  document.getElementById("btnNP").onclick=function(){wNxtP()};
   document.getElementById("pGuide").classList.remove("hid")}
 
-async function verifyAndRead(b64,canvas){
-  var vb=document.getElementById("vBar"),btn=document.getElementById("btnNP"),wr=document.getElementById("weightRes");
-  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Controllo foto...';vb.classList.remove("hid");
-  btn.disabled=true;wr.classList.add("hid");
-  // Basic checks
-  var cx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
-  var px=cx.getImageData(0,0,w,h).data,tp=w*h,br=0,sq=0;
-  for(var i=0;i<px.length;i+=4){var l=(px[i]+px[i+1]+px[i+2])/3;br+=l;sq+=l*l}
-  br/=tp;var va=(sq/tp)-(br*br);
-  if(br<30){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo scura";btn.textContent="❌ Riscatta";return}
-  if(br>235){vb.className="verify-bar fail";vb.innerHTML="❌ Troppo chiara";btn.textContent="❌ Riscatta";return}
-  if(va<200){vb.className="verify-bar fail";vb.innerHTML="❌ Inquadra bilancia con cesta";btn.textContent="❌ Riscatta";return}
-  var url=gUrl();
-  if(!url){vb.className="verify-bar fail";vb.innerHTML="❌ Collega Google Sheets per verifica AI";btn.textContent="❌ Serve Google Sheets";return}
-
-  // Send FULL photo — use the already captured b64 (1600px, quality 0.7)
-  vb.innerHTML='<span class="spin"></span> Verifica AI + lettura peso...';
-  try{
-    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:b64})});
-    var txt=await res.text();var j;
-    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Risposta non JSON: "+txt.substring(0,100);btn.textContent="❌ Errore script";return}
-    console.log("AI response:",JSON.stringify(j));
-    if(j.note){console.log("AI note:",j.note)}
-    if(j.valid===true){
-      var pesoLordo=j.peso;
-      if(pesoLordo!=null&&pesoLordo>0){
-        var pesoNetto=Math.max(0,+(pesoLordo-TARA).toFixed(2));
-        wCeste[wCC].pesoLordo=pesoLordo;wCeste[wCC].pesoNetto=pesoNetto;
-        vb.className="verify-bar pass";vb.innerHTML="✓ Peso letto: "+pesoLordo.toFixed(2)+" kg";
-        document.getElementById("wrVal").textContent=pesoLordo.toFixed(2)+" kg";
-        document.getElementById("wrNet").textContent=pesoNetto.toFixed(2)+" kg";
-        wr.classList.remove("hid");btn.disabled=false;
-        btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
-      } else {
-        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile"+(j.note?" ("+j.note+")":"")+" — inserisci:";
-        wr.classList.remove("hid");
-        document.getElementById("wrVal").innerHTML='<input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:var(--inbg);border:2px solid var(--warn);border-radius:10px;padding:10px;font-size:24px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:140px;outline:none" oninput="manualWChk()">';
-        document.getElementById("wrNet").textContent="—";
-        btn.disabled=true;btn.textContent="Inserisci il peso dal display";
-      }
-    } else if(j.valid===false){
-      vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");btn.textContent="❌ Riscatta";
-    } else if(j.error){
-      vb.className="verify-bar fail";vb.innerHTML="❌ "+j.error;btn.textContent="❌ Errore";
-    } else{vb.className="verify-bar fail";vb.innerHTML="❌ Risposta: "+JSON.stringify(j).substring(0,80);btn.textContent="❌ Errore"}
-  }catch(e){vb.className="verify-bar fail";vb.innerHTML="❌ Connessione: "+e.message;btn.textContent="❌ Riprova"}}
-
 function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(4)}}
-function manualWChk(){
-  var v=parseFloat(document.getElementById("manualW").value);
-  var btn=document.getElementById("btnNP");
-  if(v>0){
-    var netto=Math.max(0,+(v-TARA).toFixed(2));
-    wCeste[wCC].pesoLordo=v;wCeste[wCC].pesoNetto=netto;
-    document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
-    btn.disabled=false;btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
-  } else {btn.disabled=true;btn.textContent="Inserisci il peso";document.getElementById("wrNet").textContent="—"}
-}
 function bldCP(id){var h="";for(var i=0;i<wNC;i++){var c=i<wCC?"done":i===wCC?"active":"";h+='<div class="cp-d '+c+'">'+(i<wCC?"✓":(i+1))+'</div>'}document.getElementById(id).innerHTML=h}
 
 function wBldSum(){
