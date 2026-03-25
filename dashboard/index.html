@@ -202,12 +202,13 @@ function fmtDs(d){var p=d.split("-");return p[2]+"/"+p[1]}
 // Convert Google Drive file URL to displayable image URL
 function driveImgUrl(url){
   if(!url)return"";
+  var id=null;
   // Extract file ID from various Drive URL formats
   var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(m)return"https://lh3.googleusercontent.com/d/"+m[1];
-  m=url.match(/id=([a-zA-Z0-9_-]+)/);
-  if(m)return"https://lh3.googleusercontent.com/d/"+m[1];
-  return url; // fallback: return as-is
+  if(m)id=m[1];
+  if(!id){m=url.match(/id=([a-zA-Z0-9_-]+)/);if(m)id=m[1]}
+  if(id)return"https://drive.google.com/thumbnail?id="+id+"&sz=w800";
+  return url;
 }
 
 function init(){
@@ -319,7 +320,7 @@ function updToday(){
       html+='<div class="zc-body">';
       // Photo
       html+='<div class="zc-photo">';
-      if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" style="margin-bottom:8px"/>'});}
+      if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="margin-bottom:8px"/><a href="'+u.trim()+'" target="_blank" style="display:none;width:200px;height:60px;background:var(--inbg);border-radius:12px;align-items:center;justify-content:center;color:var(--accent);font-size:13px;text-decoration:underline">📷 Apri foto cesta '+(i+1)+'</a>'});}
       else{html+='<div style="width:200px;height:200px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)">Nessuna foto</div>'}
       html+='</div>';
       // Details
