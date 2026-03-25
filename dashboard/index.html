@@ -397,12 +397,11 @@ function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function
 function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
 function saveFestivi(){localStorage.setItem("festivi-"+todayStr,JSON.stringify(festivi))}
 function allApproved(){var today=dailyData[todayStr];if(!today)return false;
-  // Every zone must be either: has data + approved, OR festivo
-  return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id])||festivi[z.id]});
+  return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id]&&approvals[z.id].approved)||festivi[z.id]});
 }
 function missingInfo(){var today=dailyData[todayStr];var m=[],u=[];ZONES.forEach(function(z){
-  if(festivi[z.id])return; // skip festivo
-  if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id])u.push(z.name)});return{missing:m,unapproved:u}}
+  if(festivi[z.id])return;
+  if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id]||!approvals[z.id].approved)u.push(z.name)});return{missing:m,unapproved:u}}
 function todayComplete(){var today=dailyData[todayStr];return today&&today.ddt!=null}
 
 function updUI(){
@@ -448,7 +447,7 @@ function updToday(){
     document.getElementById("completedSub").textContent="Pesata: "+totNet.toFixed(2)+" kg · DDT: "+today.ddt.toFixed(2)+" kg · Diff: "+diff.toFixed(2)+" kg "+(diff<0?"⚠ AMMANCO":"✓ OK");return}
   document.getElementById("completedBanner").classList.add("hid");document.getElementById("approvalSection").classList.remove("hid");
   ZONES.forEach(function(z){
-    var zd=today&&today.zones[z.id];var isApproved=!!approvals[z.id];
+    var zd=today&&today.zones[z.id];var isApproved=approvals[z.id]&&approvals[z.id].approved;
     if(zd){
       hasZones=true;var pesoSalvato=zd.peso||0;var nc=zd.nceste||1;
       var netto=pesoSalvato;var lordo=pesoSalvato+TARA*nc;
@@ -489,7 +488,7 @@ function updToday(){
           html+='</div></div>'}
         html+='</div>';
       } else {
-        // Build ceste info — match photos with ceste details
+        // Build ceste info
         var cesteInfo=[];
         var cd=zd.cesteDetail||[];
         for(var ci=0;ci<Math.max(nc,cd.length,photoUrls.length);ci++){
@@ -500,20 +499,26 @@ function updToday(){
           var cNetto=cDetail.netto||0;
           cesteInfo.push({n:ci+1,lordo:cLordo,netto:cNetto,foto:cPhoto,fotoRaw:cPhotoRaw});
         }
+        var zApp=approvals[z.id]||{ceste:{}};
+        var allCesteOk=cesteInfo.every(function(c){return zApp.ceste&&zApp.ceste[c.n]});
 
         html+='<div class="zone-card waiting"><div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
-        html+='<span class="zc-badge" style="background:rgba(245,158,11,0.1);color:var(--warn)">⏳ Da verificare — '+nc+' cest'+(nc>1?'e':'a')+'</span></div>';
-        html+='<div style="padding:16px 20px">';
+        html+='<span class="zc-badge" style="background:'+(allCesteOk?'rgba(34,197,94,0.1);color:var(--ok)':'rgba(245,158,11,0.1);color:var(--warn)')+'">'+(allCesteOk?'✓ Approvata':'⏳ Da verificare — '+nc+' cest'+(nc>1?'e':'a'))+'</span></div>';
+        html+='<div style="padding:12px 20px">';
         html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
         if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
         html+='</div>';
 
-        // Show each cesta
+        // Each cesta with its own approve/correct
         cesteInfo.forEach(function(c){
-          html+='<div style="padding:12px 20px;border-top:1px solid var(--border)">';
-          html+='<div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:10px">📦 Cesta '+c.n+'</div>';
+          var cAppr=zApp.ceste&&zApp.ceste[c.n];
+          var dispLordo=cAppr?cAppr.lordo:c.lordo;
+          var dispNetto=cAppr?cAppr.netto:c.netto;
+          html+='<div style="padding:12px 20px;border-top:1px solid var(--border);background:'+(cAppr?'rgba(34,197,94,0.03)':'transparent')+'">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-weight:700;font-size:13px;color:var(--accent)">📦 Cesta '+c.n+'</span>';
+          if(cAppr)html+='<span class="badge badge-ok">✓ Approvata</span>';
+          html+='</div>';
           html+='<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
-          // Photo
           if(c.foto){
             html+='<div class="zc-photo-item">';
             html+='<img src="'+c.foto+'" alt="Cesta '+c.n+'" onclick="viewPhoto(\''+c.foto.replace(/'/g,"\\'")+'\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>';
@@ -521,24 +526,26 @@ function updToday(){
           } else {
             html+='<div style="width:180px;height:100px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">📷 Foto non caricata</div>';
           }
-          // Weight details
           html+='<div style="flex:1;min-width:200px">';
-          html+='<div class="zc-row"><span class="label">Peso lordo (display)</span><span class="value" style="font-size:16px">'+c.lordo.toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value" style="font-size:16px">'+dispLordo.toFixed(2)+' kg'+(cAppr&&cAppr.corrected?' <span style="color:var(--warn)">✏️</span>':'')+'</span></div>';
           html+='<div class="zc-row"><span class="label">Tara cesta</span><span class="value" style="color:var(--muted)">−'+TARA.toFixed(2)+' kg</span></div>';
-          html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:16px">'+c.netto.toFixed(2)+' kg</span></div>';
+          html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:16px">'+dispNetto.toFixed(2)+' kg</span></div>';
+          if(!cAppr){
+            html+='<div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+            html+='<button class="btn btn-ok btn-sm" onclick="approveCesta(\''+z.id+'\','+c.n+','+c.lordo+','+c.netto+')">✓ Approva lordo</button>';
+            html+='<span style="font-size:12px;color:var(--muted)">o correggi:</span>';
+            html+='<input class="correct-input" id="correct-'+z.id+'-'+c.n+'" type="number" step="0.01" placeholder="lordo kg" style="width:90px;font-size:14px;padding:6px 8px"/>';
+            html+='<button class="btn btn-ghost btn-sm" onclick="correctCesta(\''+z.id+'\','+c.n+')">Salva</button>';
+            html+='</div>';
+          }
           html+='</div></div></div>';
         });
 
         // Totals
+        var totNetto=0;cesteInfo.forEach(function(c){var ca=zApp.ceste&&zApp.ceste[c.n];totNetto+=(ca?ca.netto:c.netto)});
         html+='<div style="padding:12px 20px;border-top:2px solid var(--accent);background:rgba(139,92,246,0.04)">';
-        html+='<div class="zc-row"><span class="label" style="font-weight:700">TOTALE ZONA</span><span class="value" style="color:var(--accent);font-size:18px">'+netto.toFixed(2)+' kg netto</span></div>';
-        html+='</div>';
-
-        // Actions
-        html+='<div class="zc-actions"><button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — pesi corretti</button>';
-        html+='<div class="zc-correct"><span style="font-size:13px;color:var(--muted)">oppure correggi il lordo totale:</span>';
-        html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg"/>';
-        html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button></div></div></div>';
+        html+='<div class="zc-row"><span class="label" style="font-weight:700">TOTALE ZONA</span><span class="value" style="color:var(--accent);font-size:18px">'+totNetto.toFixed(2)+' kg netto</span></div>';
+        html+='</div></div>';
       }
     } else if(festivi[z.id]){
       // ══ FESTIVO ROW ══
@@ -575,8 +582,28 @@ function updToday(){
 function festZone(zid){festivi[zid]=true;saveFestivi();updUI();showT("🏖️ "+ZONES.find(function(z){return z.id===zid}).name+" — festivo")}
 function unfestZone(zid){delete festivi[zid];saveFestivi();updUI()}
 function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive?"))return;ZONES.forEach(function(z){var today=dailyData[todayStr];if(!(today&&today.zones[z.id])&&!festivi[z.id])festivi[z.id]=true});saveFestivi();updUI();showT("🏖️ Tutte festive")}
-function approveZone(zid,netto,lordo){approvals[zid]={netto:netto,lordo:lordo,approved:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ "+ZONES.find(function(z){return z.id===zid}).name+" approvata")}
-function correctZone(zid,nceste){var v=parseFloat(document.getElementById("correct-"+zid).value);if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}var n=Math.max(0,+(v-TARA*nceste).toFixed(2));approvals[zid]={netto:n,lordo:v,approved:true,corrected:true,time:new Date().toISOString()};saveApprovals();updUI();showT("✓ Corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg")}
+function approveCesta(zid,cestaNum,lordo,netto){
+  if(!approvals[zid])approvals[zid]={ceste:{}};
+  approvals[zid].ceste[cestaNum]={lordo:lordo,netto:netto,approved:true};
+  // Check if all ceste in zone are approved → mark zone approved
+  var today=dailyData[todayStr];var zd=today&&today.zones[zid];
+  if(zd){var nc=zd.nceste||1;var allOk=true;var totN=0;
+    for(var i=1;i<=nc;i++){if(!approvals[zid].ceste[i])allOk=false;else totN+=approvals[zid].ceste[i].netto}
+    if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totN+TARA*nc;approvals[zid].approved=true}}
+  saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" approvata");
+}
+function correctCesta(zid,cestaNum){
+  var v=parseFloat(document.getElementById("correct-"+zid+"-"+cestaNum).value);
+  if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}
+  var n=Math.max(0,+(v-TARA).toFixed(2));
+  if(!approvals[zid])approvals[zid]={ceste:{}};
+  approvals[zid].ceste[cestaNum]={lordo:v,netto:n,approved:true,corrected:true};
+  var today=dailyData[todayStr];var zd=today&&today.zones[zid];
+  if(zd){var nc=zd.nceste||1;var allOk=true;var totN=0;
+    for(var i=1;i<=nc;i++){if(!approvals[zid].ceste[i])allOk=false;else totN+=approvals[zid].ceste[i].netto}
+    if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totN+TARA*nc;approvals[zid].approved=true}}
+  saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg");
+}
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
 function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
   if(v>0){var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});var diff=+(totNet-v).toFixed(2);el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";btn.disabled=false}else{el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}}
