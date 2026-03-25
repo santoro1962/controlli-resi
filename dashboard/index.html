@@ -148,14 +148,14 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <!-- Step 2: DDT (shown after all zones approved) -->
     <div id="ddtSection" class="hid">
       <div class="ddt-panel">
-        <div class="ddt-title">⚖️ Inserisci DDT <span class="approval-step">STEP 2: DDT</span></div>
+        <div class="ddt-title">⚖️ Inserisci Resi da DDT <span class="approval-step">STEP 2: Resi da DDT</span></div>
         <div class="ddt-summary">
           <div class="ddt-box"><div class="ddt-box-label">Pesata Netta Totale</div><div class="ddt-box-val" id="ddtTotNetto" style="color:var(--ok)">—</div></div>
           <div class="ddt-box"><div class="ddt-box-label">DDT</div><div class="ddt-box-val"><input id="ddtInput" class="ddt-input" type="number" step="0.01" placeholder="0.00" oninput="ddtPreview()"></div></div>
           <div class="ddt-box"><div class="ddt-box-label">Differenza</div><div class="ddt-box-val" id="ddtDiffVal" style="color:var(--muted)">—</div></div>
         </div>
         <div class="ddt-input-row">
-          <button id="ddtSaveBtn" class="btn btn-ok" style="font-size:16px;padding:14px 40px" onclick="saveDDT()" disabled>✓ Conferma e salva tutto</button>
+          <button id="ddtSaveBtn" class="btn btn-ok" style="font-size:16px;padding:14px 40px" onclick="saveDDT()" disabled>✓ Salva Resi da DDT</button>
         </div>
       </div>
     </div>
@@ -252,10 +252,20 @@ function getDayNetto(d){
 function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
 function allApproved(){
   var today=dailyData[todayStr];if(!today)return false;
-  // ALL zones must have data AND be approved
-  return ZONES.every(function(z){
-    return today.zones[z.id] && approvals[z.id];
+  // Count zones with data
+  var zonesWithData=ZONES.filter(function(z){return today.zones[z.id]});
+  if(zonesWithData.length<ZONES.length)return false; // not all zones have data yet
+  // All zones with data must be approved
+  return zonesWithData.every(function(z){return approvals[z.id]});
+}
+function missingInfo(){
+  var today=dailyData[todayStr];
+  var missing=[];var unapproved=[];
+  ZONES.forEach(function(z){
+    if(!today||!today.zones[z.id])missing.push(z.name);
+    else if(!approvals[z.id])unapproved.push(z.name);
   });
+  return{missing:missing,unapproved:unapproved};
 }
 function todayComplete(){var today=dailyData[todayStr];return today&&today.ddt!=null}
 
@@ -343,7 +353,7 @@ function updToday(){
       // Actions
       if(!isApproved){
         html+='<div class="zc-actions">';
-        html+='<button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso corretto</button>';
+        html+='<button class="btn btn-ok" onclick="approveZone(\''+z.id+'\','+netto+','+lordo+')">✓ Approva — peso lordo corretto</button>';
         html+='<div class="zc-correct">';
         html+='<span style="font-size:13px;color:var(--muted)">oppure correggi il lordo:</span>';
         html+='<input class="correct-input" id="correct-'+z.id+'" type="number" step="0.01" placeholder="lordo kg">';
@@ -365,12 +375,18 @@ function updToday(){
   document.getElementById("zoneCards").innerHTML=html;
 
   // Show/hide DDT section
-  var aAll=allApproved()&&hasZones;
+  var aAll=allApproved();
   document.getElementById("ddtSection").classList.toggle("hid",!aAll);
-  document.getElementById("stepLabel").textContent=aAll?"STEP 2: Inserisci DDT":"STEP 1: Verifica pesate";
   if(aAll){
+    document.getElementById("stepLabel").textContent="STEP 2: Inserisci Resi da DDT";
     var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});
     document.getElementById("ddtTotNetto").textContent=totNet.toFixed(2)+" kg";
+  } else {
+    var info=missingInfo();
+    var msg="STEP 1: Verifica pesate";
+    if(info.missing.length>0)msg+=" — in attesa: "+info.missing.join(", ");
+    else if(info.unapproved.length>0)msg+=" — da approvare: "+info.unapproved.join(", ");
+    document.getElementById("stepLabel").textContent=msg;
   }
 }
 
@@ -427,7 +443,7 @@ async function saveDDT(){
     }
     showT("✓ DDT salvato — giornata completata!");await doSync();
   }catch(e){showT("❌ Errore salvataggio")}
-  btn.textContent="✓ Conferma e salva tutto";btn.disabled=false;
+  btn.textContent="✓ Salva Resi da DDT";btn.disabled=false;
 }
 
 function updHist(){
