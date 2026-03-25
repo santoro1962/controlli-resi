@@ -460,27 +460,32 @@ function updToday(){
         html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(34,197,94,0.3);margin-bottom:10px;overflow:hidden">';
         html+='<div onclick="toggleExpand(\''+z.id+'\')" style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer">';
         html+='<div style="display:flex;align-items:center;gap:10px;min-width:200px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">🚚 '+zd.operatore+'</span></div>';
+        var anyCorrected=approvals[z.id].ceste&&Object.values(approvals[z.id].ceste).some(function(c){return c.corrected});
         html+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
-        html+='<span style="font-size:13px">Lordo: <strong style="font-family:monospace;color:var(--text)">'+dL.toFixed(2)+' kg</strong>'+(approvals[z.id].corrected?' <span style="color:var(--warn)">✏️</span>':'')+'</span>';
+        html+='<span style="font-size:13px">Lordo: <strong style="font-family:monospace;color:var(--text)">'+dL.toFixed(2)+' kg</strong>'+(anyCorrected?' <span style="color:var(--warn)">✏️</span>':'')+'</span>';
         html+='<span style="font-size:13px">Netto: <strong style="font-family:monospace;color:var(--ok)">'+dN.toFixed(2)+' kg</strong></span>';
         html+='<span class="badge badge-ok">✓</span>';
         html+='<span style="font-size:12px;color:var(--muted)">'+(isExp?'▲ Chiudi':'▼ Dettagli')+'</span>';
         html+='</div></div>';
         if(isExp){
           var cdExp=zd.cesteDetail||[];
+          var zAppExp=approvals[z.id]||{ceste:{}};
           html+='<div style="padding:12px 20px 16px;border-top:1px solid var(--border)">';
           html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
           if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
           for(var ei=0;ei<Math.max(nc,cdExp.length,photoUrls.length);ei++){
             var eD=cdExp[ei]||{};var eP=photoUrls[ei]?driveImgUrl(photoUrls[ei].trim()):null;
+            var eAppr=zAppExp.ceste&&zAppExp.ceste[ei+1];
+            var eLordo=eAppr?eAppr.lordo:(eD.lordo||0);
+            var eNetto=eAppr?eAppr.netto:(eD.netto||0);
             html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
-            html+='<div style="font-weight:600;font-size:12px;color:var(--accent);margin-bottom:8px">📦 Cesta '+(ei+1)+'</div>';
+            html+='<div style="font-weight:600;font-size:12px;color:var(--accent);margin-bottom:8px">📦 Cesta '+(ei+1)+(eAppr&&eAppr.corrected?' <span style="color:var(--warn)">✏️ corretto</span>':'')+'</div>';
             html+='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">';
             if(eP){html+='<div class="zc-photo-item"><img src="'+eP+'" onclick="viewPhoto(\''+eP.replace(/'/g,"\\'")+'\')" onerror="this.style.display=\'none\'"/></div>'}
             html+='<div style="flex:1;min-width:180px">';
-            html+='<div class="zc-row"><span class="label">Lordo</span><span class="value">'+(eD.lordo||0).toFixed(2)+' kg</span></div>';
+            html+='<div class="zc-row"><span class="label">Lordo</span><span class="value">'+eLordo.toFixed(2)+' kg</span></div>';
             html+='<div class="zc-row"><span class="label">Tara</span><span class="value" style="color:var(--muted)">−'+TARA.toFixed(2)+' kg</span></div>';
-            html+='<div class="zc-row"><span class="label">Netto</span><span class="value" style="color:var(--ok)">'+(eD.netto||0).toFixed(2)+' kg</span></div>';
+            html+='<div class="zc-row"><span class="label">Netto</span><span class="value" style="color:var(--ok)">'+eNetto.toFixed(2)+' kg</span></div>';
             html+='</div></div></div>';
           }
           html+='<div style="margin-top:10px;padding-top:10px;border-top:2px solid var(--accent)">';
@@ -583,26 +588,33 @@ function festZone(zid){festivi[zid]=true;saveFestivi();updUI();showT("🏖️ "+
 function unfestZone(zid){delete festivi[zid];saveFestivi();updUI()}
 function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive?"))return;ZONES.forEach(function(z){var today=dailyData[todayStr];if(!(today&&today.zones[z.id])&&!festivi[z.id])festivi[z.id]=true});saveFestivi();updUI();showT("🏖️ Tutte festive")}
 function approveCesta(zid,cestaNum,lordo,netto){
-  if(!approvals[zid])approvals[zid]={ceste:{}};
+  if(!approvals[zid])approvals[zid]={ceste:{},approved:false};
+  if(!approvals[zid].ceste)approvals[zid].ceste={};
   approvals[zid].ceste[cestaNum]={lordo:lordo,netto:netto,approved:true};
-  // Check if all ceste in zone are approved → mark zone approved
-  var today=dailyData[todayStr];var zd=today&&today.zones[zid];
-  if(zd){var nc=zd.nceste||1;var allOk=true;var totN=0;
-    for(var i=1;i<=nc;i++){if(!approvals[zid].ceste[i])allOk=false;else totN+=approvals[zid].ceste[i].netto}
-    if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totN+TARA*nc;approvals[zid].approved=true}}
+  checkZoneComplete(zid);
   saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" approvata");
 }
 function correctCesta(zid,cestaNum){
   var v=parseFloat(document.getElementById("correct-"+zid+"-"+cestaNum).value);
   if(!v||v<=0){showT("⚠ Inserisci il peso lordo");return}
   var n=Math.max(0,+(v-TARA).toFixed(2));
-  if(!approvals[zid])approvals[zid]={ceste:{}};
+  if(!approvals[zid])approvals[zid]={ceste:{},approved:false};
+  if(!approvals[zid].ceste)approvals[zid].ceste={};
   approvals[zid].ceste[cestaNum]={lordo:v,netto:n,approved:true,corrected:true};
-  var today=dailyData[todayStr];var zd=today&&today.zones[zid];
-  if(zd){var nc=zd.nceste||1;var allOk=true;var totN=0;
-    for(var i=1;i<=nc;i++){if(!approvals[zid].ceste[i])allOk=false;else totN+=approvals[zid].ceste[i].netto}
-    if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totN+TARA*nc;approvals[zid].approved=true}}
-  saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" corretta: lordo "+v.toFixed(2)+" → netto "+n.toFixed(2)+" kg");
+  checkZoneComplete(zid);
+  saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" corretta: "+v.toFixed(2)+" → "+n.toFixed(2)+" kg");
+}
+function checkZoneComplete(zid){
+  var today=dailyData[todayStr];var zd=today&&today.zones[zid];if(!zd)return;
+  var nc=zd.nceste||1;var cd=zd.cesteDetail||[];
+  var numCeste=Math.max(nc,cd.length);
+  var allOk=true;var totN=0;var totL=0;
+  for(var i=1;i<=numCeste;i++){
+    if(!approvals[zid].ceste[i]){allOk=false}
+    else{totN+=approvals[zid].ceste[i].netto;totL+=approvals[zid].ceste[i].lordo}
+  }
+  if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totL;approvals[zid].approved=true}
+  else{approvals[zid].approved=false}
 }
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
 function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
