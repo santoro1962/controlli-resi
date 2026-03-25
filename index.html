@@ -393,7 +393,9 @@ async function verifyAndRead(b64,canvas){
   try{
     var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:b64})});
     var txt=await res.text();var j;
-    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore script";return}
+    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar fail";vb.innerHTML="❌ Risposta non JSON: "+txt.substring(0,100);btn.textContent="❌ Errore script";return}
+    console.log("AI response:",JSON.stringify(j));
+    if(j.note){console.log("AI note:",j.note)}
     if(j.valid===true){
       var pesoLordo=j.peso;
       if(pesoLordo!=null&&pesoLordo>0){
@@ -405,7 +407,7 @@ async function verifyAndRead(b64,canvas){
         wr.classList.remove("hid");btn.disabled=false;
         btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
       } else {
-        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile — inserisci:";
+        vb.className="verify-bar checking";vb.innerHTML="⚠️ Foto OK ma peso non leggibile"+(j.note?" ("+j.note+")":"")+" — inserisci:";
         wr.classList.remove("hid");
         document.getElementById("wrVal").innerHTML='<input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:var(--inbg);border:2px solid var(--warn);border-radius:10px;padding:10px;font-size:24px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:140px;outline:none" oninput="manualWChk()">';
         document.getElementById("wrNet").textContent="—";
@@ -415,7 +417,7 @@ async function verifyAndRead(b64,canvas){
       vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");btn.textContent="❌ Riscatta";
     } else if(j.error){
       vb.className="verify-bar fail";vb.innerHTML="❌ "+j.error;btn.textContent="❌ Errore";
-    } else{vb.className="verify-bar fail";vb.innerHTML="❌ Aggiorna script Google";btn.textContent="❌ Errore"}
+    } else{vb.className="verify-bar fail";vb.innerHTML="❌ Risposta: "+JSON.stringify(j).substring(0,80);btn.textContent="❌ Errore"}
   }catch(e){vb.className="verify-bar fail";vb.innerHTML="❌ Connessione: "+e.message;btn.textContent="❌ Riprova"}}
 
 function wNxtP(){if(wCC<wNC-1){wCC++;wGo(3)}else{wGo(4)}}
