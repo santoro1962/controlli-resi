@@ -199,6 +199,16 @@ var todayStr=new Date().toISOString().slice(0,10);
 var gUrl=function(){return localStorage.getItem("dash-gsheet-url")||""};
 function fmtD(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function fmtDs(d){var p=d.split("-");return p[2]+"/"+p[1]}
+// Convert Google Drive file URL to displayable image URL
+function driveImgUrl(url){
+  if(!url)return"";
+  // Extract file ID from various Drive URL formats
+  var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(m)return"https://lh3.googleusercontent.com/d/"+m[1];
+  m=url.match(/id=([a-zA-Z0-9_-]+)/);
+  if(m)return"https://lh3.googleusercontent.com/d/"+m[1];
+  return url; // fallback: return as-is
+}
 
 function init(){
   document.getElementById("sUrl").value=gUrl();
@@ -234,7 +244,7 @@ function getDayNetto(d){
   if(!dailyData[d])return 0;var t=0;
   ZONES.forEach(function(z){
     var zd=dailyData[d].zones[z.id];
-    if(zd){var n=zd.nceste||1;t+=Math.max(0,(zd.peso||0)-TARA*n)}
+    if(zd) t+=zd.peso||0; // peso is already netto from app
   });return t;
 }
 
@@ -294,7 +304,10 @@ function updToday(){
     var isApproved=!!approvals[z.id];
     if(zd){
       hasZones=true;
-      var lordo=zd.peso||0;var nc=zd.nceste||1;var taraT=TARA*nc;var netto=Math.max(0,lordo-taraT);
+      var pesoSalvato=zd.peso||0;var nc=zd.nceste||1;
+      // Il peso salvato dall'app è GIÀ il netto (lordo-tara fatto dall'app)
+      var netto=pesoSalvato;
+      var lordo=pesoSalvato+TARA*nc; // ricostruiamo il lordo per mostrarlo
       var approvedPeso=isApproved?approvals[z.id].netto:null;
       var time=zd.timestamp?zd.timestamp.split(" ")[1]||"":"";
       var photoUrls=zd.foto?zd.foto.split(" | "):[];
@@ -306,16 +319,16 @@ function updToday(){
       html+='<div class="zc-body">';
       // Photo
       html+='<div class="zc-photo">';
-      if(photoUrls.length>0){photoUrls.forEach(function(u,i){html+='<img src="'+u+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+u+'\')" style="margin-bottom:8px"/>'});}
+      if(photoUrls.length>0){photoUrls.forEach(function(u,i){var imgU=driveImgUrl(u.trim());html+='<img src="'+imgU+'" alt="Cesta '+(i+1)+'" onclick="viewPhoto(\''+imgU+'\')" style="margin-bottom:8px"/>'});}
       else{html+='<div style="width:200px;height:200px;background:var(--inbg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)">Nessuna foto</div>'}
       html+='</div>';
       // Details
       html+='<div class="zc-details">';
       html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
       html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
-      html+='<div class="zc-row"><span class="label">Peso lordo (AI)</span><span class="value">'+lordo.toFixed(2)+' kg</span></div>';
-      html+='<div class="zc-row"><span class="label">Tara ('+nc+' cest'+(nc>1?"e":"a")+')</span><span class="value" style="color:var(--muted)">−'+taraT.toFixed(2)+' kg</span></div>';
-      html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+netto.toFixed(2)+' kg</span></div>';
+      html+='<div class="zc-row"><span class="label">Peso lordo (ricostruito)</span><span class="value">'+lordo.toFixed(2)+' kg</span></div>';
+      html+='<div class="zc-row"><span class="label">Tara ('+nc+' cest'+(nc>1?"e":"a")+' × '+TARA+' kg)</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
+      html+='<div class="zc-row"><span class="label">Peso netto (salvato)</span><span class="value" style="color:var(--ok);font-size:18px">'+netto.toFixed(2)+' kg</span></div>';
       if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
       if(isApproved&&approvedPeso!==netto){html+='<div class="zc-row"><span class="label" style="color:var(--warn)">Peso corretto</span><span class="value" style="color:var(--warn)">'+approvedPeso.toFixed(2)+' kg</span></div>'}
       html+='</div></div>';
@@ -414,7 +427,7 @@ function updHist(){
     var ddt=day.ddt;var diff=ddt!=null?+(totNet-ddt).toFixed(2):null;var amm=diff!=null&&diff<0;
     html+='<tr class="'+(amm?"ammanco":"")+'"><td style="font-weight:600">'+fmtD(d)+'</td>';
     ZONES.forEach(function(z){var zd=day.zones[z.id];
-      if(zd){var n=Math.max(0,(zd.peso||0)-TARA*(zd.nceste||1));html+='<td style="font-family:monospace;color:'+z.clr+'">'+n.toFixed(1)+'</td>'}
+      if(zd){html+='<td style="font-family:monospace;color:'+z.clr+'">'+(zd.peso||0).toFixed(1)+'</td>'}
       else html+='<td style="color:var(--muted)">—</td>'});
     html+='<td style="font-family:monospace;font-weight:700">'+totNet.toFixed(1)+'</td>';
     html+='<td style="font-family:monospace">'+(ddt!=null?ddt.toFixed(1):'<span style="color:var(--warn)">—</span>')+'</td>';
@@ -427,7 +440,7 @@ function updCharts(){
   var days=Object.keys(dailyData).sort().slice(-curPer);var labels=days.map(fmtDs);
   ZONES.forEach(function(z){
     var key="ch"+z.id.charAt(0).toUpperCase()+z.id.slice(1);
-    var vals=days.map(function(d){var zd=dailyData[d]&&dailyData[d].zones[z.id];return zd?Math.max(0,(zd.peso||0)-TARA*(zd.nceste||1)):null});
+    var vals=days.map(function(d){var zd=dailyData[d]&&dailyData[d].zones[z.id];return zd?(zd.peso||0):null});
     if(charts[key])charts[key].destroy();
     charts[key]=new Chart(document.getElementById(key),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:z.clr,backgroundColor:z.clr+"33",fill:true,tension:0.3,pointRadius:2,borderWidth:2,spanGaps:true}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:10}},grid:{color:"#1e293b"}}}}});
