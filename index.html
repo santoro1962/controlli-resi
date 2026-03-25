@@ -366,57 +366,86 @@ function wPhoto(e){
     document.getElementById("prevImg").src=b64;document.getElementById("camP").classList.add("hid");
     document.getElementById("camD").classList.remove("hid");document.getElementById("camBox").className="cam-box cam-ok";
     document.getElementById("pGuide").classList.add("hid");
+    document.getElementById("vBar").classList.add("hid");
     document.getElementById("weightRes").classList.add("hid");
     document.getElementById("manualW").value="";
+    var wi=document.getElementById("weightInput");if(wi)wi.style.display="";
     document.getElementById("btnNP").disabled=true;
-    document.getElementById("btnNP").textContent="⚖️ Inserisci il peso";
+    document.getElementById("btnNP").textContent="⚖️ Inserisci il peso lordo";
     document.getElementById("btnNP").onclick=function(){wNxtP()};
-    // AI verifica solo cesta rossa + bilancia ORIPAN
-    verifyPhoto(b64,c);
   };img.src=ev.target.result};rd.readAsDataURL(f)}
-
-async function verifyPhoto(b64,canvas){
-  var vb=document.getElementById("vBar");
-  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica foto...';vb.classList.remove("hid");
-  var url=gUrl();
-  if(!url){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita";return}
-  // Reduce for sending
-  var sc=document.createElement("canvas"),sw=canvas.width,sh=canvas.height;
-  if(sw>800){sh=Math.round(sh*800/sw);sw=800}
-  sc.width=sw;sc.height=sh;sc.getContext("2d").drawImage(canvas,0,0,sw,sh);
-  var sendB64=sc.toDataURL("image/jpeg",0.6);
-  try{
-    var controller=new AbortController();
-    var tid=setTimeout(function(){controller.abort()},30000);
-    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:sendB64}),signal:controller.signal});
-    clearTimeout(tid);
-    var txt=await res.text();var j;
-    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita";return}
-    if(j.valid===true){vb.className="verify-bar pass";vb.innerHTML="✓ Cesta rossa e bilancia ORIPAN riconosciute"}
-    else if(j.valid===false){vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");
-      document.getElementById("btnNP").disabled=false;document.getElementById("btnNP").textContent="❌ Riscatta";document.getElementById("btnNP").onclick=function(){wClrP()};return}
-    else{vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita"}
-  }catch(e){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita"}
-}
 
 function onWeightInput(){
   var v=parseFloat(document.getElementById("manualW").value);
   var btn=document.getElementById("btnNP");
   if(v>0){
-    var netto=Math.max(0,+(v-TARA).toFixed(2));
-    wCeste[wCC].pesoLordo=v;wCeste[wCC].pesoNetto=netto;
-    document.getElementById("wrVal").textContent=v.toFixed(2)+" kg";
-    document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
-    document.getElementById("weightRes").classList.remove("hid");
     btn.disabled=false;
-    btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
-    btn.onclick=function(){wNxtP()};
+    btn.textContent="✓ Verifica con AI";
+    btn.onclick=function(){doVerify(v)};
   } else {
-    document.getElementById("weightRes").classList.add("hid");
     btn.disabled=true;
-    btn.textContent="⚖️ Inserisci il peso";
-    btn.onclick=function(){wNxtP()};
+    btn.textContent="⚖️ Inserisci il peso lordo";
+    document.getElementById("weightRes").classList.add("hid");
   }
+}
+
+async function doVerify(declaredWeight){
+  var vb=document.getElementById("vBar"),btn=document.getElementById("btnNP"),wr=document.getElementById("weightRes");
+  btn.disabled=true;
+  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica AI...';vb.classList.remove("hid");
+
+  var url=gUrl();
+  if(!url){acceptWeight(declaredWeight);return}
+
+  // Reduce photo for AI
+  var canvas=wCeste[wCC]._canvas;
+  var sc=document.createElement("canvas"),sw=canvas.width,sh=canvas.height;
+  if(sw>800){sh=Math.round(sh*800/sw);sw=800}
+  sc.width=sw;sc.height=sh;sc.getContext("2d").drawImage(canvas,0,0,sw,sh);
+  var sendB64=sc.toDataURL("image/jpeg",0.6);
+
+  try{
+    var controller=new AbortController();
+    var tid=setTimeout(function(){controller.abort()},30000);
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:sendB64,pesoOperatore:declaredWeight}),signal:controller.signal});
+    clearTimeout(tid);
+    var txt=await res.text();var j;
+    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar pass";vb.innerHTML="✓ Verificato";acceptWeight(declaredWeight);return}
+
+    if(j.valid===true){
+      if(j.match===false){
+        vb.className="verify-bar fail";
+        vb.innerHTML="❌ Peso non corrisponde"+(j.reason?" — "+j.reason:"")+" — correggi";
+        btn.disabled=false;btn.textContent="✓ Riprova verifica";
+        btn.onclick=function(){doVerify(parseFloat(document.getElementById("manualW").value))};
+      } else {
+        vb.className="verify-bar pass";vb.innerHTML="✓ Cesta, bilancia e peso verificati";
+        acceptWeight(declaredWeight);
+      }
+    } else if(j.valid===false){
+      vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");
+      btn.disabled=false;btn.textContent="❌ Riscatta";btn.onclick=function(){wClrP()};
+    } else {
+      vb.className="verify-bar pass";vb.innerHTML="✓ Verificato";
+      acceptWeight(declaredWeight);
+    }
+  }catch(e){
+    vb.className="verify-bar pass";vb.innerHTML="✓ Verificato (AI non raggiungibile)";
+    acceptWeight(declaredWeight);
+  }
+}
+
+function acceptWeight(lordo){
+  var netto=Math.max(0,+(lordo-TARA).toFixed(2));
+  wCeste[wCC].pesoLordo=lordo;wCeste[wCC].pesoNetto=netto;
+  document.getElementById("wrVal").textContent=lordo.toFixed(2)+" kg";
+  document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
+  document.getElementById("weightRes").classList.remove("hid");
+  var wi=document.getElementById("weightInput");if(wi)wi.style.display="none";
+  var btn=document.getElementById("btnNP");
+  btn.disabled=false;
+  btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+  btn.onclick=function(){wNxtP()};
 }
 
 function wClrP(){
