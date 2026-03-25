@@ -127,7 +127,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 
   <!-- MAIN APP -->
   <div id="mainApp" class="hid">
-    <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><button class="btn-gear" onclick="openSet()">⚙️</button></div>
+    <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><div style="display:flex;gap:8px"><button style="background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:18px;color:var(--text);cursor:pointer" onclick="doSync()">🔄</button><button class="btn-gear" onclick="openSet()">⚙️</button></div></div>
     <div class="user-badge"><div class="ub-icon" id="ubIcon">🚚</div><div><div class="ub-name" id="ubName"></div><div class="ub-zones" id="ubZones"></div></div></div>
     <div id="setP" class="set-card hid"><div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Impostazioni</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px">URL Google Sheets</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec" style="margin-bottom:10px"><div class="set-btns" style="margin-top:0;margin-bottom:14px"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div><div style="border-top:1px solid var(--border);padding-top:14px"><button class="btn-xx" style="width:100%" onclick="changeUser()">👤 Cambia profilo</button></div></div>
     <div id="noUrl" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px 16px;margin-bottom:16px"><strong style="color:var(--warn)">ℹ️ Modalità locale</strong><p style="color:var(--muted);margin-top:4px;font-size:12px">Per la verifica AI collega Google Sheets (⚙️).</p></div>
@@ -307,7 +307,7 @@ function initApp(){
   delete dayData["2026-03-24"];delete dayData["2026-03-25"];saveL();
   var mz=myZones().map(function(id){var z=zoneById(id);return z?z.name:id}).join(", ");
   document.getElementById("ubName").textContent=curUser;document.getElementById("ubZones").textContent=mz;
-  findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000)}
+  findAct();if(gUrl())doSync();else updUI();chkPM();setInterval(chkPM,60000);setInterval(function(){if(gUrl())doSync()},60000)}
 function findAct(){var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);activeDate=(dayData[y]&&!myDayOk(y))?y:todayStr}
 
 async function doSync(){var url=gUrl();if(!url){updUI();return}try{var r=await fetch(url+"?action=getAll");var j=await r.json();if(j.data){j.data.forEach(function(d){if(!d.data)return;var day=getDay(d.data);if(d.zona&&d.peso!=null){day[d.zona]={totaleNetto:d.peso,autista:d.operatore}}});saveL();document.getElementById("sDot").style.background="var(--ok)";document.getElementById("sLbl").textContent="Connesso";showT("✓ Sincronizzato")}}catch(e){document.getElementById("sDot").style.background="var(--danger)";document.getElementById("sLbl").textContent="Offline"}findAct();updUI()}
@@ -366,98 +366,57 @@ function wPhoto(e){
     document.getElementById("prevImg").src=b64;document.getElementById("camP").classList.add("hid");
     document.getElementById("camD").classList.remove("hid");document.getElementById("camBox").className="cam-box cam-ok";
     document.getElementById("pGuide").classList.add("hid");
-    document.getElementById("vBar").classList.add("hid");
     document.getElementById("weightRes").classList.add("hid");
     document.getElementById("manualW").value="";
     document.getElementById("btnNP").disabled=true;
-    document.getElementById("btnNP").textContent="⚖️ Inserisci il peso e verifica";
+    document.getElementById("btnNP").textContent="⚖️ Inserisci il peso";
+    document.getElementById("btnNP").onclick=function(){wNxtP()};
+    // AI verifica solo cesta rossa + bilancia ORIPAN
+    verifyPhoto(b64,c);
   };img.src=ev.target.result};rd.readAsDataURL(f)}
+
+async function verifyPhoto(b64,canvas){
+  var vb=document.getElementById("vBar");
+  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica foto...';vb.classList.remove("hid");
+  var url=gUrl();
+  if(!url){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita";return}
+  // Reduce for sending
+  var sc=document.createElement("canvas"),sw=canvas.width,sh=canvas.height;
+  if(sw>800){sh=Math.round(sh*800/sw);sw=800}
+  sc.width=sw;sc.height=sh;sc.getContext("2d").drawImage(canvas,0,0,sw,sh);
+  var sendB64=sc.toDataURL("image/jpeg",0.6);
+  try{
+    var controller=new AbortController();
+    var tid=setTimeout(function(){controller.abort()},30000);
+    var res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPhoto",foto:sendB64}),signal:controller.signal});
+    clearTimeout(tid);
+    var txt=await res.text();var j;
+    try{j=JSON.parse(txt)}catch(pe){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita";return}
+    if(j.valid===true){vb.className="verify-bar pass";vb.innerHTML="✓ Cesta rossa e bilancia ORIPAN riconosciute"}
+    else if(j.valid===false){vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida");
+      document.getElementById("btnNP").disabled=false;document.getElementById("btnNP").textContent="❌ Riscatta";document.getElementById("btnNP").onclick=function(){wClrP()};return}
+    else{vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita"}
+  }catch(e){vb.className="verify-bar pass";vb.innerHTML="✓ Foto acquisita"}
+}
 
 function onWeightInput(){
   var v=parseFloat(document.getElementById("manualW").value);
   var btn=document.getElementById("btnNP");
   if(v>0){
+    var netto=Math.max(0,+(v-TARA).toFixed(2));
+    wCeste[wCC].pesoLordo=v;wCeste[wCC].pesoNetto=netto;
+    document.getElementById("wrVal").textContent=v.toFixed(2)+" kg";
+    document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
+    document.getElementById("weightRes").classList.remove("hid");
     btn.disabled=false;
-    btn.textContent="✓ Verifica peso con AI";
-    btn.onclick=function(){verifyWeight(v)};
+    btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
+    btn.onclick=function(){wNxtP()};
   } else {
+    document.getElementById("weightRes").classList.add("hid");
     btn.disabled=true;
-    btn.textContent="⚖️ Inserisci il peso e verifica";
+    btn.textContent="⚖️ Inserisci il peso";
     btn.onclick=function(){wNxtP()};
   }
-}
-
-async function verifyWeight(declaredWeight){
-  var vb=document.getElementById("vBar"),btn=document.getElementById("btnNP"),wr=document.getElementById("weightRes");
-  btn.disabled=true;
-  vb.className="verify-bar checking";vb.innerHTML='<span class="spin"></span> Verifica AI in corso...';vb.classList.remove("hid");
-
-  var url=gUrl();
-  if(!url){
-    // No AI — accept directly
-    acceptWeight(declaredWeight);return;
-  }
-
-  // Reduce photo for sending
-  var canvas=wCeste[wCC]._canvas;
-  var sendC=document.createElement("canvas"),sw=canvas.width,sh=canvas.height;
-  if(sw>1000){sh=Math.round(sh*1000/sw);sw=1000}
-  sendC.width=sw;sendC.height=sh;sendC.getContext("2d").drawImage(canvas,0,0,sw,sh);
-  var sendB64=sendC.toDataURL("image/jpeg",0.7);
-
-  try{
-    var controller=new AbortController();
-    var tid=setTimeout(function(){controller.abort()},45000);
-    var res=await fetch(url,{
-      method:"POST",headers:{"Content-Type":"text/plain"},
-      body:JSON.stringify({action:"verifyPhoto",foto:sendB64,pesoOperatore:declaredWeight}),
-      signal:controller.signal
-    });
-    clearTimeout(tid);
-    var txt=await res.text();var j;
-    try{j=JSON.parse(txt)}catch(pe){
-      vb.className="verify-bar fail";vb.innerHTML="❌ Errore script: "+txt.substring(0,80);return}
-
-    if(j.valid===true){
-      if(j.match===false){
-        vb.className="verify-bar fail";
-        vb.innerHTML="❌ AI: il peso nella foto NON corrisponde a "+declaredWeight.toFixed(2)+" kg"+(j.reason?" — "+j.reason:"");
-        btn.disabled=false;btn.textContent="❌ Correggi peso o riscatta";
-        btn.onclick=function(){verifyWeight(parseFloat(document.getElementById("manualW").value))};
-      } else {
-        vb.className="verify-bar pass";vb.innerHTML="✓ AI conferma: peso "+declaredWeight.toFixed(2)+" kg verificato";
-        acceptWeight(declaredWeight);
-      }
-    } else if(j.valid===false){
-      vb.className="verify-bar fail";vb.innerHTML="❌ "+(j.reason||"Foto non valida — serve cesta rossa su bilancia");
-      btn.disabled=false;btn.textContent="❌ Riscatta";btn.onclick=function(){wClrP()};
-    } else {
-      // Fallback — accept anyway
-      vb.className="verify-bar checking";vb.innerHTML="⚠️ AI non disponibile — peso accettato";
-      acceptWeight(declaredWeight);
-    }
-  }catch(e){
-    if(e.name==="AbortError"){
-      vb.className="verify-bar checking";vb.innerHTML="⚠️ Timeout AI — peso accettato";
-    } else {
-      vb.className="verify-bar checking";vb.innerHTML="⚠️ Errore rete — peso accettato";
-    }
-    acceptWeight(declaredWeight);
-  }
-}
-
-function acceptWeight(lordo){
-  var netto=Math.max(0,+(lordo-TARA).toFixed(2));
-  wCeste[wCC].pesoLordo=lordo;wCeste[wCC].pesoNetto=netto;
-  var wr=document.getElementById("weightRes");
-  document.getElementById("wrVal").textContent=lordo.toFixed(2)+" kg";
-  document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
-  wr.classList.remove("hid");
-  document.getElementById("weightInput").style.display="none";
-  var btn=document.getElementById("btnNP");
-  btn.disabled=false;
-  btn.textContent=wCC>=wNC-1?"✓ Vai al riepilogo":"Avanti → Cesta "+(wCC+2);
-  btn.onclick=function(){wNxtP()};
 }
 
 function wClrP(){
