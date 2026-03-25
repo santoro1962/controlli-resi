@@ -325,7 +325,14 @@ function updToday(){
       // Il peso salvato dall'app è GIÀ il netto (lordo-tara fatto dall'app)
       var netto=pesoSalvato;
       var lordo=pesoSalvato+TARA*nc; // ricostruiamo il lordo per mostrarlo
-      var approvedPeso=isApproved?approvals[z.id].netto:null;
+      // If approved with correction, use corrected values for display
+      var displayLordo=lordo;
+      var displayNetto=netto;
+      var taraT=TARA*nc;
+      if(isApproved&&approvals[z.id].corrected){
+        displayLordo=approvals[z.id].lordo;
+        displayNetto=approvals[z.id].netto;
+      }
       var time=zd.timestamp?zd.timestamp.split(" ")[1]||"":"";
       var photoUrls=zd.foto?zd.foto.split(" | "):[];
 
@@ -343,11 +350,10 @@ function updToday(){
       html+='<div class="zc-details">';
       html+='<div class="zc-row"><span class="label">Autista</span><span class="value">🚚 '+zd.operatore+'</span></div>';
       html+='<div class="zc-row"><span class="label">N° ceste</span><span class="value">'+nc+'</span></div>';
-      html+='<div class="zc-row"><span class="label">Peso lordo (ricostruito)</span><span class="value">'+lordo.toFixed(2)+' kg</span></div>';
-      html+='<div class="zc-row"><span class="label">Tara ('+nc+' cest'+(nc>1?"e":"a")+' × '+TARA+' kg)</span><span class="value" style="color:var(--muted)">−'+(TARA*nc).toFixed(2)+' kg</span></div>';
-      html+='<div class="zc-row"><span class="label">Peso netto (salvato)</span><span class="value" style="color:var(--ok);font-size:18px">'+netto.toFixed(2)+' kg</span></div>';
+      html+='<div class="zc-row"><span class="label">Peso lordo</span><span class="value">'+(isApproved&&approvals[z.id].corrected?'<span style="text-decoration:line-through;color:var(--muted);margin-right:8px">'+lordo.toFixed(2)+'</span><span style="color:var(--warn)">'+displayLordo.toFixed(2)+' kg ✏️</span>':displayLordo.toFixed(2)+' kg')+'</span></div>';
+      html+='<div class="zc-row"><span class="label">Tara ('+nc+' cest'+(nc>1?"e":"a")+' × '+TARA+' kg)</span><span class="value" style="color:var(--muted)">−'+taraT.toFixed(2)+' kg</span></div>';
+      html+='<div class="zc-row"><span class="label">Peso netto</span><span class="value" style="color:var(--ok);font-size:18px">'+(isApproved&&approvals[z.id].corrected?'<span style="text-decoration:line-through;color:var(--muted);font-size:14px;margin-right:8px">'+netto.toFixed(2)+'</span>':'')+displayNetto.toFixed(2)+' kg</span></div>';
       if(time)html+='<div class="zc-row"><span class="label">Registrato</span><span class="value" style="color:var(--muted);font-weight:400">'+time+'</span></div>';
-      if(isApproved&&approvedPeso!==netto){html+='<div class="zc-row"><span class="label" style="color:var(--warn)">Peso corretto</span><span class="value" style="color:var(--warn)">'+approvedPeso.toFixed(2)+' kg</span></div>'}
       html+='</div></div>';
 
       // Actions
@@ -360,8 +366,7 @@ function updToday(){
         html+='<button class="btn btn-ghost btn-sm" onclick="correctZone(\''+z.id+'\','+nc+')">Salva</button>';
         html+='</div></div>';
       } else {
-        var appLordo=approvals[z.id].lordo||lordo;
-        html+='<div class="zc-actions"><span style="color:var(--ok);font-weight:600">✓ Approvata'+(approvals[z.id].corrected?' (lordo corretto: '+appLordo.toFixed(2)+' kg → netto: '+approvedPeso.toFixed(2)+' kg)':'')+'</span>';
+        html+='<div class="zc-actions"><span style="color:var(--ok);font-weight:600">✓ Approvata'+(approvals[z.id].corrected?' (lordo corretto: '+displayLordo.toFixed(2)+' kg → netto: '+displayNetto.toFixed(2)+' kg)':'')+'</span>';
         html+='<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="unapproveZone(\''+z.id+'\')">↩ Rivedi</button></div>';
       }
       html+='</div>';
