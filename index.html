@@ -480,13 +480,13 @@ async function wSave(){
       }catch(e){/* skip photo on error */}
     }
   }
-  var syncZone=wZone;var syncDate=activeDate;
+  var syncZone=wZone;var syncDate=activeDate;var syncNCeste=wCeste.length;
   // 3) Return to main immediately
   cancelWiz();
   // 4) BACKGROUND SYNC — data first (fast), then photos one by one
   var url=gUrl();if(!url)return;
   try{
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:wCeste.length,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:syncNCeste,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
   }catch(e){showT("⚠ Dati non sincronizzati")}
   // Upload photos one at a time with delay between each
   var fotoOk=0;
@@ -499,7 +499,7 @@ async function wSave(){
       else if(j.error)console.log("Upload foto "+(i+1)+" errore:",j.error);
     }catch(e){console.log("Upload foto "+(i+1)+" fallito:",e.message)}
     // Small delay between uploads
-    if(i<photosToSync.length-1)await new Promise(function(r){setTimeout(r,1000)});
+    if(i<photosToSync.length-1)await new Promise(function(r){setTimeout(r,3000)});
   }
   if(photosToSync.length>0){
     if(fotoOk===photosToSync.length)showT("📷 "+fotoOk+" foto salvate ✓");
