@@ -1320,7 +1320,7 @@ function updDoveSpendi(el){
   });
   
   // Stacked bar chart
-  h+='<div style="padding:16px 20px"><canvas id="chDoveSpendi" height="220"></canvas></div>';
+  h+='<div style="padding:16px 20px"><div style="position:relative;height:220px"><canvas id="chDoveSpendi"></canvas></div></div>';
   el.innerHTML=h;
   
   setTimeout(function(){
@@ -1403,7 +1403,7 @@ function renderStoricoList(list,filter){
       });
       h+='</div>';
     }
-    h+='<canvas id="stCh'+idx+'" height="100" style="margin-bottom:10px"></canvas>';
+    h+='<div style="position:relative;height:180px;margin-bottom:10px"><canvas id="stCh'+idx+'"></canvas></div>';
     h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--card)"><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Data</th><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Fornitore</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Qty</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Prezzo</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Totale</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Var.</th></tr></thead><tbody>';
     a.records.slice().reverse().forEach(function(r,ri){
       var prev=a.records.length>1&&ri<a.records.length-1?a.records[a.records.length-2-ri]:null;
@@ -1602,7 +1602,7 @@ function updFattRiepilogo(el){
   });
   var sortM=Object.keys(mesi).sort();
   var MESI_IT=["","Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-  var html='<div style="padding:20px"><canvas id="chCosti" height="250"></canvas></div>';
+  var html='<div style="padding:20px"><div style="position:relative;height:250px"><canvas id="chCosti"></canvas></div></div>';
   html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px"><thead><tr style="background:var(--inbg)">';
   html+='<th style="padding:10px;text-align:left;color:var(--muted);font-size:11px">Mese</th>';
   html+='<th style="padding:10px;text-align:right;color:var(--danger);font-size:11px">Costi</th>';
@@ -1978,7 +1978,7 @@ function renderArticleList(artList,filter){
       html+='</div>';
     }
     // Price chart placeholder
-    html+='<canvas id="artCh'+idx+'" height="120" style="margin-bottom:12px"></canvas>';
+    html+='<div style="position:relative;height:120px;margin-bottom:12px"><canvas id="artCh'+idx+'"></canvas></div>';
     // History table
     html+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--card)"><th style="padding:6px 8px;text-align:left;color:var(--muted)">Data</th><th style="padding:6px 8px;text-align:left;color:var(--muted)">Fornitore</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Qty</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Prezzo Unit.</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Totale</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Var.</th></tr></thead><tbody>';
     a.records.slice().reverse().forEach(function(r,ri){
