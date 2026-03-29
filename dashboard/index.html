@@ -808,30 +808,32 @@ async function syncFatture(){
   var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
   var btn=document.getElementById("syncFattBtn");btn.textContent="⏳ Scansione...";btn.disabled=true;
   var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");msg.style.color="var(--warn)";
-  msg.textContent="Scansione cartelle Google Drive...";
+  msg.innerHTML="Scansione cartelle Google Drive (max 20 file per volta)...";
   try{
     var controller=new AbortController();
-    var tid=setTimeout(function(){controller.abort()},60000);
+    var tid=setTimeout(function(){controller.abort()},90000);
     var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"}),signal:controller.signal});
     clearTimeout(tid);
     var txt=await r.text();
-    msg.textContent="Risposta ricevuta, elaboro...";
     var j;
-    try{j=JSON.parse(txt)}catch(pe){msg.style.color="var(--danger)";msg.textContent="❌ Risposta non JSON: "+txt.substring(0,150);btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;return}
-    if(j.error){msg.style.color="var(--danger)";msg.textContent="❌ "+j.error}
+    try{j=JSON.parse(txt)}catch(pe){msg.style.color="var(--danger)";msg.innerHTML="❌ Risposta non JSON: "+txt.substring(0,150);btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;return}
+    if(j.error){msg.style.color="var(--danger)";msg.innerHTML="❌ "+j.error}
     else{
       var tot=(j.acquisto||0)+(j.vendita||0);
-      msg.style.color="var(--ok)";
-      var info="✓ Importate "+j.acquisto+" acquisto, "+j.vendita+" vendita";
-      if(j.errori)info+=" ("+j.errori+" errori)";
+      var info="";
+      if(tot>0)info+="✓ Importate <strong>"+j.acquisto+"</strong> acquisto, <strong>"+j.vendita+"</strong> vendita";
+      else info+="✓ Nessuna nuova fattura in questo batch";
+      if(j.errori)info+=" (<span style='color:var(--danger)'>"+j.errori+" errori</span>)";
       if(j.skipped)info+=" — "+j.skipped+" già importate";
-      if(j.dettagli&&j.dettagli.length>0)info+="\n"+j.dettagli.join("\n");
-      msg.textContent=info;
+      if(j.remaining>0)info+="<br><strong style='color:var(--warn)'>⚠ Ancora "+j.remaining+" file da elaborare — clicca di nuovo Sincronizza</strong>";
+      if(j.dettagli&&j.dettagli.length>0)info+="<br><span style='font-size:11px;color:var(--muted)'>"+j.dettagli.join(" | ")+"</span>";
+      msg.style.color=j.errori&&!tot?"var(--danger)":"var(--ok)";
+      msg.innerHTML=info;
       if(tot>0)await loadFatture();
     }
   }catch(e){
-    if(e.name==="AbortError"){msg.style.color="var(--danger)";msg.textContent="❌ Timeout — lo script ci mette troppo (>60s)"}
-    else{msg.style.color="var(--danger)";msg.textContent="❌ Errore: "+e.message}
+    if(e.name==="AbortError"){msg.style.color="var(--danger)";msg.innerHTML="❌ Timeout (>90s) — riprova"}
+    else{msg.style.color="var(--danger)";msg.innerHTML="❌ Errore: "+e.message}
   }
   btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;
 }
