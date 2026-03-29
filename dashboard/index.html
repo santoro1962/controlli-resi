@@ -1466,15 +1466,15 @@ function updFornClassifica(el){
       var art=articles[k];
       var recs=art.records.filter(function(r){return r.fornitore===sn&&r.data>=range.from&&r.data<=range.to});
       if(recs.length===0)return;
-      var allRecs=art.records.filter(function(r){return r.fornitore===sn});
-      var an=analyzePrice(allRecs); // price analysis on ALL data for accuracy
+      var allRecsSupplier=art.records.filter(function(r){return r.fornitore===sn});
+      var an=art.hasCode?analyzePrice(allRecsSupplier):null; // price tracking only for coded items, same supplier
       var totS=recs.reduce(function(ss,r){return ss+r.prezzoTot},0);
       var totQ=recs.reduce(function(ss,r){return ss+r.qty},0);
       var detail={name:art.name,codice:art.codice||k.replace("DESC_",""),hasCode:art.hasCode!==false,
         analysis:an,totSpesa:totS,totQty:totQ,um:art.um||"",nAcq:recs.length};
       if(an&&an.change>0){
         var months=Math.max(1,Math.round((new Date(an.lastDate)-new Date(an.firstDate))/(30*86400000)));
-        var mQty=allRecs.reduce(function(ss,r){return ss+r.qty},0)/months;
+        var mQty=allRecsSupplier.reduce(function(ss,r){return ss+r.qty},0)/months;
         detail.impatto=an.change*mQty;s.impatto+=detail.impatto;
       } else {detail.impatto=0}
       s.artDetails.push(detail);
