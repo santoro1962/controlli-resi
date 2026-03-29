@@ -367,7 +367,11 @@ function goModule(mod,el){
   document.querySelectorAll(".module").forEach(function(m){m.classList.remove("active")});
   var target=document.getElementById("mod-"+mod);if(target)target.classList.add("active");
   if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();if(mod==="costi")loadFatture();
-  if(mod==="fornitori"){loadFattThen(function(){setFornTab(window._lastFornTab||"panoramica")})}
+  if(mod==="fornitori"){loadFattThen(async function(){
+    await loadClassificazioni();
+    await runClassification();
+    setFornTab(window._lastFornTab||"panoramica");
+  })}
   if(mod==="clienti"){loadFattThen(function(){setCliTab(window._lastCliTab||"clienti")})}
 }
 function openSettings(){
@@ -967,38 +971,84 @@ function setFornTab(t){
   else if(t==="elenco")updFattElencoTipo(el,"Acquisto");
 }
 
-// ═══ CATEGORY CLASSIFICATION ═══
+// ═══ CATEGORY CLASSIFICATION — AI BASED ═══
+var classificazioni={}; // loaded from sheet
 var COST_CATEGORIES=[
-  {id:"materie",name:"Materie prime",keywords:["farin","lievit","zuccher","sale ","olio","strutto","burro","uov","semol","impast","cacao","cioccolat","malt","amido","glutin","margarin","vanig","nocc","mandorl","uvett","canditi","sesam","semi ","cream","panna","latte","formag","mozzarell"],color:"#85B7EB",colorDark:"#0C447C"},
-  {id:"energia",name:"Energia",keywords:["elettric","energia","gas nat","metano","enel","eni ","edison","luce","kilowatt","kwh","smc","a2a","iren","hera","acea"],color:"#97C459",colorDark:"#27500A"},
-  {id:"trasporti",name:"Trasporti",keywords:["gasolio","carburant","diesel","benzin","autostra","pedagg","pneumat","gomm","olio motor","assicuraz","bollo","revisione","manutenz.*veic","ricambi auto"],color:"#EF9F27",colorDark:"#633806"},
-  {id:"imballaggi",name:"Imballaggi",keywords:["sacchett","bust","carton","scatol","film","pell","involucr","vaschett","contenit","etichett","nastro","celloph"],color:"#F09995",colorDark:"#791F1F"},
-  {id:"servizi",name:"Servizi",keywords:["consulen","commercialis","pulizia","lavaggio","sanifica","telefon","internet","assicuraz","canone","software","abbonament","noleggi","affitto","locaz","professional"],color:"#CECBF6",colorDark:"#3C3489"},
-  {id:"manutenzione",name:"Manutenzione",keywords:["manutenz","riparaz","ricamb","pezzo","installaz","tecnic","impiant","forno","caldai"],color:"#9FE1CB",colorDark:"#085041"},
-  {id:"altro",name:"Altro",keywords:[],color:"#D3D1C7",colorDark:"#444441"}
+  {id:"Materie prime",color:"#85B7EB",colorDark:"#0C447C"},
+  {id:"Imballaggi",color:"#F09995",colorDark:"#791F1F"},
+  {id:"Energia",color:"#97C459",colorDark:"#27500A"},
+  {id:"Trasporti",color:"#EF9F27",colorDark:"#633806"},
+  {id:"Attrezzature",color:"#9FE1CB",colorDark:"#085041"},
+  {id:"Manutenzione",color:"#F5C4B3",colorDark:"#712B13"},
+  {id:"Servizi",color:"#CECBF6",colorDark:"#3C3489"},
+  {id:"Personale",color:"#ED93B1",colorDark:"#4B1528"},
+  {id:"Altro",color:"#D3D1C7",colorDark:"#444441"}
 ];
 
-function classifyItem(desc){
-  if(!desc)return"altro";
-  var d=desc.toLowerCase();
-  for(var i=0;i<COST_CATEGORIES.length-1;i++){
-    var cat=COST_CATEGORIES[i];
-    for(var j=0;j<cat.keywords.length;j++){
-      if(d.match(new RegExp(cat.keywords[j])))return cat.id;
-    }
-  }
-  return"altro";
+function getCatColor(catName){
+  var c=COST_CATEGORIES.find(function(x){return x.id===catName});
+  return c||COST_CATEGORIES[COST_CATEGORIES.length-1];
 }
 
-function getCatById(id){return COST_CATEGORIES.find(function(c){return c.id===id})||COST_CATEGORIES[COST_CATEGORIES.length-1]}
+function classifyItem(codeOrDesc,fornitore){
+  if(!fornitore)return "Altro";
+  // Try exact match: fornitore|codice or fornitore|desc
+  var key1=fornitore+"|"+(codeOrDesc||"");
+  if(classificazioni[key1])return classificazioni[key1].categoria;
+  // Try all keys for this fornitore
+  var fKeys=Object.keys(classificazioni).filter(function(k){return k.indexOf(fornitore+"|")===0});
+  // If fornitore has only one category, use that
+  if(fKeys.length>0){
+    var cats={};fKeys.forEach(function(k){cats[classificazioni[k].categoria]=true});
+    var uniqCats=Object.keys(cats);
+    if(uniqCats.length===1)return uniqCats[0];
+    // Otherwise try partial match on description
+    if(codeOrDesc){
+      var d=codeOrDesc.toLowerCase();
+      for(var i=0;i<fKeys.length;i++){
+        var c=classificazioni[fKeys[i]];
+        if(c.descrizione&&d.indexOf(c.descrizione.toLowerCase().substring(0,15))>=0)return c.categoria;
+      }
+    }
+    return uniqCats[0]; // fallback to most common for this supplier
+  }
+  return "Non classificato";
+}
+
+async function loadClassificazioni(){
+  var url=gUrl();if(!url)return;
+  try{
+    var r=await fetch(url+"?action=getClassificazioni&t="+Date.now(),{cache:"no-store"});
+    var j=await r.json();
+    if(j.data)classificazioni=j.data;
+  }catch(e){}
+}
+
+async function runClassification(){
+  var url=gUrl();if(!url)return;
+  var keepGoing=true;var totalClassified=0;
+  while(keepGoing){
+    try{
+      var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"classifyArticles"})});
+      var j=await r.json();
+      totalClassified+=(j.classified||0);
+      if((j.remaining||0)>0){
+        await new Promise(function(r){setTimeout(r,500)});
+      } else {keepGoing=false}
+    }catch(e){keepGoing=false}
+  }
+  if(totalClassified>0){
+    await loadClassificazioni();
+    showT("🤖 "+totalClassified+" articoli classificati da AI");
+  }
+  return totalClassified;
+}
 
 // Build category data from fatture
 function buildCategoryData(){
   var cats={};
-  COST_CATEGORIES.forEach(function(c){cats[c.id]={id:c.id,name:c.name,color:c.color,colorDark:c.colorDark,totale:0,totalePrev:0,fornitori:{},articoli:0}});
+  COST_CATEGORIES.forEach(function(c){cats[c.id]={id:c.id,name:c.id,color:c.color,colorDark:c.colorDark,totale:0,totalePrev:0,fornitori:{},articoli:0}});
   
-  var articles=buildArticleIndex();
-  // Current month and previous month
   var now=new Date();var curM=now.toISOString().slice(0,7);
   var pm=new Date(now.getFullYear(),now.getMonth()-1,1);var prevM=pm.toISOString().slice(0,7);
   
@@ -1006,18 +1056,22 @@ function buildCategoryData(){
     if(!f.righe)return;
     var fMonth=f.data.substring(0,7);
     f.righe.forEach(function(r){
-      if(!r.descrizione||r.prezzoTotale===0)return;
-      var catId=classifyItem(r.descrizione);
+      if(!r.descrizione&&!r.codice)return;
+      if(r.prezzoTotale===0)return;
+      var catId=classifyItem(r.codice||r.descrizione,f.soggetto);
+      if(!cats[catId])cats[catId]={id:catId,name:catId,color:"#D3D1C7",colorDark:"#444441",totale:0,totalePrev:0,fornitori:{},articoli:0};
       if(fMonth===curM)cats[catId].totale+=r.prezzoTotale;
       if(fMonth===prevM)cats[catId].totalePrev+=r.prezzoTotale;
       cats[catId].fornitori[f.soggetto]=true;
     });
   });
   
-  // Count articles per category
+  var articles=buildArticleIndex();
   Object.keys(articles).forEach(function(k){
-    var catId=classifyItem(articles[k].name);
-    cats[catId].articoli++;
+    var art=articles[k];
+    var forn=Object.keys(art.fornitori)[0]||"";
+    var catId=classifyItem(art.codice||art.name,forn);
+    if(cats[catId])cats[catId].articoli++;
   });
   
   return Object.values(cats).filter(function(c){return c.totale>0||c.totalePrev>0}).sort(function(a,b){return b.totale-a.totale});
@@ -1034,7 +1088,7 @@ function buildSupplierImpact(){
     suppliers[f.soggetto].nFatt++;
     if(f.righe)f.righe.forEach(function(r){
       if(r.codice)suppliers[f.soggetto].articoli[r.codice]=true;
-      var cat=classifyItem(r.descrizione);
+      var cat=classifyItem(r.codice||r.descrizione,f.soggetto);
       suppliers[f.soggetto].categorie[cat]=true;
     });
   });
@@ -1150,7 +1204,7 @@ function updFornPanoramica(el){
     fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
       var m=f.data.substring(0,7);if(!months[m])months[m]={};
       if(f.righe)f.righe.forEach(function(r){
-        var cat=classifyItem(r.descrizione);
+        var cat=classifyItem(r.codice||r.descrizione,f.soggetto);
         if(!months[m][cat])months[m][cat]=0;
         months[m][cat]+=r.prezzoTotale;
       });
@@ -1187,7 +1241,8 @@ function updFornCategorie(el){
     var catArticles=[];
     Object.keys(articles).forEach(function(k){
       var art=articles[k];
-      if(classifyItem(art.name)!==c.id)return;
+      var forn=Object.keys(art.fornitori)[0]||"";
+      if(classifyItem(art.codice||art.name,forn)!==c.id)return;
       var an=analyzePrice(art.records);
       var totSpesa=art.records.reduce(function(s,r){return s+r.prezzoTot},0);
       catArticles.push({name:art.name,codice:art.codice||k,analysis:an,totSpesa:totSpesa,um:art.um,fornitori:Object.keys(art.fornitori)});
@@ -1223,7 +1278,7 @@ function updFornImpatto(el){
     var hasImpact=s.impatto>0;
     var badgeBg=hasImpact?"rgba(239,68,68,0.1)":"rgba(34,197,94,0.08)";
     var badgeColor=hasImpact?"var(--danger)":"var(--ok)";
-    var cats=Object.keys(s.categorie).map(function(c){return getCatById(c).name}).join(", ");
+    var cats=Object.keys(s.categorie).map(function(c){return c}).join(", ");
     
     h+='<div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer" onclick="toggleFattSogg(this)">';
     h+='<div style="width:30px;height:30px;border-radius:50%;background:'+badgeBg+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+badgeColor+';flex-shrink:0">'+(i+1)+'</div>';
@@ -1254,7 +1309,7 @@ function updFornImpatto(el){
     h+='<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">💡 Dove puoi agire per ridurre i costi</div>';
     h+='<div style="font-size:12px;color:var(--text);line-height:1.8">';
     topImpact.forEach(function(s,i){
-      var cats=Object.keys(s.categorie).map(function(c){return getCatById(c).name}).join(", ");
+      var cats=Object.keys(s.categorie).map(function(c){return c}).join(", ");
       h+='<div style="margin-bottom:6px"><strong>'+(i+1)+'.</strong> <strong>'+s.name+'</strong> (+€'+s.impatto.toFixed(0)+'/mese) — '+cats+'. ';
       if(s.impatto>200)h+='Impatto alto: richiedere preventivi a fornitori alternativi.';
       else if(s.impatto>50)h+='Valutare acquisto in stock a prezzo bloccato o rinegoziare.';
