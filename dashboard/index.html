@@ -1186,6 +1186,7 @@ function updFornPanoramica(el){
   var totalePrev=catData.reduce(function(s,c){return s+c.totalePrev},0);
   var varTot=totalePrev>0?((totale-totalePrev)/totalePrev*100):0;
   
+  var now=new Date();
   var MESI_NOMI=["","Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
   var curMName=MESI_NOMI[now.getMonth()+1]+" "+now.getFullYear();
   var prevMNum=now.getMonth()===0?12:now.getMonth();
