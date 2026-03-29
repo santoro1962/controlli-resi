@@ -1018,13 +1018,35 @@ async function loadCustomCategories(){}
 function getCatStyle(n){return COST_CATEGORIES.find(function(c){return c.id===n})||COST_CATEGORIES[COST_CATEGORIES.length-1]}
 function classifyItem(codeOrDesc,fornitore){
   if(!fornitore)return"Altro";
+  // 1. Exact match: fornitore|code_or_desc
   var key=fornitore+"|"+(codeOrDesc||"");
   if(classificazioni[key])return classificazioni[key].categoria;
+  // 2. Try all keys for this fornitore - find most common category
   var fKeys=Object.keys(classificazioni).filter(function(k){return k.indexOf(fornitore+"|")===0});
   if(fKeys.length>0){
-    var cats={};fKeys.forEach(function(k){cats[classificazioni[k].categoria]=true});
-    var uc=Object.keys(cats);if(uc.length===1)return uc[0];
-    return uc[0];
+    var catCount={};
+    fKeys.forEach(function(k){
+      var cat=classificazioni[k].categoria;
+      if(!catCount[cat])catCount[cat]=0;
+      catCount[cat]++;
+    });
+    // Return the most frequent category for this fornitore
+    var best="Altro";var bestN=0;
+    Object.keys(catCount).forEach(function(c){if(catCount[c]>bestN){bestN=catCount[c];best=c}});
+    return best;
+  }
+  // 3. Try partial fornitore name match (e.g. "MOLINI FRATELLI AMORUSO" vs "Molini Fratelli Amoruso S.r.l.")
+  var fornUpper=fornitore.toUpperCase();
+  var partialKeys=Object.keys(classificazioni).filter(function(k){
+    var kForn=k.split("|")[0].toUpperCase();
+    return kForn.indexOf(fornUpper.substring(0,15))>=0||fornUpper.indexOf(kForn.substring(0,15))>=0;
+  });
+  if(partialKeys.length>0){
+    var catCount2={};
+    partialKeys.forEach(function(k){var cat=classificazioni[k].categoria;if(!catCount2[cat])catCount2[cat]=0;catCount2[cat]++});
+    var best2="Altro";var bestN2=0;
+    Object.keys(catCount2).forEach(function(c){if(catCount2[c]>bestN2){bestN2=catCount2[c];best2=c}});
+    return best2;
   }
   return"Non classificato";
 }
