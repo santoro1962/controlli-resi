@@ -1398,22 +1398,32 @@ function renderStoricoList(list,filter){
     h+='<div id="stD'+idx+'" class="hid" style="padding:0 20px 14px;background:var(--inbg)">';
     if(an){
       h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">';
-      [{l:"Min",v:"€"+an.min.toFixed(4)},{l:"Media",v:"€"+an.avg.toFixed(4)},{l:"Max",v:"€"+an.max.toFixed(4)},{l:"Acquisti",v:an.nAcquisti},{l:"Qty totale",v:a.totQty.toFixed(1)+(a.um?" "+a.um:"")}].forEach(function(s){
+      [{l:"Min",v:"€"+an.min.toFixed(4)},{l:"Media",v:"€"+an.avg.toFixed(4)},{l:"Max",v:"€"+an.max.toFixed(4)},{l:"Acquisti",v:an.nAcquisti},{l:"Qty totale",v:a.totQty.toFixed(1)+(a.um?" "+a.um:"")},{l:"Var. dal 1° acq.",v:(an.changeFromFirst>0?"+":"")+an.changeFromFirstPct.toFixed(1)+"%",c:Math.abs(an.changeFromFirstPct)>=0.5?(an.changeFromFirst>0?"var(--danger)":"var(--ok)"):"var(--muted)"}].forEach(function(s){
         h+='<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;min-width:80px"><div style="font-size:10px;color:var(--muted)">'+s.l+'</div><div style="font-weight:600;font-size:12px;font-family:monospace">'+s.v+'</div></div>';
       });
       h+='</div>';
     }
     h+='<div style="position:relative;height:180px;margin-bottom:10px"><canvas id="stCh'+idx+'"></canvas></div>';
-    h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--card)"><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Data</th><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Fornitore</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Qty</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Prezzo</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Totale</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Var.</th></tr></thead><tbody>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--card)"><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Data</th><th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Fornitore</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Qty</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Prezzo</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Totale</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Var. %</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Diff. €</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Var. cum. %</th><th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Diff. cum. €</th></tr></thead><tbody>';
+    var firstPrice=a.records.length>0?a.records[0].prezzoUnit:0;
     a.records.slice().reverse().forEach(function(r,ri){
       var prev=a.records.length>1&&ri<a.records.length-1?a.records[a.records.length-2-ri]:null;
       var vp=prev&&prev.prezzoUnit>0?((r.prezzoUnit-prev.prezzoUnit)/prev.prezzoUnit*100):0;
       var vc=Math.abs(vp)>=0.5?(vp>0?"var(--danger)":"var(--ok)"):"var(--muted)";
+      var diffEur=prev?(r.prezzoUnit-prev.prezzoUnit)*r.qty:0;
+      var diffEurCol=Math.abs(diffEur)>=0.01?(diffEur>0?"var(--danger)":"var(--ok)"):"var(--muted)";
+      var cumPct=firstPrice>0?((r.prezzoUnit-firstPrice)/firstPrice*100):0;
+      var cumCol=Math.abs(cumPct)>=0.5?(cumPct>0?"var(--danger)":"var(--ok)"):"var(--muted)";
+      var cumEur=(r.prezzoUnit-firstPrice)*r.qty;
+      var cumEurCol=Math.abs(cumEur)>=0.01?(cumEur>0?"var(--danger)":"var(--ok)"):"var(--muted)";
       h+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 6px">'+fmtD(r.data)+'</td><td style="padding:4px 6px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.fornitore+'</td>';
       h+='<td style="padding:4px 6px;text-align:right">'+r.qty.toFixed(1)+'</td>';
       h+='<td style="padding:4px 6px;text-align:right;font-weight:600">€'+r.prezzoUnit.toFixed(4)+'</td>';
       h+='<td style="padding:4px 6px;text-align:right">€'+r.prezzoTot.toFixed(2)+'</td>';
-      h+='<td style="padding:4px 6px;text-align:right;color:'+vc+'">'+(Math.abs(vp)>=0.5?(vp>0?"+":"")+vp.toFixed(1)+"%":"—")+'</td></tr>';
+      h+='<td style="padding:4px 6px;text-align:right;color:'+vc+'">'+(Math.abs(vp)>=0.5?(vp>0?"+":"")+vp.toFixed(1)+"%":"—")+'</td>';
+      h+='<td style="padding:4px 6px;text-align:right;color:'+diffEurCol+'">'+(prev&&Math.abs(diffEur)>=0.01?(diffEur>0?"+":"")+"€"+diffEur.toFixed(2):"—")+'</td>';
+      h+='<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+cumCol+'">'+(Math.abs(cumPct)>=0.1?(cumPct>0?"+":"")+cumPct.toFixed(1)+"%":"—")+'</td>';
+      h+='<td style="padding:4px 6px;text-align:right;font-weight:700;color:'+cumEurCol+'">'+(Math.abs(cumEur)>=0.01?(cumEur>0?"+":"")+"€"+cumEur.toFixed(2):"—")+'</td></tr>';
     });
     h+='</tbody></table></div></div>';
   });
