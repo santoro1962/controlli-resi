@@ -379,7 +379,7 @@ function goModule(mod,el){
         if(fattureData.length===0)await loadFatture();
         console.log("Fatture caricate: "+fattureData.length);
       }catch(e){console.log("loadFatture error:",e)}
-      try{await loadClassificazioni();console.log("Classificazioni caricate: "+Object.keys(classificazioni).length)}catch(e){console.log("loadClass error:",e)}
+      try{await loadClassificazioni();await loadCustomCategories();console.log("Classificazioni: "+Object.keys(classificazioni).length+", Custom cats: "+customCategories.length)}catch(e){console.log("loadClass error:",e)}
       setFornTab(window._lastFornTab||"controllo");
       try{await runClassification();await loadClassificazioni();setFornTab(window._lastFornTab||"controllo")}catch(e){console.log("classify error:",e)}
     })();
@@ -1009,6 +1009,9 @@ var COST_CATEGORIES=[
   {id:"Personale",color:"#ED93B1",colorDark:"#4B1528"},
   {id:"Altro",color:"#D3D1C7",colorDark:"#444441"}
 ];
+var customCategories=[];
+function getAllCategories(){return COST_CATEGORIES.slice()}
+async function loadCustomCategories(){}
 function getCatStyle(n){return COST_CATEGORIES.find(function(c){return c.id===n})||COST_CATEGORIES[COST_CATEGORIES.length-1]}
 function classifyItem(codeOrDesc,fornitore){
   if(!fornitore)return"Altro";
@@ -1039,6 +1042,24 @@ async function reassignCategory(artKey,newCat){
   else classificazioni[artKey]={categoria:newCat};
   var url=gUrl();if(!url)return;
   try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateClassification",key:artKey,categoria:newCat})});showT("✓ Categoria: "+newCat)}catch(e){}
+}
+
+async function riclassificaTutto(){
+  if(!confirm("Cancellare tutte le classificazioni automatiche e rifare da zero con l'AI?"))return;
+  var btn=document.getElementById("btnRiclass");if(btn){btn.textContent="⏳ Resettando...";btn.disabled=true}
+  var url=gUrl();if(!url)return;
+  try{
+    showT("🗑️ Cancellazione classificazioni...");
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"resetClassifications"})});
+    classificazioni={};
+    showT("🤖 Riclassificazione in corso...");
+    if(btn)btn.textContent="🤖 Classificando...";
+    await runClassification();
+    await loadClassificazioni();
+    showT("✓ Riclassificazione completata: "+Object.keys(classificazioni).length+" articoli");
+    setFornTab(window._lastFornTab||"controllo");
+  }catch(e){showT("❌ Errore: "+e.message)}
+  if(btn){btn.textContent="🤖 Riclassifica AI";btn.disabled=false}
 }
 
 // ═══ ALERT BANNER ═══
@@ -1204,8 +1225,9 @@ function updImpattoEconomico(el){
 
 // ═══ TAB 3: DOVE SPENDI ═══
 function updDoveSpendi(el){
+  var allCats=getAllCategories();
   var cats={};
-  COST_CATEGORIES.forEach(function(c){cats[c.id]={id:c.id,color:c.color,colorDark:c.colorDark,totale:0,fornitori:{},articoli:[]}});
+  allCats.forEach(function(c){cats[c.id]={id:c.id,color:c.color,colorDark:c.colorDark,totale:0,fornitori:{},articoli:[]}});
   cats["Non classificato"]={id:"Non classificato",color:"#D3D1C7",colorDark:"#444441",totale:0,fornitori:{},articoli:[]};
   
   fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
@@ -1232,7 +1254,9 @@ function updDoveSpendi(el){
   
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
   h+='<div style="font-weight:700;font-size:15px;margin-bottom:6px">📊 Dove Spendi</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Breakdown costi per categoria — classificazione AI · totale: €'+totale.toFixed(0)+'</div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  h+='<div style="font-size:12px;color:var(--muted)">Breakdown costi per categoria — classificazione automatica AI · totale: €'+totale.toFixed(0)+'</div>';
+  h+='</div>';
   
   // Category bar
   if(totale>0){
