@@ -280,10 +280,12 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <div id="fattStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
     <!-- Tabs -->
     <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="setFattTab('riepilogo')" id="ftab-riepilogo" style="background:var(--accent);color:#fff">📊 Riepilogo Mensile</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('riepilogo')" id="ftab-riepilogo" style="background:var(--accent);color:#fff">📊 Riepilogo</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('alert')" id="ftab-alert">🚨 Variazioni Prezzi</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('articoli')" id="ftab-articoli">📦 Articoli</button>
       <button class="btn btn-ghost btn-sm" onclick="setFattTab('fornitori')" id="ftab-fornitori">🏭 Fornitori</button>
       <button class="btn btn-ghost btn-sm" onclick="setFattTab('clienti')" id="ftab-clienti">🏪 Clienti</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattTab('elenco')" id="ftab-elenco">📋 Elenco Fatture</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('elenco')" id="ftab-elenco">📋 Elenco</button>
     </div>
     <!-- Tab content -->
     <div id="fattContent" style="background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden"></div>
@@ -879,14 +881,14 @@ async function loadFatture(){
   try{
     var r=await fetch(url+"?action=getFatture&t="+Date.now(),{cache:"no-store"});
     var j=await r.json();
-    if(j.data)fattureData=j.data;
+    if(j.data){fattureData=j.data;window._artData=null}
     updFattUI();
   }catch(e){}
 }
 
 function setFattTab(t){
   fattTab=t;
-  ["riepilogo","fornitori","clienti","elenco"].forEach(function(k){
+  ["riepilogo","alert","articoli","fornitori","clienti","elenco"].forEach(function(k){
     var b=document.getElementById("ftab-"+k);
     if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
   });
@@ -901,12 +903,17 @@ function updFattUI(){
     else{totVen+=f.imponibile;totIvaVen+=f.iva;nVen++}
   });
   var margine=totVen-totAcq;
+  // Count price alerts
+  var articles=buildArticleIndex();var nAlerts=0;
+  Object.keys(articles).forEach(function(k){var an=analyzePrice(articles[k].records);if(an&&Math.abs(an.changePct)>=3)nAlerts++});
   var stats=[
     {l:"Fatture Acquisto",v:nAcq,sub:"€ "+totAcq.toFixed(2)+" + IVA € "+totIvaAcq.toFixed(2)},
     {l:"Fatture Vendita",v:nVen,sub:"€ "+totVen.toFixed(2)+" + IVA € "+totIvaVen.toFixed(2)},
     {l:"Tot. Acquisti",v:"€ "+totAcq.toFixed(2),c:"var(--danger)"},
     {l:"Tot. Vendite",v:"€ "+totVen.toFixed(2),c:"var(--ok)"},
     {l:"Margine",v:"€ "+margine.toFixed(2),c:margine>=0?"var(--ok)":"var(--danger)"},
+    {l:"Articoli",v:Object.keys(articles).length},
+    {l:"🚨 Alert prezzi",v:nAlerts,c:nAlerts>0?"var(--danger)":"var(--ok)"},
   ];
   document.getElementById("fattStats").innerHTML=stats.map(function(s){
     return'<div class="stat"><div class="stat-label">'+s.l+'</div><div class="stat-val" style="color:'+(s.c||"var(--text)")+'">'+s.v+'</div>'+(s.sub?'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+s.sub+'</div>':'')+'</div>'
@@ -918,6 +925,8 @@ function updFattContent(){
   var el=document.getElementById("fattContent");
   if(fattureData.length===0){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">📂</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Nessuna fattura importata</div><div style="font-size:12px">Crea le cartelle "Fatture Acquisto" e "Fatture Vendita" su Google Drive, inserisci i file XML e clicca Sincronizza.</div></div>';return}
   if(fattTab==="riepilogo")updFattRiepilogo(el);
+  else if(fattTab==="alert")updFattAlert(el);
+  else if(fattTab==="articoli")updFattArticoli(el);
   else if(fattTab==="fornitori")updFattSoggetti(el,"Acquisto","Fornitori","🏭");
   else if(fattTab==="clienti")updFattSoggetti(el,"Vendita","Clienti","🏪");
   else if(fattTab==="elenco")updFattElenco(el);
@@ -1043,6 +1052,240 @@ function updFattElenco(el){
 }
 
 // Load fatture when switching to costi module is handled in goModule
+
+// ══════════════════════════════════════════════════
+// ── ANALISI COSTI PROFESSIONALE ──
+// ══════════════════════════════════════════════════
+
+function buildArticleIndex(){
+  var articles={};// key: normalized description → {name,fornitore,um,records:[{data,qty,prezzoUnit,prezzoTot,fornitore,fatNum}]}
+  fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
+    if(!f.righe)return;
+    f.righe.forEach(function(r){
+      if(!r.descrizione||r.prezzoTotale===0)return;
+      var key=normalizeArt(r.descrizione);
+      if(!articles[key])articles[key]={name:r.descrizione,fornitori:{},um:r.um||"",records:[]};
+      articles[key].records.push({
+        data:f.data,qty:r.quantita,prezzoUnit:r.prezzoUnitario,prezzoTot:r.prezzoTotale,
+        aliqIVA:r.aliquotaIVA,fornitore:f.soggetto,fatNum:f.numero,um:r.um
+      });
+      articles[key].fornitori[f.soggetto]=true;
+      if(r.um&&!articles[key].um)articles[key].um=r.um;
+    });
+  });
+  // Sort records by date
+  Object.keys(articles).forEach(function(k){
+    articles[k].records.sort(function(a,b){return a.data.localeCompare(b.data)});
+  });
+  return articles;
+}
+
+function normalizeArt(desc){
+  return desc.toUpperCase().replace(/\s+/g," ").replace(/[^A-Z0-9 ]/g,"").trim();
+}
+
+// Price change analysis for an article
+function analyzePrice(records){
+  if(records.length<2)return null;
+  var withPrice=records.filter(function(r){return r.prezzoUnit>0});
+  if(withPrice.length<2)return null;
+  var first=withPrice[0];var last=withPrice[withPrice.length-1];
+  var prev=withPrice.length>=2?withPrice[withPrice.length-2]:first;
+  var change=last.prezzoUnit-prev.prezzoUnit;
+  var changePct=prev.prezzoUnit>0?((change/prev.prezzoUnit)*100):0;
+  var changeFromFirst=last.prezzoUnit-first.prezzoUnit;
+  var changeFromFirstPct=first.prezzoUnit>0?((changeFromFirst/first.prezzoUnit)*100):0;
+  var avg=withPrice.reduce(function(s,r){return s+r.prezzoUnit},0)/withPrice.length;
+  var min=Math.min.apply(null,withPrice.map(function(r){return r.prezzoUnit}));
+  var max=Math.max.apply(null,withPrice.map(function(r){return r.prezzoUnit}));
+  return{
+    lastPrice:last.prezzoUnit,prevPrice:prev.prezzoUnit,firstPrice:first.prezzoUnit,
+    change:change,changePct:changePct,
+    changeFromFirst:changeFromFirst,changeFromFirstPct:changeFromFirstPct,
+    avg:avg,min:min,max:max,nAcquisti:withPrice.length,
+    lastDate:last.data,firstDate:first.data,lastFornitore:last.fornitore
+  };
+}
+
+// 🚨 VARIAZIONI PREZZI
+function updFattAlert(el){
+  var articles=buildArticleIndex();
+  var alerts=[];
+  Object.keys(articles).forEach(function(k){
+    var art=articles[k];var analysis=analyzePrice(art.records);
+    if(!analysis)return;
+    if(Math.abs(analysis.changePct)>=3){// Alert if >=3% change
+      alerts.push({name:art.name,key:k,um:art.um,analysis:analysis,
+        severity:Math.abs(analysis.changePct)>=10?"high":Math.abs(analysis.changePct)>=5?"medium":"low"});
+    }
+  });
+  alerts.sort(function(a,b){return Math.abs(b.analysis.changePct)-Math.abs(a.analysis.changePct)});
+  
+  var nUp=alerts.filter(function(a){return a.analysis.change>0}).length;
+  var nDown=alerts.filter(function(a){return a.analysis.change<0}).length;
+  
+  var html='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
+  html+='<div style="font-weight:700;font-size:14px;margin-bottom:6px">🚨 Variazioni Prezzi (ultima fattura vs precedente)</div>';
+  html+='<div style="font-size:12px;color:var(--muted)">Soglia: ±3% — <span style="color:var(--danger)">'+nUp+' aumenti</span> · <span style="color:var(--ok)">'+nDown+' ribassi</span> · '+alerts.length+' totali</div></div>';
+  
+  if(alerts.length===0){
+    html+='<div style="padding:30px;text-align:center;color:var(--muted)">✓ Nessuna variazione significativa rilevata</div>';
+  } else {
+    alerts.forEach(function(a){
+      var an=a.analysis;var isUp=an.change>0;
+      var sevColor=a.severity==="high"?(isUp?"var(--danger)":"var(--ok)"):a.severity==="medium"?(isUp?"#f59e0b":"#3b82f6"):"var(--muted)";
+      var sevBg=a.severity==="high"?(isUp?"rgba(239,68,68,0.06)":"rgba(34,197,94,0.06)"):"transparent";
+      html+='<div style="padding:14px 20px;border-bottom:1px solid var(--border);background:'+sevBg+'">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">';
+      html+='<div style="flex:1;min-width:250px">';
+      html+='<div style="font-weight:600;font-size:13px;margin-bottom:4px">'+a.name+'</div>';
+      html+='<div style="font-size:11px;color:var(--muted)">'+an.lastFornitore+' · '+an.nAcquisti+' acquisti · ultimo: '+fmtD(an.lastDate)+'</div></div>';
+      html+='<div style="text-align:right;min-width:200px">';
+      html+='<div style="font-size:11px;color:var(--muted)">€'+an.prevPrice.toFixed(4)+' → <strong style="color:'+sevColor+'">€'+an.lastPrice.toFixed(4)+'</strong>'+(a.um?' /'+a.um:'')+'</div>';
+      html+='<div style="font-size:18px;font-weight:700;color:'+sevColor+';font-family:monospace">'+(isUp?'▲ +':'▼ ')+an.changePct.toFixed(1)+'%</div>';
+      html+='<div style="font-size:11px;color:var(--muted)">'+(isUp?'+':'')+'€'+an.change.toFixed(4)+' per unità</div>';
+      html+='</div></div>';
+      // From first purchase
+      if(Math.abs(an.changeFromFirstPct)>=1&&an.nAcquisti>=3){
+        html+='<div style="margin-top:6px;font-size:11px;color:var(--muted)">📈 Dal primo acquisto ('+fmtD(an.firstDate)+'): '+(an.changeFromFirst>0?'+':'')+an.changeFromFirstPct.toFixed(1)+'% (€'+an.firstPrice.toFixed(4)+' → €'+an.lastPrice.toFixed(4)+')</div>';
+      }
+      html+='</div>';
+    });
+  }
+  el.innerHTML=html;
+}
+
+// 📦 ARTICOLI
+function updFattArticoli(el){
+  var articles=buildArticleIndex();
+  var artList=Object.keys(articles).map(function(k){
+    var a=articles[k];var analysis=analyzePrice(a.records);
+    var totQty=a.records.reduce(function(s,r){return s+r.qty},0);
+    var totSpesa=a.records.reduce(function(s,r){return s+r.prezzoTot},0);
+    var lastPrice=analysis?analysis.lastPrice:(a.records.length>0?a.records[a.records.length-1].prezzoUnit:0);
+    return{key:k,name:a.name,um:a.um,fornitori:Object.keys(a.fornitori),nAcquisti:a.records.length,
+      totQty:totQty,totSpesa:totSpesa,lastPrice:lastPrice,analysis:analysis,records:a.records};
+  });
+  artList.sort(function(a,b){return b.totSpesa-a.totSpesa});
+  
+  // Search
+  var html='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+  html+='<div style="font-weight:700;font-size:14px">📦 Analisi Articoli Acquisto ('+artList.length+')</div>';
+  html+='<input id="artSearch" type="text" placeholder="🔍 Cerca articolo..." oninput="filterArticles()" style="background:var(--inbg);border:1px solid var(--inbord);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;width:250px;outline:none">';
+  html+='</div>';
+  html+='<div style="font-size:11px;color:var(--muted);margin-top:6px">Ordinati per spesa totale · clicca per espandere storico prezzi</div></div>';
+  
+  html+='<div id="artListContainer">';
+  html+=renderArticleList(artList);
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function renderArticleList(artList,filter){
+  var html='<div style="overflow-x:auto;max-height:600px;overflow-y:auto">';
+  var filtered=filter?artList.filter(function(a){return a.name.toUpperCase().indexOf(filter.toUpperCase())>=0}):artList;
+  
+  filtered.forEach(function(a,idx){
+    var an=a.analysis;
+    var trendIcon="";var trendColor="var(--muted)";
+    if(an&&Math.abs(an.changePct)>=3){
+      trendIcon=an.change>0?"▲":"▼";
+      trendColor=an.change>0?"var(--danger)":"var(--ok)";
+    }
+    
+    html+='<div style="border-bottom:1px solid var(--border)">';
+    html+='<div onclick="toggleArtDetail('+idx+')" style="padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+    html+='<div style="flex:1;min-width:250px">';
+    html+='<div style="font-weight:600;font-size:13px">'+a.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--muted)">'+a.fornitori.join(", ")+(a.um?" · "+a.um:"")+'</div></div>';
+    html+='<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;font-family:monospace;font-size:12px">';
+    html+='<div style="text-align:right;min-width:70px"><div style="color:var(--muted);font-size:10px">Ultimo prezzo</div><div style="font-weight:600">€'+a.lastPrice.toFixed(4)+'</div></div>';
+    if(trendIcon){html+='<div style="text-align:right;min-width:60px"><div style="color:var(--muted);font-size:10px">Variazione</div><div style="font-weight:700;color:'+trendColor+'">'+trendIcon+' '+Math.abs(an.changePct).toFixed(1)+'%</div></div>'}
+    html+='<div style="text-align:right;min-width:60px"><div style="color:var(--muted);font-size:10px">Acquisti</div><div>'+a.nAcquisti+'</div></div>';
+    html+='<div style="text-align:right;min-width:80px"><div style="color:var(--muted);font-size:10px">Tot. spesa</div><div style="font-weight:600">€'+a.totSpesa.toFixed(2)+'</div></div>';
+    html+='<span style="color:var(--muted);font-size:10px">▼</span>';
+    html+='</div></div>';
+    
+    // Detail (hidden)
+    html+='<div id="artD'+idx+'" class="hid" style="padding:0 20px 16px;background:var(--inbg)">';
+    // Stats row
+    if(an){
+      html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;padding-top:12px">';
+      [{l:"Prezzo min",v:"€"+an.min.toFixed(4)},{l:"Prezzo medio",v:"€"+an.avg.toFixed(4)},{l:"Prezzo max",v:"€"+an.max.toFixed(4)},
+       {l:"Qty totale",v:a.totQty.toFixed(1)+(a.um?" "+a.um:"")},{l:"Dal primo acq.",v:(an.changeFromFirst>0?"+":"")+an.changeFromFirstPct.toFixed(1)+"%",c:Math.abs(an.changeFromFirstPct)>=3?(an.changeFromFirst>0?"var(--danger)":"var(--ok)"):"var(--muted)"}
+      ].forEach(function(s){
+        html+='<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:100px"><div style="font-size:10px;color:var(--muted)">'+s.l+'</div><div style="font-weight:600;font-size:13px;font-family:monospace;color:'+(s.c||"var(--text)")+'">'+s.v+'</div></div>';
+      });
+      html+='</div>';
+    }
+    // Price chart placeholder
+    html+='<canvas id="artCh'+idx+'" height="120" style="margin-bottom:12px"></canvas>';
+    // History table
+    html+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--card)"><th style="padding:6px 8px;text-align:left;color:var(--muted)">Data</th><th style="padding:6px 8px;text-align:left;color:var(--muted)">Fornitore</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Qty</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Prezzo Unit.</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Totale</th><th style="padding:6px 8px;text-align:right;color:var(--muted)">Var.</th></tr></thead><tbody>';
+    a.records.slice().reverse().forEach(function(r,ri){
+      var prevR=a.records.length>1&&ri<a.records.length-1?a.records[a.records.length-2-ri]:null;
+      var varPct=prevR&&prevR.prezzoUnit>0?((r.prezzoUnit-prevR.prezzoUnit)/prevR.prezzoUnit*100):0;
+      var varCol=Math.abs(varPct)>=3?(varPct>0?"var(--danger)":"var(--ok)"):"var(--muted)";
+      html+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px">'+fmtD(r.data)+'</td><td style="padding:5px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.fornitore+'</td>';
+      html+='<td style="padding:5px 8px;text-align:right">'+r.qty.toFixed(1)+'</td>';
+      html+='<td style="padding:5px 8px;text-align:right;font-weight:600">€'+r.prezzoUnit.toFixed(4)+'</td>';
+      html+='<td style="padding:5px 8px;text-align:right">€'+r.prezzoTot.toFixed(2)+'</td>';
+      html+='<td style="padding:5px 8px;text-align:right;color:'+varCol+'">'+(Math.abs(varPct)>=0.5?(varPct>0?"+":"")+varPct.toFixed(1)+"%":"—")+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+window._artData=null;
+function filterArticles(){
+  var q=document.getElementById("artSearch").value;
+  if(!window._artData){
+    var articles=buildArticleIndex();
+    window._artData=Object.keys(articles).map(function(k){
+      var a=articles[k];var analysis=analyzePrice(a.records);
+      var totQty=a.records.reduce(function(s,r){return s+r.qty},0);
+      var totSpesa=a.records.reduce(function(s,r){return s+r.prezzoTot},0);
+      var lastPrice=analysis?analysis.lastPrice:(a.records.length>0?a.records[a.records.length-1].prezzoUnit:0);
+      return{key:k,name:a.name,um:a.um,fornitori:Object.keys(a.fornitori),nAcquisti:a.records.length,
+        totQty:totQty,totSpesa:totSpesa,lastPrice:lastPrice,analysis:analysis,records:a.records};
+    }).sort(function(a,b){return b.totSpesa-a.totSpesa});
+  }
+  document.getElementById("artListContainer").innerHTML=renderArticleList(window._artData,q);
+}
+
+function toggleArtDetail(idx){
+  var d=document.getElementById("artD"+idx);
+  if(!d)return;
+  var wasHid=d.classList.contains("hid");
+  d.classList.toggle("hid");
+  // Draw chart when opening
+  if(wasHid){
+    var articles=buildArticleIndex();
+    var keys=Object.keys(articles).sort(function(a,b){
+      var sa=articles[a].records.reduce(function(s,r){return s+r.prezzoTot},0);
+      var sb=articles[b].records.reduce(function(s,r){return s+r.prezzoTot},0);
+      return sb-sa;
+    });
+    if(keys[idx]){
+      var art=articles[keys[idx]];
+      var withPrice=art.records.filter(function(r){return r.prezzoUnit>0});
+      if(withPrice.length>=2){
+        var ctx=document.getElementById("artCh"+idx);
+        if(ctx){
+          var labels=withPrice.map(function(r){return fmtDs(r.data)});
+          var data=withPrice.map(function(r){return r.prezzoUnit});
+          if(window["_artChart"+idx])window["_artChart"+idx].destroy();
+          window["_artChart"+idx]=new Chart(ctx,{type:"line",data:{labels:labels,datasets:[{
+            label:"Prezzo unitario €",data:data,borderColor:"#8b5cf6",backgroundColor:"rgba(139,92,246,0.1)",fill:true,tension:0.3,pointRadius:3,borderWidth:2
+          }]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#94a3b8",font:{size:9}},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",font:{size:9},callback:function(v){return"€"+v.toFixed(2)}},grid:{color:"#1e293b"}}}}});
+        }
+      }
+    }
+  }
+}
 
 </script>
 </body>
