@@ -177,7 +177,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
   </div>
   <div class="sb-bottom">
     <button class="sb-item" onclick="openSettings()"><span class="sb-icon">⚙️</span><span class="sb-label">Impostazioni</span></button>
-    <div style="padding:8px 14px;margin-top:auto"><span class="sb-label" style="font-size:10px;color:var(--muted);font-family:monospace">v3.1</span></div>
+    <div style="padding:8px 14px;margin-top:auto"><span class="sb-label" style="font-size:10px;color:var(--muted);font-family:monospace">v3.2</span></div>
     <button class="sb-toggle" onclick="toggleSidebar()"><span class="sb-icon" style="font-size:16px" id="sbTogIcon">◀</span><span class="sb-toggle-label">Comprimi</span></button>
   </div>
 </nav>
@@ -326,7 +326,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
       <div style="display:flex;gap:10px;align-items:center"><input id="sUrl" class="fi" placeholder="https://script.google.com/.../exec"><button class="btn btn-ok" onclick="saveUrl()">✓ Salva</button></div>
       <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
         <div style="font-weight:700;font-size:16px;margin-bottom:12px">Info Sistema</div>
-        <p style="font-size:13px;color:var(--muted);line-height:1.8">Tara cesta rossa: <strong style="color:var(--text)">2.66 kg</strong><br>Zone attive: <strong style="color:var(--text)">3</strong> (Nocera-Salerno, Montoro-Solofra, Avellino-Benevento)<br>Versione dashboard: <strong style="color:var(--text)">3.1</strong></p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.8">Tara cesta rossa: <strong style="color:var(--text)">2.66 kg</strong><br>Zone attive: <strong style="color:var(--text)">3</strong> (Nocera-Salerno, Montoro-Solofra, Avellino-Benevento)<br>Versione dashboard: <strong style="color:var(--text)">3.2</strong></p>
       </div>
     </div>
   </div>
@@ -1436,10 +1436,22 @@ function toggleStoricoDetail(idx){
 }
 
 // ═══ TAB 5: FORNITORI CLASSIFICA ═══
+var fornPeriodo="max"; // "1m","3m","ytd","ly","max"
+function getFornDateRange(){
+  var now=new Date();var y=now.getFullYear();var m=now.getMonth();
+  if(fornPeriodo==="1m"){var d=new Date(y,m-1,now.getDate());return{from:d.toISOString().slice(0,10),to:"9999-12-31",label:"Ultimo mese"}}
+  if(fornPeriodo==="3m"){var d=new Date(y,m-3,now.getDate());return{from:d.toISOString().slice(0,10),to:"9999-12-31",label:"Ultimo trimestre"}}
+  if(fornPeriodo==="ytd"){return{from:y+"-01-01",to:"9999-12-31",label:"Da inizio anno "+y}}
+  if(fornPeriodo==="ly"){return{from:(y-1)+"-01-01",to:(y-1)+"-12-31",label:"Anno "+(y-1)}}
+  return{from:"2000-01-01",to:"9999-12-31",label:"Tutti i dati"};
+}
+
 function updFornClassifica(el){
+  var range=getFornDateRange();
+  var filteredFatt=fattureData.filter(function(f){return f.tipo==="Acquisto"&&f.data>=range.from&&f.data<=range.to});
   var articles=buildArticleIndex();
   var suppliers={};
-  fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
+  filteredFatt.forEach(function(f){
     if(!suppliers[f.soggetto])suppliers[f.soggetto]={name:f.soggetto,totale:0,nFatt:0,artKeys:{},cats:{}};
     suppliers[f.soggetto].totale+=f.imponibile;suppliers[f.soggetto].nFatt++;
     if(f.righe)f.righe.forEach(function(r){
@@ -1447,55 +1459,78 @@ function updFornClassifica(el){
       suppliers[f.soggetto].cats[classifyItem(r.codice||r.descrizione,f.soggetto)]=true;
     });
   });
-  // Calc impact per supplier
+  // Calc details per supplier — filtered by period
   Object.keys(suppliers).forEach(function(sn){
     var s=suppliers[sn];s.impatto=0;s.artDetails=[];
     Object.keys(articles).forEach(function(k){
       var art=articles[k];
-      var recs=art.records.filter(function(r){return r.fornitore===sn});
+      var recs=art.records.filter(function(r){return r.fornitore===sn&&r.data>=range.from&&r.data<=range.to});
       if(recs.length===0)return;
-      var an=analyzePrice(recs);
+      var allRecs=art.records.filter(function(r){return r.fornitore===sn});
+      var an=analyzePrice(allRecs); // price analysis on ALL data for accuracy
       var totS=recs.reduce(function(ss,r){return ss+r.prezzoTot},0);
-      var detail={name:art.name,codice:art.codice||k.replace("DESC_",""),hasCode:art.hasCode!==false,analysis:an,totSpesa:totS,um:art.um,nAcq:recs.length};
+      var totQ=recs.reduce(function(ss,r){return ss+r.qty},0);
+      var detail={name:art.name,codice:art.codice||k.replace("DESC_",""),hasCode:art.hasCode!==false,
+        analysis:an,totSpesa:totS,totQty:totQ,um:art.um||"",nAcq:recs.length};
       if(an&&an.change>0){
         var months=Math.max(1,Math.round((new Date(an.lastDate)-new Date(an.firstDate))/(30*86400000)));
-        var mQty=recs.reduce(function(ss,r){return ss+r.qty},0)/months;
+        var mQty=allRecs.reduce(function(ss,r){return ss+r.qty},0)/months;
         detail.impatto=an.change*mQty;s.impatto+=detail.impatto;
       } else {detail.impatto=0}
       s.artDetails.push(detail);
     });
-    s.artDetails.sort(function(a,b){return b.impatto-a.impatto});
+    s.artDetails.sort(function(a,b){return b.totSpesa-a.totSpesa});
   });
   
   var supArr=Object.values(suppliers).sort(function(a,b){return b.totale-a.totale});
+  var totGenerale=supArr.reduce(function(s,x){return s+x.totale},0);
   
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
-  h+='<div style="font-weight:700;font-size:15px">🏭 Fornitori per volume spesa</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">Clicca per vedere articoli acquistati e aumenti</div></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">';
+  h+='<div><div style="font-weight:700;font-size:15px">🏭 Fornitori per volume spesa</div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+range.label+' · '+supArr.length+' fornitori · Totale: €'+totGenerale.toFixed(0)+'</div></div>';
+  // Period filters
+  h+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
+  [["1m","Ultimo mese"],["3m","Ultimo trimestre"],["ytd","Da inizio anno"],["ly","Anno precedente"],["max","Tutto"]].forEach(function(p){
+    var active=fornPeriodo===p[0];
+    h+='<button onclick="fornPeriodo=\''+p[0]+'\';updFornClassifica(document.getElementById(\'fornContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+p[1]+'</button>';
+  });
+  h+='</div></div></div>';
   
   supArr.forEach(function(s,i){
     var hasImp=s.impatto>0;
+    var pctTot=totGenerale>0?(s.totale/totGenerale*100):0;
     h+='<div style="border-bottom:1px solid var(--border)">';
     h+='<div onclick="this.nextElementSibling.classList.toggle(\'hid\')" style="padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
     h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(hasImp?"rgba(239,68,68,0.1)":"var(--inbg)")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(hasImp?"var(--danger)":"var(--muted)")+';flex-shrink:0">'+(i+1)+'</div>';
     h+='<div style="flex:1;min-width:200px"><div style="font-size:13px;font-weight:600">'+s.name+'</div>';
     h+='<div style="font-size:11px;color:var(--muted)">'+Object.keys(s.artKeys).length+' articoli · '+s.nFatt+' fatt. · '+Object.keys(s.cats).join(", ")+'</div></div>';
-    h+='<div style="text-align:right;min-width:90px"><div style="font-size:15px;font-weight:700;font-family:monospace">€'+s.totale.toFixed(0)+'</div></div>';
+    h+='<div style="text-align:right;min-width:100px"><div style="font-size:15px;font-weight:700;font-family:monospace">€'+s.totale.toFixed(0)+'</div><div style="font-size:10px;color:var(--muted)">'+pctTot.toFixed(1)+'% del totale</div></div>';
     if(hasImp)h+='<div style="text-align:right;min-width:100px"><div style="font-size:13px;font-weight:700;color:var(--danger);font-family:monospace">+€'+s.impatto.toFixed(0)+'/mese</div></div>';
     h+='<span style="color:var(--muted);font-size:10px">▼</span></div>';
     // Detail
     h+='<div class="hid" style="padding:6px 20px 12px;background:var(--inbg)">';
     if(s.artDetails.length>0){
-      h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr><th style="text-align:left;padding:4px 6px;color:var(--muted);font-size:10px">Articolo</th><th style="text-align:right;padding:4px 6px;color:var(--muted);font-size:10px">Prezzo</th><th style="text-align:right;padding:4px 6px;color:var(--muted);font-size:10px">Var.</th><th style="text-align:right;padding:4px 6px;color:var(--muted);font-size:10px">Spesa</th><th style="text-align:right;padding:4px 6px;color:var(--muted);font-size:10px">Impatto</th></tr></thead><tbody>';
+      h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr>';
+      h+='<th style="text-align:left;padding:5px 6px;color:var(--muted);font-size:10px">Articolo</th>';
+      h+='<th style="text-align:center;padding:5px 6px;color:var(--muted);font-size:10px">UM</th>';
+      h+='<th style="text-align:right;padding:5px 6px;color:var(--muted);font-size:10px">Qty acquistata</th>';
+      h+='<th style="text-align:right;padding:5px 6px;color:var(--muted);font-size:10px">Ultimo prezzo unit.</th>';
+      h+='<th style="text-align:right;padding:5px 6px;color:var(--muted);font-size:10px">Var. prezzo</th>';
+      h+='<th style="text-align:right;padding:5px 6px;color:var(--muted);font-size:10px">Spesa periodo</th>';
+      h+='<th style="text-align:right;padding:5px 6px;color:var(--muted);font-size:10px">Impatto/mese</th>';
+      h+='</tr></thead><tbody>';
       s.artDetails.forEach(function(a){
         var vc="var(--muted)";var vt="—";
         if(a.analysis&&Math.abs(a.analysis.changePct)>=0.5){vc=a.analysis.change>0?"var(--danger)":"var(--ok)";vt=(a.analysis.change>0?"+":"")+a.analysis.changePct.toFixed(1)+"%"}
         h+='<tr style="border-bottom:1px solid var(--border)">';
-        h+='<td style="padding:4px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.hasCode?'<span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:3px">'+a.codice+'</span>':'')+a.name+'</td>';
-        h+='<td style="padding:4px 6px;text-align:right">'+(a.analysis?"€"+a.analysis.lastPrice.toFixed(4):"—")+'</td>';
-        h+='<td style="padding:4px 6px;text-align:right;font-weight:600;color:'+vc+'">'+vt+'</td>';
-        h+='<td style="padding:4px 6px;text-align:right">€'+a.totSpesa.toFixed(0)+'</td>';
-        h+='<td style="padding:4px 6px;text-align:right;color:'+(a.impatto>0?"var(--danger)":"var(--muted)")+'">'+(a.impatto>0?"+€"+a.impatto.toFixed(0)+"/m":"—")+'</td></tr>';
+        h+='<td style="padding:5px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.hasCode?'<span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:3px">'+a.codice+'</span>':'')+a.name+'</td>';
+        h+='<td style="padding:5px 6px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
+        h+='<td style="padding:5px 6px;text-align:right">'+a.totQty.toFixed(1)+(a.um?' '+a.um:'')+'</td>';
+        h+='<td style="padding:5px 6px;text-align:right">'+(a.analysis?"€"+a.analysis.lastPrice.toFixed(4)+(a.um?'/'+a.um:''):"—")+'</td>';
+        h+='<td style="padding:5px 6px;text-align:right;font-weight:600;color:'+vc+'">'+vt+'</td>';
+        h+='<td style="padding:5px 6px;text-align:right;font-weight:600">€'+a.totSpesa.toFixed(0)+'</td>';
+        h+='<td style="padding:5px 6px;text-align:right;color:'+(a.impatto>0?"var(--danger)":"var(--muted)")+'">'+(a.impatto>0?"+€"+a.impatto.toFixed(0)+"/m":"—")+'</td></tr>';
       });
       h+='</tbody></table>';
     }
