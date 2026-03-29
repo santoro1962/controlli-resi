@@ -189,6 +189,22 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     </div>
     <div id="alertBox"></div>
     <div id="statsRow" class="stats"></div>
+    <!-- Driver unlock — ADMIN ONLY -->
+    <div id="driverUnlockSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px 20px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><span style="font-size:15px">🔓</span> <strong style="font-size:14px">Accesso autisti autonomo</strong><br><span id="unlockStatus" style="font-size:12px;color:var(--muted)">Caricamento...</span></div>
+        <button id="adminUnlockBtn" class="btn btn-ghost btn-sm" onclick="openAdminUnlock()" style="padding:8px 16px">🔑 Gestisci (Admin)</button>
+      </div>
+      <div id="adminPanel" class="hid" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+          <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Dal</label><input id="unlockFrom" type="date" style="background:var(--inbg);border:1px solid var(--inbord);border-radius:8px;padding:8px 12px;color:var(--text);font-family:monospace;font-size:14px;outline:none"></div>
+          <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Al</label><input id="unlockTo" type="date" style="background:var(--inbg);border:1px solid var(--inbord);border-radius:8px;padding:8px 12px;color:var(--text);font-family:monospace;font-size:14px;outline:none"></div>
+          <button class="btn btn-ok btn-sm" onclick="saveDriverRange()" style="padding:8px 20px">✓ Sblocca periodo</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearDriverRange()" style="padding:8px 14px;color:var(--danger)">✕ Rimuovi sblocco</button>
+        </div>
+        <div id="unlockDetail" style="font-size:12px;color:var(--muted)"></div>
+      </div>
+    </div>
     <!-- Approval -->
     <div id="approvalSection" class="approval-section">
       <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
@@ -343,7 +359,7 @@ function init(){
   // Load approvals from localStorage, validate against sheet data
   try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
   try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
-  if(gUrl()) doSync(); else updUI();
+  if(gUrl()){doSync();checkDriverAccess()} else updUI();
   // Auto-refresh every 60 seconds
   setInterval(function(){if(gUrl())doSync()},60000);
 }
@@ -617,6 +633,81 @@ function checkZoneComplete(zid){
   else{approvals[zid].approved=false}
 }
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
+
+var driverUnlockRange=null; // {from:"2026-03-29",to:"2026-04-02"}
+var ADMIN_PIN="189092";
+
+function openAdminUnlock(){
+  var pin=prompt("PIN Admin:");
+  if(pin!==ADMIN_PIN){if(pin!==null)showT("❌ PIN Admin errato");return}
+  document.getElementById("adminPanel").classList.toggle("hid");
+  if(driverUnlockRange){
+    document.getElementById("unlockFrom").value=driverUnlockRange.from||"";
+    document.getElementById("unlockTo").value=driverUnlockRange.to||"";
+  }
+}
+
+async function saveDriverRange(){
+  var from=document.getElementById("unlockFrom").value;
+  var to=document.getElementById("unlockTo").value;
+  if(!from||!to){showT("⚠ Seleziona entrambe le date");return}
+  if(from>to){showT("⚠ La data 'Dal' deve essere prima di 'Al'");return}
+  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
+  try{
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"setDriverAccess",from:from,to:to})});
+    driverUnlockRange={from:from,to:to};
+    updDriverStatus();
+    document.getElementById("adminPanel").classList.add("hid");
+    showT("🔓 Autisti sbloccati dal "+fmtD(from)+" al "+fmtD(to));
+  }catch(e){showT("❌ Errore: "+e.message)}
+}
+
+async function clearDriverRange(){
+  if(!confirm("Rimuovere lo sblocco autisti?"))return;
+  var url=gUrl();if(!url)return;
+  try{
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"setDriverAccess",from:"",to:""})});
+    driverUnlockRange=null;
+    updDriverStatus();
+    document.getElementById("adminPanel").classList.add("hid");
+    showT("🔒 Sblocco rimosso — autisti bloccati");
+  }catch(e){showT("❌ Errore: "+e.message)}
+}
+
+function updDriverStatus(){
+  var el=document.getElementById("unlockStatus");
+  var today=todayStr;
+  if(driverUnlockRange&&driverUnlockRange.from&&driverUnlockRange.to){
+    var active=today>=driverUnlockRange.from&&today<=driverUnlockRange.to;
+    el.innerHTML=active
+      ?'<span style="color:var(--ok);font-weight:600">🔓 Sbloccati: '+fmtD(driverUnlockRange.from)+' → '+fmtD(driverUnlockRange.to)+'</span>'
+      :'<span style="color:var(--warn);font-weight:600">📅 Programmato: '+fmtD(driverUnlockRange.from)+' → '+fmtD(driverUnlockRange.to)+'</span>';
+    document.getElementById("unlockDetail").textContent=active?"Gli autisti possono pesare autonomamente oggi":"Lo sblocco sarà attivo dal "+fmtD(driverUnlockRange.from);
+  } else {
+    var dow=new Date().getDay();
+    var isSunday=dow===0;
+    var p=todayStr.split("-"),ty=+p[0],tm=+p[1],td=+p[2];
+    var fissi=[[1,1],[1,6],[4,25],[5,1],[6,2],[8,15],[11,1],[12,8],[12,25],[12,26]];
+    var isHoliday=fissi.some(function(f){return f[0]===tm&&f[1]===td});
+    if(!isHoliday){var a=ty%19,b=Math.floor(ty/100),c=ty%100,d2=Math.floor(b/4),e2=b%4,f2=Math.floor((b+8)/25),g2=Math.floor((b-f2+1)/3),h2=(19*a+b-d2-g2+15)%30,i2=Math.floor(c/4),k2=c%4,l2=(32+2*e2+2*i2-h2-k2)%7,m2=Math.floor((a+11*h2+22*l2)/451),eM=Math.floor((h2+l2-7*m2+114)/31),eD=((h2+l2-7*m2+114)%31)+1;var ed=new Date(ty,eM-1,eD);ed.setDate(ed.getDate()+1);if(tm===(ed.getMonth()+1)&&td===ed.getDate())isHoliday=true}
+    var isAuto=isSunday||isHoliday;
+    el.innerHTML=isAuto
+      ?'<span style="color:var(--ok);font-weight:600">🔓 '+(isSunday?'Domenica':'Festivo')+' — autisti abilitati</span>'
+      :'<span style="color:var(--muted)">🔒 Solo Carmela può inserire resi (Domeniche e festivi: autisti abilitati)</span>';
+    document.getElementById("unlockDetail").textContent="";
+  }
+}
+
+async function checkDriverAccess(){
+  var url=gUrl();if(!url){updDriverStatus();return}
+  try{
+    var r=await fetch(url+"?action=getDriverAccess&t="+Date.now(),{cache:"no-store"});
+    var j=await r.json();
+    if(j.from&&j.to)driverUnlockRange={from:j.from,to:j.to};
+    else driverUnlockRange=null;
+    updDriverStatus();
+  }catch(e){updDriverStatus()}
+}
 function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
   if(v>0){var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});var diff=+(totNet-v).toFixed(2);el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";btn.disabled=false}else{el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}}
 async function saveDDT(){var v=parseFloat(document.getElementById("ddtInput").value);if(!v)return;var btn=document.getElementById("ddtSaveBtn");btn.textContent="⏳ Salvataggio...";btn.disabled=true;var url=gUrl();if(!url){showT("❌ Configura Google Sheets");return}
