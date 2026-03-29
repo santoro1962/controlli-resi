@@ -273,6 +273,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
   <div id="mod-costi" class="module">
     <div class="page-header"><div><div class="page-title">💰 Controllo Costi</div><div class="page-sub">Fatture acquisto e vendita da Google Drive</div></div>
       <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn">🔄 Sincronizza fatture</button>
+      <button class="btn btn-ghost btn-sm" onclick="testFatture()" style="font-size:11px;color:var(--muted)">🔍 Test cartelle</button>
     </div>
     <div id="fattSyncMsg" class="hid" style="background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
     <!-- Stats -->
@@ -809,19 +810,47 @@ async function syncFatture(){
   var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");msg.style.color="var(--warn)";
   msg.textContent="Scansione cartelle Google Drive...";
   try{
-    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"})});
-    var j=await r.json();
+    var controller=new AbortController();
+    var tid=setTimeout(function(){controller.abort()},60000);
+    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"}),signal:controller.signal});
+    clearTimeout(tid);
+    var txt=await r.text();
+    msg.textContent="Risposta ricevuta, elaboro...";
+    var j;
+    try{j=JSON.parse(txt)}catch(pe){msg.style.color="var(--danger)";msg.textContent="❌ Risposta non JSON: "+txt.substring(0,150);btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;return}
     if(j.error){msg.style.color="var(--danger)";msg.textContent="❌ "+j.error}
     else{
-      var tot=j.acquisto+j.vendita;
+      var tot=(j.acquisto||0)+(j.vendita||0);
       msg.style.color="var(--ok)";
-      msg.textContent=tot>0?"✓ Importate "+j.acquisto+" fatture acquisto e "+j.vendita+" fatture vendita"+(j.errori?" ("+j.errori+" errori)":"")
-        :"✓ Nessuna nuova fattura trovata"+(j.skipped?" ("+j.skipped+" già importate)":"");
+      var info="✓ Importate "+j.acquisto+" acquisto, "+j.vendita+" vendita";
+      if(j.errori)info+=" ("+j.errori+" errori)";
+      if(j.skipped)info+=" — "+j.skipped+" già importate";
+      if(j.dettagli&&j.dettagli.length>0)info+="\n"+j.dettagli.join("\n");
+      msg.textContent=info;
       if(tot>0)await loadFatture();
     }
-  }catch(e){msg.style.color="var(--danger)";msg.textContent="❌ Errore: "+e.message}
+  }catch(e){
+    if(e.name==="AbortError"){msg.style.color="var(--danger)";msg.textContent="❌ Timeout — lo script ci mette troppo (>60s)"}
+    else{msg.style.color="var(--danger)";msg.textContent="❌ Errore: "+e.message}
+  }
   btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;
-  setTimeout(function(){msg.classList.add("hid")},5000);
+}
+
+async function testFatture(){
+  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
+  var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");msg.style.color="var(--warn)";
+  msg.textContent="🔍 Test cartelle Drive in corso...";
+  try{
+    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"testFatture"})});
+    var j=await r.json();
+    var info="";
+    if(j.cartelle){j.cartelle.forEach(function(c){
+      info+=c.nome+": "+(c.trovata?"✓ trovata ("+c.files.length+" file)":"❌ NON trovata")+"\n";
+      if(c.files)c.files.forEach(function(f){info+="  • "+f.nome+" ("+Math.round(f.size/1024)+"KB, "+f.tipo+")\n"});
+      if(c.errore)info+="  Errore: "+c.errore+"\n";
+    })}
+    msg.style.color="var(--text)";msg.innerHTML="<pre style='white-space:pre-wrap;font-size:12px;margin:0'>"+info+"</pre>";
+  }catch(e){msg.style.color="var(--danger)";msg.textContent="❌ "+e.message}
 }
 
 async function loadFatture(){
