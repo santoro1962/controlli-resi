@@ -303,7 +303,8 @@ function zGetNet(d,z){var v=getDay(d)[z];if(!v||v==="festivo")return 0;if(v.tota
 function myZones(){return AUTISTA_ZONES[curUser]||[]}
 function myPendZ(d){return ZONES.filter(function(z){return myZones().indexOf(z.id)>=0&&!zDone(d,z.id)})}
 function myDayOk(d){return myZones().every(function(z){return zDone(d,z)})}
-function fmtDt(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+var GIORNI_IT=["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+function fmtDt(d){var p=d.split("-");var dow=new Date(d+"T00:00:00").getDay();return GIORNI_IT[dow]+" "+p[2]+"/"+p[1]+"/"+p[0]}
 function saveL(){localStorage.setItem("dayData",JSON.stringify(dayData))}
 function zoneById(id){return ZONES.find(function(z){return z.id===id})}
 
