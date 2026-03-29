@@ -807,35 +807,54 @@ var fattTab="riepilogo";
 async function syncFatture(){
   var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
   var btn=document.getElementById("syncFattBtn");btn.textContent="⏳ Scansione...";btn.disabled=true;
-  var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");msg.style.color="var(--warn)";
-  msg.innerHTML="Scansione cartelle Google Drive (max 20 file per volta)...";
-  try{
-    var controller=new AbortController();
-    var tid=setTimeout(function(){controller.abort()},90000);
-    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"}),signal:controller.signal});
-    clearTimeout(tid);
-    var txt=await r.text();
-    var j;
-    try{j=JSON.parse(txt)}catch(pe){msg.style.color="var(--danger)";msg.innerHTML="❌ Risposta non JSON: "+txt.substring(0,150);btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;return}
-    if(j.error){msg.style.color="var(--danger)";msg.innerHTML="❌ "+j.error}
-    else{
-      var tot=(j.acquisto||0)+(j.vendita||0);
-      var info="";
-      if(tot>0)info+="✓ Importate <strong>"+j.acquisto+"</strong> acquisto, <strong>"+j.vendita+"</strong> vendita";
-      else info+="✓ Nessuna nuova fattura in questo batch";
-      if(j.errori)info+=" (<span style='color:var(--danger)'>"+j.errori+" errori</span>)";
-      if(j.skipped)info+=" — "+j.skipped+" già importate";
-      if(j.remaining>0)info+="<br><strong style='color:var(--warn)'>⚠ Ancora "+j.remaining+" file da elaborare — clicca di nuovo Sincronizza</strong>";
-      if(j.dettagli&&j.dettagli.length>0)info+="<br><span style='font-size:11px;color:var(--muted)'>"+j.dettagli.join(" | ")+"</span>";
-      msg.style.color=j.errori&&!tot?"var(--danger)":"var(--ok)";
-      msg.innerHTML=info;
-      if(tot>0)await loadFatture();
+  var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");
+  
+  var totAcq=0,totVen=0,totErr=0,totDup=0,batch=0;
+  var keepGoing=true;
+  
+  while(keepGoing){
+    batch++;
+    msg.style.color="var(--warn)";
+    msg.innerHTML="⏳ Batch "+batch+" in corso... (importate finora: "+totAcq+" acquisto, "+totVen+" vendita)";
+    
+    try{
+      var controller=new AbortController();
+      var tid=setTimeout(function(){controller.abort()},90000);
+      var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"}),signal:controller.signal});
+      clearTimeout(tid);
+      var txt=await r.text();
+      var j;
+      try{j=JSON.parse(txt)}catch(pe){msg.style.color="var(--danger)";msg.innerHTML="❌ Risposta non JSON: "+txt.substring(0,150);keepGoing=false;break}
+      
+      if(j.error){msg.style.color="var(--danger)";msg.innerHTML="❌ "+j.error;keepGoing=false;break}
+      
+      totAcq+=(j.acquisto||0);totVen+=(j.vendita||0);totErr+=(j.errori||0);totDup+=(j.duplicati||0);
+      
+      if((j.remaining||0)>0){
+        msg.innerHTML="⏳ Batch "+batch+" completato — ancora <strong>"+j.remaining+"</strong> file... continuo automaticamente";
+        await new Promise(function(r){setTimeout(r,1000)});
+      } else {
+        keepGoing=false;
+      }
+    }catch(e){
+      if(e.name==="AbortError"){msg.style.color="var(--danger)";msg.innerHTML="❌ Timeout batch "+batch+" — riprova"}
+      else{msg.style.color="var(--danger)";msg.innerHTML="❌ Errore: "+e.message}
+      keepGoing=false;
     }
-  }catch(e){
-    if(e.name==="AbortError"){msg.style.color="var(--danger)";msg.innerHTML="❌ Timeout (>90s) — riprova"}
-    else{msg.style.color="var(--danger)";msg.innerHTML="❌ Errore: "+e.message}
   }
+  
+  // Final summary
+  var tot=totAcq+totVen;
+  var info="";
+  if(tot>0)info="✓ Importazione completata: <strong>"+totAcq+"</strong> acquisto, <strong>"+totVen+"</strong> vendita";
+  else info="✓ Nessuna nuova fattura da importare";
+  if(totDup>0)info+=" — <span style='color:var(--muted)'>"+totDup+" duplicati ignorati</span>";
+  if(totErr>0)info+=" — <span style='color:var(--danger)'>"+totErr+" errori</span>";
+  info+=" ("+batch+" batch)";
+  msg.style.color=totErr&&!tot?"var(--danger)":"var(--ok)";
+  msg.innerHTML=info;
   btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;
+  if(tot>0)await loadFatture();
 }
 
 async function testFatture(){
