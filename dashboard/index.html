@@ -166,7 +166,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <button class="sb-sub" onclick="goModule('grafici',this)"><span class="sb-icon">📈</span><span class="sb-label">Grafici</span></button>
     <button class="sb-sub" onclick="goModule('ddtTab',this)"><span class="sb-icon">⚖️</span><span class="sb-label">DDT</span><span class="sb-badge" id="sbAmm" style="display:none"></span></button>
     <div class="sb-divider"></div>
-    <button class="sb-item" onclick="goModule('costi',this)"><span class="sb-icon">💰</span><span class="sb-label">Controllo Costi</span><span class="sb-coming">SOON</span></button>
+    <button class="sb-item" onclick="goModule('costi',this)"><span class="sb-icon">💰</span><span class="sb-label">Controllo Costi</span></button>
   </div>
   <div class="sb-bottom">
     <button class="sb-item" onclick="openSettings()"><span class="sb-icon">⚙️</span><span class="sb-label">Impostazioni</span></button>
@@ -271,12 +271,21 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 
   <!-- ═══ MODULE: CONTROLLO COSTI ═══ -->
   <div id="mod-costi" class="module">
-    <div class="page-header"><div><div class="page-title">💰 Controllo Costi</div></div></div>
-    <div class="coming-soon">
-      <div class="coming-soon-icon">💰</div>
-      <div class="coming-soon-title">In arrivo</div>
-      <div class="coming-soon-sub">Il modulo Controllo Costi è in fase di sviluppo. Qui potrai monitorare costi materie prime, margini per prodotto, spese di trasporto e analisi economiche.</div>
+    <div class="page-header"><div><div class="page-title">💰 Controllo Costi</div><div class="page-sub">Fatture acquisto e vendita da Google Drive</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn">🔄 Sincronizza fatture</button>
     </div>
+    <div id="fattSyncMsg" class="hid" style="background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
+    <!-- Stats -->
+    <div id="fattStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('riepilogo')" id="ftab-riepilogo" style="background:var(--accent);color:#fff">📊 Riepilogo Mensile</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('fornitori')" id="ftab-fornitori">🏭 Fornitori</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('clienti')" id="ftab-clienti">🏪 Clienti</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFattTab('elenco')" id="ftab-elenco">📋 Elenco Fatture</button>
+    </div>
+    <!-- Tab content -->
+    <div id="fattContent" style="background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden"></div>
   </div>
 
   <!-- ═══ MODULE: IMPOSTAZIONI ═══ -->
@@ -331,7 +340,7 @@ function goModule(mod,el){
   }
   document.querySelectorAll(".module").forEach(function(m){m.classList.remove("active")});
   var target=document.getElementById("mod-"+mod);if(target)target.classList.add("active");
-  if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();
+  if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();if(mod==="costi")loadFatture();
 }
 function openSettings(){
   var p=prompt("Password impostazioni:");
@@ -787,6 +796,204 @@ function saveUrl(){localStorage.setItem("dash-gsheet-url",document.getElementByI
 function viewPhoto(url){document.getElementById("modalImg").src=url;document.getElementById("modal").classList.add("show")}
 function clModal(){document.getElementById("modal").classList.remove("show")}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
+
+// ══════════════════════════════════════════════════
+// ── MODULO CONTROLLO COSTI ──
+// ══════════════════════════════════════════════════
+var fattureData=[];
+var fattTab="riepilogo";
+
+async function syncFatture(){
+  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
+  var btn=document.getElementById("syncFattBtn");btn.textContent="⏳ Scansione...";btn.disabled=true;
+  var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");msg.style.color="var(--warn)";
+  msg.textContent="Scansione cartelle Google Drive...";
+  try{
+    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"})});
+    var j=await r.json();
+    if(j.error){msg.style.color="var(--danger)";msg.textContent="❌ "+j.error}
+    else{
+      var tot=j.acquisto+j.vendita;
+      msg.style.color="var(--ok)";
+      msg.textContent=tot>0?"✓ Importate "+j.acquisto+" fatture acquisto e "+j.vendita+" fatture vendita"+(j.errori?" ("+j.errori+" errori)":"")
+        :"✓ Nessuna nuova fattura trovata"+(j.skipped?" ("+j.skipped+" già importate)":"");
+      if(tot>0)await loadFatture();
+    }
+  }catch(e){msg.style.color="var(--danger)";msg.textContent="❌ Errore: "+e.message}
+  btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;
+  setTimeout(function(){msg.classList.add("hid")},5000);
+}
+
+async function loadFatture(){
+  var url=gUrl();if(!url)return;
+  try{
+    var r=await fetch(url+"?action=getFatture&t="+Date.now(),{cache:"no-store"});
+    var j=await r.json();
+    if(j.data)fattureData=j.data;
+    updFattUI();
+  }catch(e){}
+}
+
+function setFattTab(t){
+  fattTab=t;
+  ["riepilogo","fornitori","clienti","elenco"].forEach(function(k){
+    var b=document.getElementById("ftab-"+k);
+    if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
+  });
+  updFattContent();
+}
+
+function updFattUI(){
+  // Stats
+  var totAcq=0,totVen=0,totIvaAcq=0,totIvaVen=0,nAcq=0,nVen=0;
+  fattureData.forEach(function(f){
+    if(f.tipo==="Acquisto"){totAcq+=f.imponibile;totIvaAcq+=f.iva;nAcq++}
+    else{totVen+=f.imponibile;totIvaVen+=f.iva;nVen++}
+  });
+  var margine=totVen-totAcq;
+  var stats=[
+    {l:"Fatture Acquisto",v:nAcq,sub:"€ "+totAcq.toFixed(2)+" + IVA € "+totIvaAcq.toFixed(2)},
+    {l:"Fatture Vendita",v:nVen,sub:"€ "+totVen.toFixed(2)+" + IVA € "+totIvaVen.toFixed(2)},
+    {l:"Tot. Acquisti",v:"€ "+totAcq.toFixed(2),c:"var(--danger)"},
+    {l:"Tot. Vendite",v:"€ "+totVen.toFixed(2),c:"var(--ok)"},
+    {l:"Margine",v:"€ "+margine.toFixed(2),c:margine>=0?"var(--ok)":"var(--danger)"},
+  ];
+  document.getElementById("fattStats").innerHTML=stats.map(function(s){
+    return'<div class="stat"><div class="stat-label">'+s.l+'</div><div class="stat-val" style="color:'+(s.c||"var(--text)")+'">'+s.v+'</div>'+(s.sub?'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+s.sub+'</div>':'')+'</div>'
+  }).join("");
+  updFattContent();
+}
+
+function updFattContent(){
+  var el=document.getElementById("fattContent");
+  if(fattureData.length===0){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">📂</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Nessuna fattura importata</div><div style="font-size:12px">Crea le cartelle "Fatture Acquisto" e "Fatture Vendita" su Google Drive, inserisci i file XML e clicca Sincronizza.</div></div>';return}
+  if(fattTab==="riepilogo")updFattRiepilogo(el);
+  else if(fattTab==="fornitori")updFattSoggetti(el,"Acquisto","Fornitori","🏭");
+  else if(fattTab==="clienti")updFattSoggetti(el,"Vendita","Clienti","🏪");
+  else if(fattTab==="elenco")updFattElenco(el);
+}
+
+function updFattRiepilogo(el){
+  // Group by month
+  var mesi={};
+  fattureData.forEach(function(f){
+    var m=f.data.substring(0,7);// yyyy-MM
+    if(!mesi[m])mesi[m]={acq:0,ven:0};
+    if(f.tipo==="Acquisto")mesi[m].acq+=f.imponibile;
+    else mesi[m].ven+=f.imponibile;
+  });
+  var sortM=Object.keys(mesi).sort();
+  var MESI_IT=["","Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+  var html='<div style="padding:20px"><canvas id="chCosti" height="250"></canvas></div>';
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px"><thead><tr style="background:var(--inbg)">';
+  html+='<th style="padding:10px;text-align:left;color:var(--muted);font-size:11px">Mese</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--danger);font-size:11px">Acquisti</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--ok);font-size:11px">Vendite</th>';
+  html+='<th style="padding:10px;text-align:right;font-size:11px">Margine</th></tr></thead><tbody>';
+  sortM.forEach(function(m){
+    var d=mesi[m];var mg=d.ven-d.acq;
+    var p=m.split("-");var label=MESI_IT[+p[1]]+" "+p[0];
+    html+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:10px;font-weight:600">'+label+'</td>';
+    html+='<td style="padding:10px;text-align:right;color:var(--danger)">€ '+d.acq.toFixed(2)+'</td>';
+    html+='<td style="padding:10px;text-align:right;color:var(--ok)">€ '+d.ven.toFixed(2)+'</td>';
+    html+='<td style="padding:10px;text-align:right;font-weight:700;color:'+(mg>=0?"var(--ok)":"var(--danger)")+'">€ '+mg.toFixed(2)+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+  // Chart
+  setTimeout(function(){
+    var ctx=document.getElementById("chCosti");if(!ctx)return;
+    var labels=sortM.map(function(m){var p=m.split("-");return MESI_IT[+p[1]]+" "+p[0].slice(2)});
+    if(window._chCosti)window._chCosti.destroy();
+    window._chCosti=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:[
+      {label:"Acquisti",data:sortM.map(function(m){return mesi[m].acq}),backgroundColor:"rgba(239,68,68,0.7)",borderRadius:4},
+      {label:"Vendite",data:sortM.map(function(m){return mesi[m].ven}),backgroundColor:"rgba(34,197,94,0.7)",borderRadius:4}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}}},scales:{x:{ticks:{color:"#94a3b8"},grid:{color:"#1e293b"}},y:{ticks:{color:"#94a3b8",callback:function(v){return"€"+v}},grid:{color:"#1e293b"}}}}});
+  },100);
+}
+
+function updFattSoggetti(el,tipo,titolo,icon){
+  var sogg={};
+  fattureData.filter(function(f){return f.tipo===tipo}).forEach(function(f){
+    if(!sogg[f.soggetto])sogg[f.soggetto]={piva:f.piva,imponibile:0,iva:0,totale:0,n:0};
+    sogg[f.soggetto].imponibile+=f.imponibile;
+    sogg[f.soggetto].iva+=f.iva;
+    sogg[f.soggetto].totale+=f.totale;
+    sogg[f.soggetto].n++;
+  });
+  var sorted=Object.keys(sogg).sort(function(a,b){return sogg[b].imponibile-sogg[a].imponibile});
+  var html='<div style="padding:16px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px">'+icon+' '+titolo+' ('+sorted.length+')</div>';
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px"><thead><tr style="background:var(--inbg)">';
+  html+='<th style="padding:10px;text-align:left;color:var(--muted);font-size:11px">'+titolo.slice(0,-1)+'</th>';
+  html+='<th style="padding:10px;text-align:left;color:var(--muted);font-size:11px">P.IVA</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--muted);font-size:11px">N° Fatt.</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--muted);font-size:11px">Imponibile</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--muted);font-size:11px">IVA</th>';
+  html+='<th style="padding:10px;text-align:right;color:var(--muted);font-size:11px">Totale</th></tr></thead><tbody>';
+  sorted.forEach(function(name){
+    var s=sogg[name];
+    html+='<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleFattSogg(this)">';
+    html+='<td style="padding:10px;font-weight:600">'+name+' <span style="font-size:10px;color:var(--muted)">▼</span></td>';
+    html+='<td style="padding:10px;color:var(--muted);font-size:11px">'+s.piva+'</td>';
+    html+='<td style="padding:10px;text-align:right">'+s.n+'</td>';
+    html+='<td style="padding:10px;text-align:right">€ '+s.imponibile.toFixed(2)+'</td>';
+    html+='<td style="padding:10px;text-align:right;color:var(--muted)">€ '+s.iva.toFixed(2)+'</td>';
+    html+='<td style="padding:10px;text-align:right;font-weight:600">€ '+s.totale.toFixed(2)+'</td></tr>';
+    // Detail row (hidden)
+    var detFatt=fattureData.filter(function(f){return f.tipo===tipo&&f.soggetto===name}).sort(function(a,b){return b.data.localeCompare(a.data)});
+    html+='<tr class="hid" style="background:var(--inbg)"><td colspan="6" style="padding:0"><div style="padding:10px 20px">';
+    detFatt.forEach(function(f){
+      html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;flex-wrap:wrap;gap:4px">';
+      html+='<span>'+fmtD(f.data)+' — n. '+f.numero+'</span>';
+      html+='<span>€ '+f.imponibile.toFixed(2)+' + IVA € '+f.iva.toFixed(2)+' = <strong>€ '+f.totale.toFixed(2)+'</strong></span></div>';
+    });
+    html+='</div></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+function toggleFattSogg(tr){var next=tr.nextElementSibling;if(next)next.classList.toggle("hid")}
+
+function updFattElenco(el){
+  var sorted=fattureData.slice().sort(function(a,b){return b.data.localeCompare(a.data)});
+  var html='<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14px">📋 Tutte le fatture ('+sorted.length+')</span></div>';
+  html+='<div style="overflow-x:auto;max-height:500px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
+  html+='<th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:10px">Tipo</th>';
+  html+='<th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:10px">Data</th>';
+  html+='<th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:10px">N°</th>';
+  html+='<th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:10px">Soggetto</th>';
+  html+='<th style="padding:8px 10px;text-align:right;color:var(--muted);font-size:10px">Imponibile</th>';
+  html+='<th style="padding:8px 10px;text-align:right;color:var(--muted);font-size:10px">IVA</th>';
+  html+='<th style="padding:8px 10px;text-align:right;color:var(--muted);font-size:10px">Totale</th></tr></thead><tbody>';
+  sorted.forEach(function(f){
+    var isAcq=f.tipo==="Acquisto";
+    html+='<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleFattSogg(this)">';
+    html+='<td style="padding:7px 10px"><span style="background:'+(isAcq?"rgba(239,68,68,0.1);color:var(--danger)":"rgba(34,197,94,0.1);color:var(--ok)")+';padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600">'+(isAcq?"ACQ":"VEN")+'</span></td>';
+    html+='<td style="padding:7px 10px">'+fmtD(f.data)+'</td>';
+    html+='<td style="padding:7px 10px">'+f.numero+'</td>';
+    html+='<td style="padding:7px 10px;font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.soggetto+'</td>';
+    html+='<td style="padding:7px 10px;text-align:right">€ '+f.imponibile.toFixed(2)+'</td>';
+    html+='<td style="padding:7px 10px;text-align:right;color:var(--muted)">€ '+f.iva.toFixed(2)+'</td>';
+    html+='<td style="padding:7px 10px;text-align:right;font-weight:600">€ '+f.totale.toFixed(2)+'</td></tr>';
+    // Detail row with line items
+    if(f.righe&&f.righe.length>0){
+      html+='<tr class="hid" style="background:var(--inbg)"><td colspan="7" style="padding:0"><div style="padding:10px 20px;font-size:11px">';
+      f.righe.forEach(function(r){
+        html+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);gap:8px">';
+        html+='<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.descrizione+'</span>';
+        html+='<span style="flex-shrink:0;color:var(--muted)">'+(r.quantita?r.quantita+" "+r.um+" × €"+r.prezzoUnitario.toFixed(2):"")+'</span>';
+        html+='<span style="flex-shrink:0;font-weight:600;min-width:80px;text-align:right">€ '+r.prezzoTotale.toFixed(2)+'</span></div>';
+      });
+      html+='</div></td></tr>';
+    }
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+// Load fatture when switching to costi module is handled in goModule
+
 </script>
 </body>
 </html>
