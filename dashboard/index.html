@@ -167,6 +167,8 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <button class="sb-sub" onclick="goModule('ddtTab',this)"><span class="sb-icon">⚖️</span><span class="sb-label">DDT</span><span class="sb-badge" id="sbAmm" style="display:none"></span></button>
     <div class="sb-divider"></div>
     <button class="sb-item" onclick="goModule('costi',this)"><span class="sb-icon">💰</span><span class="sb-label">Costi & Ricavi</span></button>
+    <button class="sb-sub" onclick="goModule('fornitori',this)"><span class="sb-icon">🏭</span><span class="sb-label">Fornitori</span></button>
+    <button class="sb-sub" onclick="goModule('clienti',this)"><span class="sb-icon">🏪</span><span class="sb-label">Clienti</span></button>
   </div>
   <div class="sb-bottom">
     <button class="sb-item" onclick="openSettings()"><span class="sb-icon">⚙️</span><span class="sb-label">Impostazioni</span></button>
@@ -271,32 +273,36 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
 
   <!-- ═══ MODULE: CONTROLLO COSTI ═══ -->
   <div id="mod-costi" class="module">
-    <div class="page-header"><div><div class="page-title">💰 Costi & Ricavi</div><div class="page-sub">Fatture acquisto e vendita da Google Drive</div></div>
+    <div class="page-header"><div><div class="page-title">💰 Costi & Ricavi</div><div class="page-sub">Riepilogo costi e ricavi da fatture elettroniche</div></div>
       <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn">🔄 Sincronizza fatture</button>
       <button class="btn btn-ghost btn-sm" onclick="testFatture()" style="font-size:11px;color:var(--muted)">🔍 Test</button>
     </div>
     <div id="fattSyncMsg" class="hid" style="background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
-    <!-- Stats -->
     <div id="fattStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
-    <!-- Main tabs -->
-    <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="setFattTab('riepilogo')" id="ftab-riepilogo" style="background:var(--accent);color:#fff">📊 Riepilogo</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattTab('acquisti')" id="ftab-acquisti">🏭 Fatture Acquisto</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattTab('vendite')" id="ftab-vendite">🏪 Fatture Vendita</button>
-    </div>
-    <!-- Sub-tabs (shown conditionally) -->
-    <div id="subTabsAcquisti" class="hid" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;padding-left:8px;border-left:3px solid var(--danger)">
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('acq-fornitori')" id="fsub-acq-fornitori" style="font-size:11px">🏭 Fornitori</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('acq-articoli')" id="fsub-acq-articoli" style="font-size:11px">📦 Articoli</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('acq-alert')" id="fsub-acq-alert" style="font-size:11px">🚨 Alert Prezzi</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('acq-elenco')" id="fsub-acq-elenco" style="font-size:11px">📋 Elenco</button>
-    </div>
-    <div id="subTabsVendite" class="hid" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;padding-left:8px;border-left:3px solid var(--ok)">
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('ven-clienti')" id="fsub-ven-clienti" style="font-size:11px">🏪 Clienti</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFattSub('ven-elenco')" id="fsub-ven-elenco" style="font-size:11px">📋 Elenco</button>
-    </div>
-    <!-- Tab content -->
     <div id="fattContent" style="background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden"></div>
+  </div>
+  <div id="mod-fornitori" class="module">
+    <div class="page-header"><div><div class="page-title">🏭 Fornitori — Fatture Acquisto</div><div class="page-sub">Analisi costi, articoli e variazioni prezzi</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn2">🔄 Sync</button>
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="setFornTab('fornitori')" id="ftab-f-fornitori" style="background:var(--accent);color:#fff">🏭 Fornitori</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFornTab('articoli')" id="ftab-f-articoli">📦 Articoli</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFornTab('alert')" id="ftab-f-alert">🚨 Alert Prezzi</button>
+      <button class="btn btn-ghost btn-sm" onclick="setFornTab('elenco')" id="ftab-f-elenco">📋 Elenco Fatture</button>
+    </div>
+    <div id="fornContent" style="background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden"></div>
+  </div>
+
+  <div id="mod-clienti" class="module">
+    <div class="page-header"><div><div class="page-title">🏪 Clienti — Fatture Vendita</div><div class="page-sub">Analisi ricavi e dettaglio clienti</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn3">🔄 Sync</button>
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="setCliTab('clienti')" id="ftab-c-clienti" style="background:var(--accent);color:#fff">🏪 Clienti</button>
+      <button class="btn btn-ghost btn-sm" onclick="setCliTab('elenco')" id="ftab-c-elenco">📋 Elenco Fatture</button>
+    </div>
+    <div id="cliContent" style="background:var(--card);border-radius:16px;border:1px solid var(--border);overflow:hidden"></div>
   </div>
 
   <!-- ═══ MODULE: IMPOSTAZIONI ═══ -->
@@ -349,9 +355,15 @@ function goModule(mod,el){
   if(mod==="storico"||mod==="grafici"||mod==="ddtTab"){
     document.querySelector('.sb-item[onclick*="resi"]').classList.add("active");
   }
+  // If sub-module of costi, also highlight parent
+  if(mod==="fornitori"||mod==="clienti"){
+    document.querySelector('.sb-item[onclick*="costi"]').classList.add("active");
+  }
   document.querySelectorAll(".module").forEach(function(m){m.classList.remove("active")});
   var target=document.getElementById("mod-"+mod);if(target)target.classList.add("active");
   if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();if(mod==="costi")loadFatture();
+  if(mod==="fornitori"){loadFattThen(function(){setFornTab(window._lastFornTab||"fornitori")})}
+  if(mod==="clienti"){loadFattThen(function(){setCliTab(window._lastCliTab||"clienti")})}
 }
 function openSettings(){
   var p=prompt("Password impostazioni:");
@@ -812,7 +824,6 @@ function showT(m){var t=document.getElementById("toast");t.textContent=m;t.class
 // ── MODULO CONTROLLO COSTI ──
 // ══════════════════════════════════════════════════
 var fattureData=[];
-var fattTab="riepilogo";
 
 async function syncFatture(){
   var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
@@ -894,41 +905,33 @@ async function loadFatture(){
   }catch(e){}
 }
 
-function setFattTab(t){
-  fattTab=t;
-  // Main tabs
-  ["riepilogo","acquisti","vendite"].forEach(function(k){
-    var b=document.getElementById("ftab-"+k);
+function setFornTab(t){
+  window._lastFornTab=t;
+  ["fornitori","articoli","alert","elenco"].forEach(function(k){
+    var b=document.getElementById("ftab-f-"+k);
     if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
   });
-  // Show/hide sub-tabs
-  document.getElementById("subTabsAcquisti").classList.toggle("hid",t!=="acquisti");
-  document.getElementById("subTabsVendite").classList.toggle("hid",t!=="vendite");
-  document.getElementById("subTabsAcquisti").style.display=t==="acquisti"?"flex":"none";
-  document.getElementById("subTabsVendite").style.display=t==="vendite"?"flex":"none";
-  // Set default sub-tab
-  if(t==="acquisti")setFattSub(window._lastAcqSub||"acq-fornitori");
-  else if(t==="vendite")setFattSub(window._lastVenSub||"ven-clienti");
-  else updFattContent();
+  var el=document.getElementById("fornContent");
+  if(t==="fornitori")updFattSoggetti(el,"Acquisto","Fornitori","🏭");
+  else if(t==="articoli")updFattArticoli(el);
+  else if(t==="alert")updFattAlert(el);
+  else if(t==="elenco")updFattElencoTipo(el,"Acquisto");
 }
 
-var fattSub="";
-function setFattSub(sub){
-  fattSub=sub;
-  if(sub.indexOf("acq-")===0)window._lastAcqSub=sub;
-  if(sub.indexOf("ven-")===0)window._lastVenSub=sub;
-  // Highlight sub-tabs
-  var allSubs=["acq-fornitori","acq-articoli","acq-alert","acq-elenco","ven-clienti","ven-elenco"];
-  allSubs.forEach(function(k){
-    var b=document.getElementById("fsub-"+k);
-    if(b){
-      var active=k===sub;
-      var isAcq=k.indexOf("acq-")===0;
-      b.style.background=active?(isAcq?"var(--danger)":"var(--ok)"):"var(--inbg)";
-      b.style.color=active?"#fff":"var(--muted)";
-    }
+function setCliTab(t){
+  window._lastCliTab=t;
+  ["clienti","elenco"].forEach(function(k){
+    var b=document.getElementById("ftab-c-"+k);
+    if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
   });
-  updFattContent();
+  var el=document.getElementById("cliContent");
+  if(t==="clienti")updFattSoggetti(el,"Vendita","Clienti","🏪");
+  else if(t==="elenco")updFattElencoTipo(el,"Vendita");
+}
+
+async function loadFattThen(cb){
+  if(fattureData.length===0)await loadFatture();
+  if(cb)cb();
 }
 
 function updFattUI(){
@@ -960,17 +963,7 @@ function updFattUI(){
 function updFattContent(){
   var el=document.getElementById("fattContent");
   if(fattureData.length===0){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)"><div style="font-size:36px;margin-bottom:12px">📂</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">Nessuna fattura importata</div><div style="font-size:12px">Crea le cartelle "Fatture Acquisto" e "Fatture Vendita" su Google Drive, inserisci i file XML e clicca Sincronizza.</div></div>';return}
-  if(fattTab==="riepilogo")updFattRiepilogo(el);
-  else if(fattTab==="acquisti"){
-    if(fattSub==="acq-fornitori")updFattSoggetti(el,"Acquisto","Fornitori","🏭");
-    else if(fattSub==="acq-articoli")updFattArticoli(el);
-    else if(fattSub==="acq-alert")updFattAlert(el);
-    else if(fattSub==="acq-elenco")updFattElencoTipo(el,"Acquisto");
-  }
-  else if(fattTab==="vendite"){
-    if(fattSub==="ven-clienti")updFattSoggetti(el,"Vendita","Clienti","🏪");
-    else if(fattSub==="ven-elenco")updFattElencoTipo(el,"Vendita");
-  }
+  updFattRiepilogo(el);
 }
 
 function updFattRiepilogo(el){
@@ -1214,7 +1207,7 @@ function updFattAlert(el){
   html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">';
   [{k:"aumenti",l:"▲ Aumenti ("+nUp+")",c:"var(--danger)"},{k:"ribassi",l:"▼ Ribassi ("+nDown+")",c:"var(--ok)"},{k:"tutti",l:"Tutti ("+alerts.length+")",c:"var(--muted)"}].forEach(function(f){
     var active=alertFilter===f.k;
-    html+='<button onclick="alertFilter=\''+f.k+'\';updFattAlert(document.getElementById(\'fattContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":f.c)+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">'+f.l+'</button>';
+    html+='<button onclick="alertFilter=\''+f.k+'\';updFattAlert(document.getElementById(\'fornContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":f.c)+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">'+f.l+'</button>';
   });
   html+='</div>';
   html+='<div style="font-size:11px;color:var(--muted)">Soglia: ±3% · Basato su codice articolo · Solo articoli con codice tracciabile</div></div>';
