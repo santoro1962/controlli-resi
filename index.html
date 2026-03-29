@@ -113,6 +113,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
       <button class="login-btn" onclick="selUser('Giovanni')"><div class="lb-icon" style="background:rgba(245,158,11,0.15)">🚚</div><div><div class="lb-name">Giovanni</div><div class="lb-zones">Zona 1 — Nocera-Salerno</div></div></button>
       <button class="login-btn" onclick="selUser('Antonio')"><div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div><div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3</div></div></button>
       <button class="login-btn" onclick="selUser('Sergio')"><div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div><div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3</div></div></button>
+      <button class="login-btn" onclick="selUser('Carmela')"><div class="lb-icon" style="background:rgba(236,72,153,0.15)">👩</div><div><div class="lb-name">Carmela</div><div class="lb-zones">Tutte le zone</div></div></button>
     </div>
     <div id="pinPanel" class="hid" style="width:100%;max-width:320px;margin-top:24px">
       <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;text-align:center">
@@ -241,7 +242,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
           <img id="prevImg" class="cam-preview" onclick="viewP(this.src)"/>
           <!-- Weight input -->
           <div id="weightInput" style="background:var(--inbg);border:2px solid var(--warn);border-radius:14px;padding:16px;margin-top:12px;text-align:center">
-            <div style="font-size:13px;color:var(--warn);font-weight:600;margin-bottom:8px">⚖️ Inserisci il peso dal display piccolo (lordo)</div>
+            <div id="weightInputLabel" style="font-size:13px;color:var(--warn);font-weight:600;margin-bottom:8px">⚖️ Inserisci il peso dal display (lordo)</div>
             <input id="manualW" type="number" step="0.01" placeholder="0.00" style="background:#0a0e1a;border:2px solid var(--inbord);border-radius:10px;padding:12px;font-size:28px;font-weight:700;font-family:monospace;color:var(--text);text-align:center;width:160px;outline:none" oninput="onWeightInput()">
             <div style="font-size:12px;color:var(--muted);margin-top:6px">kg</div>
           </div>
@@ -249,7 +250,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
           <div id="weightRes" class="weight-result hid">
             <div class="wr-label">Peso lordo (dal display)</div>
             <div class="wr-val" id="wrVal"></div>
-            <div class="wr-row"><span>Tara cesta rossa</span><span>−2.66 kg</span></div>
+            <div class="wr-row"><span>Tara ceste</span><span id="wrTara"></span></div>
             <div class="wr-row"><span>Peso netto reso</span><span id="wrNet" style="color:var(--ok)"></span></div>
           </div>
           <button onclick="wClrP()" style="background:transparent;color:var(--muted);border:1px solid var(--inbord);border-radius:8px;padding:8px 16px;font-size:12px;margin-top:12px">🔄 Riscatta</button>
@@ -276,11 +277,25 @@ var todayStr=new Date().toISOString().slice(0,10);
 var activeDate=todayStr;
 var dayData={};
 var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"var(--z1)"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"var(--z2)"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"var(--z3)"}];
-var AUTISTA_ZONES={Giovanni:["z1"],Antonio:["z3"],Sergio:["z2","z3"]};
-var PINS={Giovanni:"4821",Antonio:"7539",Sergio:"6347"};
+var AUTISTA_ZONES={Giovanni:["z1"],Antonio:["z3"],Sergio:["z2","z3"],Carmela:["z1","z2","z3"]};
+var PINS={Giovanni:"4821",Antonio:"7539",Sergio:"6347",Carmela:"3164"};
 var curUser="";
 var gUrl=function(){return localStorage.getItem("gsheet-url")||""};
-var wZone=null,wNC=0,wCC=0,wCeste=[]; // ceste: [{foto,pesoLordo,pesoNetto}]
+var wZone=null,wNC=0,wCC=0,wCeste=[];
+
+// Festivi italiani
+function getEaster(year){var a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;return{m:month,d:day}}
+function isFestivo(dateStr){
+  var p=dateStr.split("-"),y=+p[0],m=+p[1],d=+p[2];
+  // Festivi fissi
+  var fissi=[[1,1],[1,6],[4,25],[5,1],[6,2],[8,15],[11,1],[12,8],[12,25],[12,26]];
+  if(fissi.some(function(f){return f[0]===m&&f[1]===d}))return true;
+  // Pasquetta (Lunedì dell'Angelo)
+  var e=getEaster(y);var ed=new Date(y,e.m-1,e.d);ed.setDate(ed.getDate()+1);
+  if(m===(ed.getMonth()+1)&&d===ed.getDate())return true;
+  return false;
+}
+function isDriverDay(dateStr){return new Date(dateStr+"T00:00:00").getDay()===0||isFestivo(dateStr)} // wPesate: [{numCeste,foto,pesoLordo,pesoNetto}]
 
 function getDay(d){if(!dayData[d])dayData[d]={};return dayData[d]}
 function zDone(d,z){return getDay(d)[z]!=null}
@@ -296,11 +311,38 @@ function zoneById(id){return ZONES.find(function(z){return z.id===id})}
 var loginSel="";
 function selUser(n){loginSel=n;document.getElementById("pinPanel").classList.remove("hid");document.getElementById("pinUser").textContent="🚚 "+n;document.getElementById("pinInput").value="";document.getElementById("pinErr").classList.add("hid");document.getElementById("pinBtn").disabled=true;setTimeout(function(){document.getElementById("pinInput").focus()},100)}
 function chkPin(){document.getElementById("pinBtn").disabled=document.getElementById("pinInput").value.length<4;document.getElementById("pinErr").classList.add("hid")}
-function tryPin(){if(document.getElementById("pinInput").value===PINS[loginSel])doLogin(loginSel);else{document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinInput").value="";document.getElementById("pinBtn").disabled=true}}
+function tryPin(){if(document.getElementById("pinInput").value===PINS[loginSel]){
+  // Carmela sempre, autisti: Domenica/festivi O se sbloccati da admin
+  if(loginSel!=="Carmela"&&!isDriverDay(new Date().toISOString().slice(0,10))){
+    checkDriverUnlock(loginSel);return}
+  doLogin(loginSel)}else{document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinErr").textContent="❌ PIN errato";document.getElementById("pinInput").value="";document.getElementById("pinBtn").disabled=true}}
+
+async function checkDriverUnlock(name){
+  var url=gUrl();
+  if(!url){document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinErr").textContent="⛔ Accesso bloccato — configura Google Sheets";return}
+  document.getElementById("pinBtn").textContent="⏳ Verifica...";document.getElementById("pinBtn").disabled=true;
+  try{
+    var today=new Date().toISOString().slice(0,10);
+    var r=await fetch(url+"?action=getDriverAccess&date="+today+"&t="+Date.now(),{cache:"no-store"});
+    var j=await r.json();
+    if(j.unlock){doLogin(name)}
+    else{document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinErr").textContent="⛔ Accesso bloccato — contatta l'amministratore";document.getElementById("pinInput").value="";document.getElementById("pinBtn").disabled=true;document.getElementById("pinBtn").textContent="Accedi"}
+  }catch(e){document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinErr").textContent="⛔ Errore verifica accesso";document.getElementById("pinBtn").textContent="Accedi";document.getElementById("pinBtn").disabled=false}
+}
 function doLogin(n){curUser=n;localStorage.setItem("autista",n);document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}
 function changeUser(){if(!confirm("Cambiare profilo?"))return;localStorage.removeItem("autista");curUser="";document.getElementById("mainApp").classList.add("hid");document.getElementById("setP").classList.add("hid");document.getElementById("loginScr").classList.remove("hid")}
 
-function init(){var s=localStorage.getItem("autista");if(s&&AUTISTA_ZONES[s]){curUser=s;document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}}
+function init(){var s=localStorage.getItem("autista");if(s&&AUTISTA_ZONES[s]){
+  if(s!=="Carmela"&&!isDriverDay(new Date().toISOString().slice(0,10))){
+    // Check if unlocked — async, so show login screen first
+    var url=gUrl();if(!url){localStorage.removeItem("autista");return}
+    fetch(url+"?action=getDriverAccess&date="+new Date().toISOString().slice(0,10)+"&t="+Date.now(),{cache:"no-store"})
+      .then(function(r){return r.json()}).then(function(j){
+        if(j.unlock){curUser=s;document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}
+        else{localStorage.removeItem("autista")}
+      }).catch(function(){localStorage.removeItem("autista")});
+    return}
+  curUser=s;document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}}
 function initApp(){
   document.getElementById("sUrl").value=gUrl();
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
@@ -371,6 +413,7 @@ function wPhoto(e){
     document.getElementById("manualW").value="";
     var wi=document.getElementById("weightInput");if(wi)wi.style.display="";
     document.getElementById("btnNP").disabled=true;
+    document.getElementById("weightInputLabel").textContent="⚖️ Inserisci il peso dal display (lordo)";
     document.getElementById("btnNP").textContent="⚖️ Inserisci il peso lordo";
     document.getElementById("btnNP").onclick=function(){wNxtP()};
   };img.src=ev.target.result};rd.readAsDataURL(f)}
@@ -379,13 +422,18 @@ function onWeightInput(){
   var v=parseFloat(document.getElementById("manualW").value);
   var btn=document.getElementById("btnNP");
   if(v>0){
+    var netto=Math.max(0,+(v-TARA).toFixed(2));
+    document.getElementById("wrVal").textContent=v.toFixed(2)+" kg";
+    document.getElementById("wrTara").textContent="−"+TARA.toFixed(2)+" kg";
+    document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
+    document.getElementById("weightRes").classList.remove("hid");
     btn.disabled=false;
     btn.textContent="✓ Verifica con AI";
     btn.onclick=function(){doVerify(v)};
   } else {
+    document.getElementById("weightRes").classList.add("hid");
     btn.disabled=true;
     btn.textContent="⚖️ Inserisci il peso lordo";
-    document.getElementById("weightRes").classList.add("hid");
   }
 }
 
@@ -437,8 +485,10 @@ async function doVerify(declaredWeight){
 
 function acceptWeight(lordo){
   var netto=Math.max(0,+(lordo-TARA).toFixed(2));
+  if(!wCeste[wCC])wCeste[wCC]={};
   wCeste[wCC].pesoLordo=lordo;wCeste[wCC].pesoNetto=netto;
   document.getElementById("wrVal").textContent=lordo.toFixed(2)+" kg";
+  document.getElementById("wrTara").textContent="−"+TARA.toFixed(2)+" kg";
   document.getElementById("wrNet").textContent=netto.toFixed(2)+" kg";
   document.getElementById("weightRes").classList.remove("hid");
   var wi=document.getElementById("weightInput");if(wi)wi.style.display="none";
