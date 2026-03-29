@@ -392,8 +392,10 @@ function init(){
   try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
   try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
   if(gUrl()){doSync();checkDriverAccess()} else updUI();
-  // Auto-refresh every 60 seconds
+  // Auto-refresh resi every 60 seconds
   setInterval(function(){if(gUrl())doSync()},60000);
+  // Auto-sync fatture every 10 seconds (silent)
+  setInterval(function(){if(gUrl())autoSyncFatture()},10000);
 }
 
 async function doSync(){
@@ -824,11 +826,48 @@ function showT(m){var t=document.getElementById("toast");t.textContent=m;t.class
 // ── MODULO CONTROLLO COSTI ──
 // ══════════════════════════════════════════════════
 var fattureData=[];
+var _autoSyncing=false;
+
+// Silent auto-sync — runs every 10 seconds, imports remaining files automatically
+async function autoSyncFatture(){
+  if(_autoSyncing)return;
+  var url=gUrl();if(!url)return;
+  _autoSyncing=true;
+  try{
+    var controller=new AbortController();
+    var tid=setTimeout(function(){controller.abort()},30000);
+    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"syncFatture"}),signal:controller.signal});
+    clearTimeout(tid);
+    var txt=await r.text();
+    try{
+      var j=JSON.parse(txt);
+      var newCount=(j.acquisto||0)+(j.vendita||0);
+      if(newCount>0){
+        showT("📥 "+newCount+" nuove fatture importate");
+        await loadFatture();
+        if(curModule==="costi")updFattUI();
+        if(curModule==="fornitori")setFornTab(window._lastFornTab||"fornitori");
+        if(curModule==="clienti")setCliTab(window._lastCliTab||"clienti");
+      }
+      // If more files remaining, run again immediately
+      if((j.remaining||0)>0){
+        _autoSyncing=false;
+        setTimeout(autoSyncFatture,500);
+        return;
+      }
+    }catch(pe){}
+  }catch(e){}
+  _autoSyncing=false;
+}
 
 async function syncFatture(){
-  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");return}
-  var btn=document.getElementById("syncFattBtn");btn.textContent="⏳ Scansione...";btn.disabled=true;
-  var msg=document.getElementById("fattSyncMsg");msg.classList.remove("hid");
+  if(_autoSyncing){showT("⏳ Sincronizzazione automatica in corso...");return}
+  _autoSyncing=true; // block auto-sync during manual
+  var url=gUrl();if(!url){showT("⚠ Configura Google Sheets");_autoSyncing=false;return}
+  var btn=document.getElementById("syncFattBtn")||document.getElementById("syncFattBtn2")||document.getElementById("syncFattBtn3");
+  if(btn){btn.textContent="⏳ Scansione...";btn.disabled=true}
+  var msg=document.getElementById("fattSyncMsg");
+  if(!msg){msg=document.createElement("div");msg.style.display="none"} else {msg.classList.remove("hid")}
   
   var totAcq=0,totVen=0,totErr=0,totDup=0,batch=0;
   var keepGoing=true;
@@ -874,8 +913,9 @@ async function syncFatture(){
   info+=" ("+batch+" batch)";
   msg.style.color=totErr&&!tot?"var(--danger)":"var(--ok)";
   msg.innerHTML=info;
-  btn.textContent="🔄 Sincronizza fatture";btn.disabled=false;
+  if(btn){btn.textContent="🔄 Sincronizza fatture";btn.disabled=false}
   if(tot>0)await loadFatture();
+  _autoSyncing=false;
 }
 
 async function testFatture(){
