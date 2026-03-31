@@ -113,7 +113,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
       <button class="login-btn" onclick="selUser('Giovanni')"><div class="lb-icon" style="background:rgba(245,158,11,0.15)">🚚</div><div><div class="lb-name">Giovanni</div><div class="lb-zones">Zona 1 — Nocera-Salerno</div></div></button>
       <button class="login-btn" onclick="selUser('Antonio')"><div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div><div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3</div></div></button>
       <button class="login-btn" onclick="selUser('Sergio')"><div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div><div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3</div></div></button>
-      <button class="login-btn" onclick="selUser('Carmela')"><div class="lb-icon" style="background:rgba(236,72,153,0.15)">👩</div><div><div class="lb-name">Carmela</div><div class="lb-zones">Tutte le zone</div></div></button>
+      <button class="login-btn" onclick="selUser('Carmela')"><div class="lb-icon" style="background:rgba(236,72,153,0.15)">👩</div><div><div class="lb-name">Carmela</div><div class="lb-zones">Controllo · Tutte le zone</div></div></button>
     </div>
     <div id="pinPanel" class="hid" style="width:100%;max-width:320px;margin-top:24px">
       <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:24px 20px;text-align:center">
@@ -371,10 +371,10 @@ function updUI(){
     var st,sc;
     if(hasD){st="✓ "+net.toFixed(1)+" kg netto";sc="ok"}
     else if(fest){st="🏖️ festivo";sc="f"}
-    else if(!isMine){st="altro autista";sc="oth"}
+    else if(!isMine){st="altro operatore";sc="oth"}
     else{st="in attesa";sc="w"}
     html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div><div class="zr-sub">'+z.area+'</div></div></div><span class="zr-st '+sc+'">'+st+'</span></div>';
-    if(hasD&&v.autista)html+='<div class="zr-detail">🚚 '+v.autista+(v.ceste?' · '+v.ceste.length+' cest'+(v.ceste.length>1?'e':'a'):'')+'</div>';
+    if(hasD&&v.autista)html+='<div class="zr-detail">'+(v.autista==="Carmela"?"👩 ":"🚚 ")+v.autista+(v.ceste?' · '+v.ceste.length+' cest'+(v.ceste.length>1?'e':'a'):'')+'</div>';
   });
   document.getElementById("zoneGrid").innerHTML=html;document.getElementById("totVal").textContent=total>0?total.toFixed(1)+" kg":"—";
   var pend=myPendZ(activeDate);document.getElementById("btnAdd").classList.toggle("hid",pend.length===0);
@@ -531,7 +531,7 @@ function bldCP(id){var h="";for(var i=0;i<wNC;i++){var c=i<wCC?"done":i===wCC?"a
 
 function wBldSum(){
   document.getElementById("w4z").textContent=wZone.name+" — "+wZone.area;
-  var h='<div class="sum-section"><div class="sum-title">Autista</div><div class="sum-row"><span class="sl">🚚 '+curUser+'</span><span class="sv"></span></div></div>';
+  var h='<div class="sum-section"><div class="sum-title">Operatore</div><div class="sum-row"><span class="sl">'+(curUser==="Carmela"?"👩 ":"🚚 ")+curUser+'</span><span class="sv"></span></div></div>';
   var totLordo=0,totNetto=0;
   wCeste.forEach(function(c,i){
     var lordo=c.pesoLordo||0;var netto=c.pesoNetto||0;totLordo+=lordo;totNetto+=netto;
