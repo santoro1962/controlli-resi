@@ -1682,6 +1682,66 @@ function updCliResi(el){
   });
   h+='</div></div>';
   
+  // Sub-tab toggle: Per Articolo vs Per Cliente
+  var resiView=window._resiView||"cliente";
+  h+='<div style="display:flex;gap:5px;padding:14px 20px;border-bottom:1px solid var(--border)">';
+  h+='<button onclick="window._resiView=\'articolo\';updCliResi(document.getElementById(\'cliContent\'))" style="background:'+(resiView==="articolo"?"var(--accent)":"var(--inbg)")+';color:'+(resiView==="articolo"?"#fff":"var(--muted)")+';border:1px solid '+(resiView==="articolo"?"var(--accent)":"var(--inbord)")+';border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer">📦 Per Articolo</button>';
+  h+='<button onclick="window._resiView=\'cliente\';updCliResi(document.getElementById(\'cliContent\'))" style="background:'+(resiView==="cliente"?"var(--accent)":"var(--inbg)")+';color:'+(resiView==="cliente"?"#fff":"var(--muted)")+';border:1px solid '+(resiView==="cliente"?"var(--accent)":"var(--inbord)")+';border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer">🏪 Per Cliente</button>';
+  h+='</div>';
+
+  if(resiView==="articolo"){
+    // Aggregate all articles across all clients
+    var allArts={};
+    cliArr.forEach(function(c){
+      Object.keys(c.articles).forEach(function(k){
+        var a=c.articles[k];
+        if(!allArts[k])allArts[k]={codice:a.codice,descrizione:a.descrizione,um:a.um,consQty:0,consVal:0,resoQty:0,resoVal:0,clienti:{}};
+        allArts[k].consQty+=a.consQty;allArts[k].consVal+=a.consVal;
+        allArts[k].resoQty+=a.resoQty;allArts[k].resoVal+=a.resoVal;
+        if(!allArts[k].um&&a.um)allArts[k].um=a.um;
+        if(a.resoQty>0||a.consQty>0)allArts[k].clienti[c.name]={consQty:a.consQty,resoQty:a.resoQty,resoVal:a.resoVal,pct:a.consQty>0?(a.resoQty/a.consQty*100):0};
+      });
+    });
+    var allArtArr=Object.values(allArts).filter(function(a){return a.consQty>0||a.resoQty>0}).sort(function(a,b){
+      var pa=a.consQty>0?(a.resoQty/a.consQty):0;var pb=b.consQty>0?(b.resoQty/b.consQty):0;return pb-pa});
+    
+    h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
+    h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Articolo</th>';
+    h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">UM</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Consegnato</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">€ Consegnato</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Reso</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">€ Reso</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% Reso</th>';
+    h+='</tr></thead><tbody>';
+    allArtArr.forEach(function(a){
+      var pct=a.consQty>0?(a.resoQty/a.consQty*100):0;
+      var pc=pct>10?"var(--danger)":pct>5?"var(--warn)":"var(--ok)";
+      var cliList=Object.keys(a.clienti).filter(function(c){return a.clienti[c].resoQty>0}).sort(function(x,y){return a.clienti[y].resoQty-a.clienti[x].resoQty});
+      h+='<tr style="border-bottom:1px solid var(--border);cursor:'+(cliList.length>0?"pointer":"default")+'" '+(cliList.length>0?'onclick="this.nextElementSibling.classList.toggle(\'hid\')"':'')+'>';
+      h+='<td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.codice?'<span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:3px">'+a.codice+'</span>':'')+a.descrizione+(cliList.length>0?' <span style="font-size:9px;color:var(--muted)">▼</span>':'')+'</td>';
+      h+='<td style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;color:var(--ok)">'+a.consQty.toFixed(1)+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;color:var(--ok)">€'+a.consVal.toFixed(2)+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;color:var(--danger)">'+(a.resoQty>0?a.resoQty.toFixed(1):"—")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;color:var(--danger)">'+(a.resoVal>0?"€"+a.resoVal.toFixed(2):"—")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;font-weight:700;color:'+pc+'">'+(pct>0?pct.toFixed(1)+"%":"—")+'</td></tr>';
+      // Sub-row: which clients return this article
+      if(cliList.length>0){
+        h+='<tr class="hid" style="background:var(--inbg)"><td colspan="7" style="padding:6px 20px">';
+        h+='<div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600">Clienti che rendono questo articolo:</div>';
+        cliList.forEach(function(cn){
+          var ci=a.clienti[cn];
+          var cpc=ci.pct>10?"var(--danger)":ci.pct>5?"var(--warn)":"var(--ok)";
+          h+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">';
+          h+='<span>'+cn+'</span>';
+          h+='<span>cons. '+ci.consQty.toFixed(1)+' · reso <span style="color:var(--danger)">'+ci.resoQty.toFixed(1)+'</span> · <span style="font-weight:700;color:'+cpc+'">'+ci.pct.toFixed(1)+'%</span></span></div>';
+        });
+        h+='</td></tr>';
+      }
+    });
+    h+='</tbody></table></div>';
+  } else {
   // Client rows
   cliArr.forEach(function(c,i){
     var pctReso=c.consegnato>0?(c.resi/c.consegnato*100):0;
@@ -1726,6 +1786,7 @@ function updCliResi(el){
     });
     h+='</tbody></table></div></div>';
   });
+  } // end per-cliente view
   el.innerHTML=h;
 }
 
