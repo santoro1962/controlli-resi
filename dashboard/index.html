@@ -289,16 +289,12 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
   </div>
   <div id="mod-fornitori" class="module">
     <div class="page-header"><div><div class="page-title">🏭 Fornitori — Controllo Costi</div><div class="page-sub">Monitoraggio prezzi, impatto economico e analisi spesa</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="riclassificaTutto()" id="btnRiclass" style="background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);font-weight:700;font-size:13px">🤖 Riclassifica AI</button>
-        <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn2">🔄 Sync</button>
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="syncFatture()" id="syncFattBtn2">🔄 Sync</button>
     </div>
     <div id="fornAlertBanner"></div>
     <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="setFornTab('controllo')" id="ftab-f-controllo">🔍 Controllo Prezzi</button>
       <button class="btn btn-ghost btn-sm" onclick="setFornTab('impatto')" id="ftab-f-impatto">💶 Impatto Economico</button>
-      <button class="btn btn-ghost btn-sm" onclick="setFornTab('dovespendi')" id="ftab-f-dovespendi">📊 Dove Spendi</button>
       <button class="btn btn-ghost btn-sm" onclick="setFornTab('storico')" id="ftab-f-storico">📦 Storico Articolo</button>
       <button class="btn btn-ghost btn-sm" onclick="setFornTab('fornitori')" id="ftab-f-fornitori">🏭 Fornitori</button>
       <button class="btn btn-ghost btn-sm" onclick="setFornTab('elenco')" id="ftab-f-elenco">📋 Fatture</button>
@@ -376,15 +372,12 @@ function goModule(mod,el){
   if(mod==="storico")updHist();if(mod==="grafici")updCharts();if(mod==="ddtTab")updDDTTab();if(mod==="costi")loadFatture();
   if(mod==="fornitori"){
     var fc=document.getElementById("fornContent");
-    if(fc)fc.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)"><span class="spin" style="display:inline-block;width:24px;height:24px;border:3px solid var(--inbord);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></span><div style="margin-top:12px">Caricamento fatture e classificazioni...</div></div>';
+    if(fc)fc.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)"><span class="spin" style="display:inline-block;width:24px;height:24px;border:3px solid var(--inbord);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></span><div style="margin-top:12px">Caricamento fatture...</div></div>';
     (async function(){
       try{
         if(fattureData.length===0)await loadFatture();
-        console.log("Fatture caricate: "+fattureData.length);
       }catch(e){console.log("loadFatture error:",e)}
-      try{await loadClassificazioni();await loadCustomCategories();console.log("Classificazioni: "+Object.keys(classificazioni).length+", Custom cats: "+customCategories.length)}catch(e){console.log("loadClass error:",e)}
       setFornTab(window._lastFornTab||"controllo");
-      try{await runClassification();await loadClassificazioni();setFornTab(window._lastFornTab||"controllo")}catch(e){console.log("classify error:",e)}
     })();
   }
   if(mod==="clienti"){loadFattThen(function(){setCliTab(window._lastCliTab||"clienti")})}
@@ -975,7 +968,7 @@ async function loadFatture(){
 
 function setFornTab(t){
   window._lastFornTab=t;
-  ["controllo","impatto","dovespendi","storico","fornitori","elenco"].forEach(function(k){
+  ["controllo","impatto","storico","fornitori","elenco"].forEach(function(k){
     var b=document.getElementById("ftab-f-"+k);
     if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
   });
@@ -989,7 +982,6 @@ function setFornTab(t){
     buildAlertBanner();
     if(t==="controllo")updControlloPrezzi(el);
     else if(t==="impatto")updImpattoEconomico(el);
-    else if(t==="dovespendi")updDoveSpendi(el);
     else if(t==="storico")updStoricoArticolo(el);
     else if(t==="fornitori")updFornClassifica(el);
     else if(t==="elenco")updFattElencoTipo(el,"Acquisto");
@@ -997,94 +989,6 @@ function setFornTab(t){
     el.innerHTML='<div style="padding:20px;color:var(--danger)">❌ Errore: '+err.message+'</div>';
     console.log("setFornTab errore:",err);
   }
-}
-
-// ═══ CLASSIFICATION ═══
-var classificazioni={};
-var COST_CATEGORIES=[
-  {id:"Materie prime",color:"#85B7EB",colorDark:"#0C447C"},
-  {id:"Imballaggi",color:"#F09995",colorDark:"#791F1F"},
-  {id:"Energia",color:"#97C459",colorDark:"#27500A"},
-  {id:"Trasporti",color:"#EF9F27",colorDark:"#633806"},
-  {id:"Attrezzature",color:"#9FE1CB",colorDark:"#085041"},
-  {id:"Manutenzione",color:"#F5C4B3",colorDark:"#712B13"},
-  {id:"Servizi",color:"#CECBF6",colorDark:"#3C3489"},
-  {id:"Personale",color:"#ED93B1",colorDark:"#4B1528"},
-  {id:"Altro",color:"#D3D1C7",colorDark:"#444441"}
-];
-var customCategories=[];
-function getAllCategories(){return COST_CATEGORIES.slice()}
-async function loadCustomCategories(){}
-function getCatStyle(n){return COST_CATEGORIES.find(function(c){return c.id===n})||COST_CATEGORIES[COST_CATEGORIES.length-1]}
-function classifyItem(codeOrDesc,fornitore){
-  if(!fornitore)return"Altro";
-  // 1. Exact match: fornitore|code_or_desc
-  var key=fornitore+"|"+(codeOrDesc||"");
-  if(classificazioni[key])return classificazioni[key].categoria;
-  // 2. Try all keys for this fornitore - find most common category
-  var fKeys=Object.keys(classificazioni).filter(function(k){return k.indexOf(fornitore+"|")===0});
-  if(fKeys.length>0){
-    var catCount={};
-    fKeys.forEach(function(k){
-      var cat=classificazioni[k].categoria;
-      if(!catCount[cat])catCount[cat]=0;
-      catCount[cat]++;
-    });
-    // Return the most frequent category for this fornitore
-    var best="Altro";var bestN=0;
-    Object.keys(catCount).forEach(function(c){if(catCount[c]>bestN){bestN=catCount[c];best=c}});
-    return best;
-  }
-  // 3. Try partial fornitore name match (e.g. "MOLINI FRATELLI AMORUSO" vs "Molini Fratelli Amoruso S.r.l.")
-  var fornUpper=fornitore.toUpperCase();
-  var partialKeys=Object.keys(classificazioni).filter(function(k){
-    var kForn=k.split("|")[0].toUpperCase();
-    return kForn.indexOf(fornUpper.substring(0,15))>=0||fornUpper.indexOf(kForn.substring(0,15))>=0;
-  });
-  if(partialKeys.length>0){
-    var catCount2={};
-    partialKeys.forEach(function(k){var cat=classificazioni[k].categoria;if(!catCount2[cat])catCount2[cat]=0;catCount2[cat]++});
-    var best2="Altro";var bestN2=0;
-    Object.keys(catCount2).forEach(function(c){if(catCount2[c]>bestN2){bestN2=catCount2[c];best2=c}});
-    return best2;
-  }
-  return"Non classificato";
-}
-async function loadClassificazioni(){
-  var url=gUrl();if(!url)return;
-  try{var r=await fetch(url+"?action=getClassificazioni&t="+Date.now(),{cache:"no-store"});var j=await r.json();if(j.data)classificazioni=j.data}catch(e){}
-}
-async function runClassification(){
-  var url=gUrl();if(!url)return;
-  var keepGoing=true;var tot=0;
-  while(keepGoing){
-    try{var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"classifyItems"})});var j=await r.json();tot+=(j.classified||0);if((j.remaining||0)>0){await new Promise(function(r){setTimeout(r,500)})}else{keepGoing=false}}catch(e){keepGoing=false}
-  }
-  if(tot>0){await loadClassificazioni();showT("🤖 "+tot+" articoli classificati")}
-}
-async function reassignCategory(artKey,newCat){
-  if(classificazioni[artKey])classificazioni[artKey].categoria=newCat;
-  else classificazioni[artKey]={categoria:newCat};
-  var url=gUrl();if(!url)return;
-  try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateClassification",key:artKey,categoria:newCat})});showT("✓ Categoria: "+newCat)}catch(e){}
-}
-
-async function riclassificaTutto(){
-  if(!confirm("Cancellare tutte le classificazioni automatiche e rifare da zero con l'AI?"))return;
-  var btn=document.getElementById("btnRiclass");if(btn){btn.textContent="⏳ Resettando...";btn.disabled=true}
-  var url=gUrl();if(!url)return;
-  try{
-    showT("🗑️ Cancellazione classificazioni...");
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"resetClassifications"})});
-    classificazioni={};
-    showT("🤖 Riclassificazione in corso...");
-    if(btn)btn.textContent="🤖 Classificando...";
-    await runClassification();
-    await loadClassificazioni();
-    showT("✓ Riclassificazione completata: "+Object.keys(classificazioni).length+" articoli");
-    setFornTab(window._lastFornTab||"controllo");
-  }catch(e){showT("❌ Errore: "+e.message)}
-  if(btn){btn.textContent="🤖 Riclassifica AI";btn.disabled=false}
 }
 
 // ═══ ALERT BANNER ═══
@@ -1248,102 +1152,6 @@ function updImpattoEconomico(el){
   el.innerHTML=h;
 }
 
-// ═══ TAB 3: DOVE SPENDI ═══
-function updDoveSpendi(el){
-  var allCats=getAllCategories();
-  var cats={};
-  allCats.forEach(function(c){cats[c.id]={id:c.id,color:c.color,colorDark:c.colorDark,totale:0,fornitori:{},articoli:[]}});
-  cats["Non classificato"]={id:"Non classificato",color:"#D3D1C7",colorDark:"#444441",totale:0,fornitori:{},articoli:[]};
-  
-  fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
-    if(!f.righe)return;
-    f.righe.forEach(function(r){
-      if(r.prezzoTotale===0)return;
-      var cat=classifyItem(r.codice||r.descrizione,f.soggetto);
-      if(!cats[cat])cats[cat]={id:cat,color:"#D3D1C7",colorDark:"#444441",totale:0,fornitori:{},articoli:[]};
-      cats[cat].totale+=r.prezzoTotale;
-      cats[cat].fornitori[f.soggetto]=true;
-    });
-  });
-  // Add articles
-  var articles=buildArticleIndex();
-  Object.keys(articles).forEach(function(k){
-    var art=articles[k];var forn=Object.keys(art.fornitori)[0]||"";
-    var cat=classifyItem(art.codice||art.name,forn);
-    var totS=art.records.reduce(function(s,r){return s+r.prezzoTot},0);
-    if(cats[cat])cats[cat].articoli.push({name:art.name,codice:art.codice||k,spesa:totS,forn:forn,hasCode:art.hasCode!==false});
-  });
-  
-  var catArr=Object.values(cats).filter(function(c){return c.totale>0}).sort(function(a,b){return b.totale-a.totale});
-  var totale=catArr.reduce(function(s,c){return s+c.totale},0);
-  
-  var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
-  h+='<div style="font-weight:700;font-size:15px;margin-bottom:6px">📊 Dove Spendi</div>';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  h+='<div style="font-size:12px;color:var(--muted)">Breakdown costi per categoria — classificazione automatica AI · totale: €'+totale.toFixed(0)+'</div>';
-  h+='</div>';
-  
-  // Category bar
-  if(totale>0){
-    h+='<div style="display:flex;gap:2px;height:44px;border-radius:10px;overflow:hidden;margin-bottom:16px">';
-    catArr.forEach(function(c){
-      var pct=c.totale/totale*100;if(pct<1.5)return;
-      h+='<div style="flex:'+pct.toFixed(1)+';background:'+c.color+';display:flex;align-items:center;justify-content:center;font-size:'+(pct>8?'11':'9')+'px;font-weight:600;color:'+c.colorDark+';overflow:hidden;white-space:nowrap;cursor:pointer" onclick="document.getElementById(\'catExp'+c.id.replace(/[^a-zA-Z]/g,"")+'\').classList.toggle(\'hid\')">'+(pct>5?c.id+' '+pct.toFixed(0)+'%':pct.toFixed(0)+'%')+'</div>';
-    });
-    h+='</div>';
-  }
-  
-  // Category details
-  catArr.forEach(function(c){
-    var pct=totale>0?(c.totale/totale*100):0;
-    var cid=c.id.replace(/[^a-zA-Z]/g,"");
-    h+='<div style="border-bottom:1px solid var(--border)">';
-    h+='<div onclick="document.getElementById(\'catExp'+cid+'\').classList.toggle(\'hid\')" style="padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:12px">';
-    h+='<div style="width:12px;height:12px;border-radius:3px;background:'+c.color+';flex-shrink:0"></div>';
-    h+='<div style="flex:1"><div style="font-size:14px;font-weight:600">'+c.id+'</div><div style="font-size:11px;color:var(--muted)">'+Object.keys(c.fornitori).length+' fornitori · '+c.articoli.length+' articoli</div></div>';
-    h+='<div style="text-align:right;min-width:90px"><div style="font-size:16px;font-weight:700;font-family:monospace">€'+c.totale.toFixed(0)+'</div><div style="font-size:11px;color:var(--muted)">'+pct.toFixed(0)+'%</div></div>';
-    h+='<span style="color:var(--muted);font-size:11px">▼</span></div>';
-    // Expandable articles
-    h+='<div id="catExp'+cid+'" class="hid" style="padding:4px 20px 12px;background:var(--inbg)">';
-    c.articoli.sort(function(a,b){return b.spesa-a.spesa});
-    c.articoli.forEach(function(a){
-      var artKey=a.forn+"|"+(a.codice||a.name);
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px">';
-      h+='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.hasCode?'<span style="font-family:monospace;font-size:9px;background:var(--card);padding:1px 3px;border-radius:2px;margin-right:3px">'+a.codice+'</span>':'')+a.name+'</span>';
-      h+='<span style="font-family:monospace;font-weight:600;flex-shrink:0">€'+a.spesa.toFixed(0)+'</span>';
-      h+='<select onchange="reassignCategory(\''+artKey.replace(/'/g,"\\'")+'\',this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--inbord);border-radius:4px;padding:2px 4px;font-size:10px;cursor:pointer;flex-shrink:0">';
-      COST_CATEGORIES.forEach(function(cc){h+='<option value="'+cc.id+'"'+(cc.id===c.id?' selected':'')+'>'+cc.id+'</option>'});
-      h+='<option value="Non classificato"'+(c.id==="Non classificato"?" selected":"")+'>Non classificato</option></select>';
-      h+='</div>';
-    });
-    h+='</div></div>';
-  });
-  
-  // Stacked bar chart
-  h+='<div style="padding:16px 20px"><div style="position:relative;height:220px"><canvas id="chDoveSpendi"></canvas></div></div>';
-  el.innerHTML=h;
-  
-  setTimeout(function(){
-    var ctx=document.getElementById("chDoveSpendi");if(!ctx)return;
-    var months={};
-    fattureData.filter(function(f){return f.tipo==="Acquisto"}).forEach(function(f){
-      var m=f.data.substring(0,7);if(!months[m])months[m]={};
-      if(f.righe)f.righe.forEach(function(r){
-        var cat=classifyItem(r.codice||r.descrizione,f.soggetto);
-        if(!months[m][cat])months[m][cat]=0;months[m][cat]+=r.prezzoTotale;
-      });
-    });
-    var sortM=Object.keys(months).sort().slice(-8);
-    var MI=["","Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-    var labels=sortM.map(function(m){var p=m.split("-");return MI[+p[1]]+" '"+p[0].slice(2)});
-    var ds=catArr.slice(0,6).map(function(c){
-      return{label:c.id,data:sortM.map(function(m){return Math.round(months[m]&&months[m][c.id]||0)}),backgroundColor:c.color+"BB",borderColor:c.color,borderWidth:1};
-    });
-    if(window._chDS)window._chDS.destroy();
-    window._chDS=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8",font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:"#94a3b8"},grid:{color:"#1e293b"}},y:{stacked:true,ticks:{color:"#94a3b8",callback:function(v){return"€"+v}},grid:{color:"#1e293b"}}}}});
-  },100);
-}
-
 // ═══ TAB 4: STORICO ARTICOLO ═══
 function updStoricoArticolo(el){
   var articles=buildArticleIndex();
@@ -1462,11 +1270,10 @@ function updFornClassifica(el){
   var articles=buildArticleIndex();
   var suppliers={};
   filteredFatt.forEach(function(f){
-    if(!suppliers[f.soggetto])suppliers[f.soggetto]={name:f.soggetto,totale:0,nFatt:0,artKeys:{},cats:{}};
+    if(!suppliers[f.soggetto])suppliers[f.soggetto]={name:f.soggetto,totale:0,nFatt:0,artKeys:{}};
     suppliers[f.soggetto].totale+=f.imponibile;suppliers[f.soggetto].nFatt++;
     if(f.righe)f.righe.forEach(function(r){
       var k=r.codice||normalizeArt(r.descrizione);if(k)suppliers[f.soggetto].artKeys[k]=true;
-      suppliers[f.soggetto].cats[classifyItem(r.codice||r.descrizione,f.soggetto)]=true;
     });
   });
   // Calc details per supplier — filtered by period
@@ -1514,7 +1321,7 @@ function updFornClassifica(el){
     h+='<div onclick="this.nextElementSibling.classList.toggle(\'hid\')" style="padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
     h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(hasImp?"rgba(239,68,68,0.1)":"var(--inbg)")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(hasImp?"var(--danger)":"var(--muted)")+';flex-shrink:0">'+(i+1)+'</div>';
     h+='<div style="flex:1;min-width:200px"><div style="font-size:13px;font-weight:600">'+s.name+'</div>';
-    h+='<div style="font-size:11px;color:var(--muted)">'+Object.keys(s.artKeys).length+' articoli · '+s.nFatt+' fatt. · '+Object.keys(s.cats).join(", ")+'</div></div>';
+    h+='<div style="font-size:11px;color:var(--muted)">'+Object.keys(s.artKeys).length+' articoli · '+s.nFatt+' fatture</div></div>';
     h+='<div style="text-align:right;min-width:100px"><div style="font-size:15px;font-weight:700;font-family:monospace">€'+s.totale.toFixed(0)+'</div><div style="font-size:10px;color:var(--muted)">'+pctTot.toFixed(1)+'% del totale</div></div>';
     if(hasImp)h+='<div style="text-align:right;min-width:100px"><div style="font-size:13px;font-weight:700;color:var(--danger);font-family:monospace">+€'+s.impatto.toFixed(0)+'/mese</div></div>';
     h+='<span style="color:var(--muted);font-size:10px">▼</span></div>';
