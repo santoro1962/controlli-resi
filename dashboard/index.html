@@ -516,7 +516,41 @@ function updToday(){
   ZONES.forEach(function(z){
     var zd=today&&today.zones[z.id];var isApproved=approvals[z.id]&&approvals[z.id].approved;
     if(zd){
-      hasZones=true;var pesoSalvato=zd.peso||0;var nc=zd.nceste||1;
+      hasZones=true;var pesoSalvato=zd.peso||0;var nc=zd.nceste||0;
+      
+      // ═══ ZERO RESI — operatore ha scelto intenzionalmente 0 ceste ═══
+      if(nc===0&&pesoSalvato===0){
+        var time=zd.timestamp?zd.timestamp.split(" ")[1]||"":"";
+        var opIcon=zd.operatore==="Carmela"?"👩":"🚚";
+        if(isApproved){
+          html+='<div style="background:var(--card);border-radius:14px;border:1px solid rgba(34,197,94,0.3);margin-bottom:10px;overflow:hidden">';
+          html+='<div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+          html+='<div style="display:flex;align-items:center;gap:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">'+opIcon+' '+zd.operatore+'</span></div>';
+          html+='<div style="display:flex;align-items:center;gap:10px">';
+          html+='<span style="background:rgba(148,163,184,0.1);color:var(--muted);padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600">📦 Zero resi — nessuna consegna</span>';
+          html+='<span class="badge badge-ok">✓ Approvato</span>';
+          html+='</div></div></div>';
+        } else {
+          html+='<div class="zone-card" style="border:1px solid rgba(148,163,184,0.3);margin-bottom:10px">';
+          html+='<div class="zc-header"><div class="zc-zone"><span class="zone-dot" style="background:'+z.clr+'"></span>'+z.name+' — '+z.area+'</div>';
+          html+='<span class="zc-badge" style="background:rgba(148,163,184,0.1);color:var(--muted)">📦 Zero resi</span></div>';
+          html+='<div style="padding:20px">';
+          html+='<div style="background:var(--inbg);border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">';
+          html+='<div style="font-size:32px;margin-bottom:8px">📦</div>';
+          html+='<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">Nessun reso oggi</div>';
+          html+='<div style="font-size:13px;color:var(--muted)">'+opIcon+' <strong>'+zd.operatore+'</strong> ha confermato: nessuna consegna per questa zona'+(time?' alle '+time:'')+'</div>';
+          html+='<div style="font-size:12px;color:var(--muted);margin-top:6px">Peso: 0.00 kg · 0 ceste · Nessuna foto prevista</div>';
+          html+='</div>';
+          html+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+          html+='<button class="btn btn-ok btn-sm" onclick="approveZero(\''+z.id+'\')">✓ Approva zero resi</button>';
+          html+='<button class="btn btn-ghost btn-sm" onclick="overrideZero(\''+z.id+'\')">✏️ Correggi (inserisci peso)</button>';
+          html+='</div></div></div>';
+        }
+        return; // skip normal rendering for this zone
+      }
+      
+      // ═══ NORMAL RESI (1+ ceste) ═══
+      if(!nc)nc=1;
       var netto=pesoSalvato;var lordo=pesoSalvato+TARA*nc;
       var dL=lordo,dN=netto;
       if(isApproved){dL=approvals[z.id].lordo||lordo;dN=approvals[z.id].netto}
@@ -683,6 +717,36 @@ function checkZoneComplete(zid){
   if(allOk){approvals[zid].netto=totN;approvals[zid].lordo=totL;approvals[zid].approved=true}
   else{approvals[zid].approved=false}
 }
+function approveZero(zid){
+  approvals[zid]={approved:true,netto:0,lordo:0,zero:true,ceste:{}};
+  saveApprovals();updUI();showT("✓ Zero resi approvato")
+}
+function overrideZero(zid){
+  var zname=ZONES.find(function(z){return z.id===zid});
+  var h='<div style="padding:24px;text-align:center">';
+  h+='<div style="font-size:32px;margin-bottom:12px">✏️</div>';
+  h+='<div style="font-size:16px;font-weight:700;margin-bottom:6px">Correggi peso — '+(zname?zname.name:zid)+'</div>';
+  h+='<div style="font-size:13px;color:var(--muted);margin-bottom:16px">Inserisci il peso lordo effettivo (kg)</div>';
+  h+='<input type="number" step="0.01" id="overrideInput" placeholder="0.00" style="width:100%;padding:14px;border-radius:12px;background:var(--inbg);border:1px solid var(--inbord);color:var(--text);font-size:18px;font-family:monospace;text-align:center;outline:none;box-sizing:border-box;margin-bottom:16px"/>';
+  h+='<div style="display:flex;gap:10px">';
+  h+='<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'overrideModal\').classList.add(\'hid\')" style="flex:1;padding:12px">Annulla</button>';
+  h+='<button class="btn btn-ok btn-sm" onclick="doOverrideZero(\''+zid+'\')" style="flex:1;padding:12px">Salva</button>';
+  h+='</div></div>';
+  var m=document.getElementById("overrideModal");
+  if(!m){m=document.createElement("div");m.id="overrideModal";m.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px";
+    document.body.appendChild(m)}
+  m.className="";m.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:20px;max-width:360px;width:100%;overflow:hidden">'+h+'</div>';
+  setTimeout(function(){var inp=document.getElementById("overrideInput");if(inp)inp.focus()},100);
+}
+function doOverrideZero(zid){
+  var v=document.getElementById("overrideInput").value;
+  if(!v){showT("⚠ Inserisci un peso");return}
+  var lordo=parseFloat(v);if(isNaN(lordo)||lordo<=0){showT("⚠ Peso non valido");return}
+  var netto=Math.max(0,+(lordo-TARA).toFixed(2));
+  approvals[zid]={approved:true,netto:netto,lordo:lordo,corrected:true,ceste:{1:{lordo:lordo,netto:netto,approved:true,corrected:true}}};
+  saveApprovals();updUI();showT("✓ Corretto: "+lordo.toFixed(2)+" kg lordo → "+netto.toFixed(2)+" kg netto");
+  var m=document.getElementById("overrideModal");if(m)m.classList.add("hid");
+}
 function toggleExpand(zid){if(!window._expanded)window._expanded={};window._expanded[zid]=!window._expanded[zid];updUI()}
 
 var driverUnlockRange=null; // {from:"2026-03-29",to:"2026-04-02"}
@@ -784,11 +848,18 @@ function updHist(){var days=Object.keys(dailyData).sort().reverse().slice(0,curP
     html+='<tr><td colspan="8" style="padding:0;border:none"><div style="background:var(--inbg);padding:16px 20px;border-bottom:2px solid var(--border)">';
     ZONES.forEach(function(z){
       var zd=day.zones[z.id];if(!zd)return;
-      var nc=zd.nceste||1;var cd=zd.cesteDetail||[];
+      var nc=zd.nceste||0;var cd=zd.cesteDetail||[];
       var photoUrls=zd.foto?zd.foto.split(" | "):[];
+      var opIcon=zd.operatore==="Carmela"?"👩":"🚚";
       html+='<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">';
-      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">🚚 '+(zd.operatore||"—")+'</span></div>';
-      // Per cesta
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="zone-dot" style="background:'+z.clr+'"></span><strong>'+z.name+'</strong><span style="color:var(--muted);font-size:12px">'+opIcon+' '+(zd.operatore||"—")+'</span></div>';
+      // Zero resi case
+      if(nc===0&&(zd.peso||0)===0){
+        html+='<div style="background:rgba(148,163,184,0.05);border:1px solid rgba(148,163,184,0.2);border-radius:10px;padding:14px;text-align:center">';
+        html+='<span style="font-size:20px">📦</span> <span style="color:var(--muted);font-size:13px">Nessun reso — '+opIcon+' '+(zd.operatore||"—")+' ha confermato: nessuna consegna</span></div>';
+      } else {
+      // Per cesta (normal)
+      if(!nc)nc=1;
       for(var ci=0;ci<Math.max(nc,cd.length,photoUrls.length);ci++){
         var cD=cd[ci]||{};var cP=photoUrls[ci]?driveImgUrl(photoUrls[ci].trim()):null;
         html+='<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px;padding:8px 0">';
@@ -802,6 +873,7 @@ function updHist(){var days=Object.keys(dailyData).sort().reverse().slice(0,curP
       }
       // Zone total
       html+='<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="font-weight:700">Totale '+z.name+'</span><span style="font-family:monospace;font-weight:700;color:var(--ok)">'+(zd.peso||0).toFixed(2)+' kg netto</span></div>';
+      } // end else (normal resi)
       html+='</div>';
     });
     // DDT summary
