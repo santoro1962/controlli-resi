@@ -408,8 +408,7 @@ function wPickZero(){
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:0,nceste:0,ceste:[]})})
     .then(function(){
       showT("✓ "+wZone.name+" — 0 resi salvato");
-      if(!doneZones[activeDate])doneZones[activeDate]={};doneZones[activeDate][wZone.id]=true;
-      try{localStorage.setItem("done-zones",JSON.stringify(doneZones))}catch(e){}
+      getDay(activeDate)[wZone.id]={ceste:[],autista:curUser,totaleNetto:0};saveL();
       doSync();cancelWiz();
     }).catch(function(e){showT("❌ Errore: "+e.message)});
   });
