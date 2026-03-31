@@ -105,6 +105,16 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 <body>
 <div id="toast" class="toast"></div>
 <div id="po" class="po" onclick="clPo()"><button class="po-c" onclick="clPo()">✕</button><img id="poImg" src=""/></div>
+<div id="confirmModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center">
+    <div id="confirmIcon" style="font-size:40px;margin-bottom:12px">❓</div>
+    <div id="confirmMsg" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:24px;line-height:1.5"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeConfirm(false)" style="flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:600;background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);cursor:pointer">Annulla</button>
+      <button onclick="closeConfirm(true)" style="flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:600;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;cursor:pointer">Conferma</button>
+    </div>
+  </div>
+</div>
 <div class="app">
   <!-- LOGIN -->
   <div id="loginScr" class="login">
@@ -331,7 +341,7 @@ async function checkDriverUnlock(name){
   }catch(e){document.getElementById("pinErr").classList.remove("hid");document.getElementById("pinErr").textContent="⛔ Errore verifica accesso";document.getElementById("pinBtn").textContent="Accedi";document.getElementById("pinBtn").disabled=false}
 }
 function doLogin(n){curUser=n;localStorage.setItem("autista",n);document.getElementById("loginScr").classList.add("hid");document.getElementById("mainApp").classList.remove("hid");initApp()}
-function changeUser(){if(!confirm("Cambiare profilo?"))return;localStorage.removeItem("autista");curUser="";document.getElementById("mainApp").classList.add("hid");document.getElementById("setP").classList.add("hid");document.getElementById("loginScr").classList.remove("hid")}
+function changeUser(){appConfirm("Cambiare profilo?","👤",function(){localStorage.removeItem("autista");curUser="";document.getElementById("mainApp").classList.add("hid");document.getElementById("setP").classList.add("hid");document.getElementById("loginScr").classList.remove("hid")})}
 
 function init(){var s=localStorage.getItem("autista");if(s&&AUTISTA_ZONES[s]){
   if(s!=="Carmela"&&!isDriverDay(new Date().toISOString().slice(0,10))){
@@ -391,19 +401,18 @@ function wPickZ(zid){wZone=zoneById(zid);wGo(2)}
 function wBldC(){var h='<button class="cnt-btn" onclick="wPickZero()" style="background:rgba(148,163,184,0.15);color:var(--muted);border-color:rgba(148,163,184,0.3);font-size:14px;width:100%">0 — Nessun reso oggi</button>';for(var i=1;i<=6;i++)h+='<button class="cnt-btn" onclick="wPickC('+i+')">'+i+'</button>';document.getElementById("wCntBtns").innerHTML=h}
 function wPickC(n){wNC=n;wCC=0;wCeste=[];wGo(3)}
 function wPickZero(){
-  if(!confirm("Confermi: NESSUN reso per "+wZone.name+" oggi?"))return;
-  wNC=0;wCC=0;wCeste=[];
-  // Save directly with 0
-  var url=gUrl();if(!url){showT("⚠ Configura URL");return}
-  var btn=event.target;btn.disabled=true;btn.textContent="⏳ Salvataggio...";
-  fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:0,nceste:0,ceste:[]})})
-  .then(function(){
-    showT("✓ "+wZone.name+" — 0 resi salvato");
-    if(!doneZones[activeDate])doneZones[activeDate]={};doneZones[activeDate][wZone.id]=true;
-    try{localStorage.setItem("done-zones",JSON.stringify(doneZones))}catch(e){}
-    doSync();
-    setTimeout(function(){cancelWiz()},500);
-  }).catch(function(e){showT("❌ Errore: "+e.message);btn.disabled=false;btn.textContent="0 — Nessun reso oggi"});
+  appConfirm("Nessun reso per "+wZone.name+" oggi?","📦",function(){
+    wNC=0;wCC=0;wCeste=[];
+    var url=gUrl();if(!url){showT("⚠ Configura URL");return}
+    showT("⏳ Salvataggio...");
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:activeDate,operatore:curUser,zona:wZone.id,zonaName:wZone.name+" "+wZone.area,peso:0,nceste:0,ceste:[]})})
+    .then(function(){
+      showT("✓ "+wZone.name+" — 0 resi salvato");
+      if(!doneZones[activeDate])doneZones[activeDate]={};doneZones[activeDate][wZone.id]=true;
+      try{localStorage.setItem("done-zones",JSON.stringify(doneZones))}catch(e){}
+      doSync();cancelWiz();
+    }).catch(function(e){showT("❌ Errore: "+e.message)});
+  });
 }
 
 function wSetP(){
@@ -605,6 +614,9 @@ async function wSave(){
 function openSet(){var p=prompt("Password:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
 function saveSet(){localStorage.setItem("gsheet-url",document.getElementById("sUrl").value.trim());document.getElementById("setP").classList.add("hid");if(gUrl())doSync();else updUI()}
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},3000)}
+var _confirmCb=null;
+function appConfirm(msg,icon,cb){_confirmCb=cb;document.getElementById("confirmIcon").textContent=icon||"❓";document.getElementById("confirmMsg").textContent=msg;document.getElementById("confirmModal").style.display="flex"}
+function closeConfirm(yes){document.getElementById("confirmModal").style.display="none";if(yes&&_confirmCb)_confirmCb();_confirmCb=null}
 function viewP(s){document.getElementById("poImg").src=s;document.getElementById("po").classList.add("show")}
 function clPo(){document.getElementById("po").classList.remove("show")}
 init();
