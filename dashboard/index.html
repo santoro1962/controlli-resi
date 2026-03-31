@@ -311,6 +311,7 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
     <div style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="setCliTab('clienti')" id="ftab-c-clienti" style="background:var(--accent);color:#fff">🏪 Clienti</button>
       <button class="btn btn-ghost btn-sm" onclick="setCliTab('articoli')" id="ftab-c-articoli">📦 Articoli per Cliente</button>
+      <button class="btn btn-ghost btn-sm" onclick="setCliTab('resi')" id="ftab-c-resi">📊 Analisi Resi</button>
       <button class="btn btn-ghost btn-sm" onclick="setCliTab('andamento')" id="ftab-c-andamento">📈 Andamento</button>
       <button class="btn btn-ghost btn-sm" onclick="setCliTab('elenco')" id="ftab-c-elenco">📋 Fatture</button>
     </div>
@@ -1472,13 +1473,14 @@ function getCliDateRange(){
 
 function setCliTab(t){
   window._lastCliTab=t;
-  ["clienti","articoli","andamento","elenco"].forEach(function(k){
+  ["clienti","articoli","resi","andamento","elenco"].forEach(function(k){
     var b=document.getElementById("ftab-c-"+k);
     if(b){b.style.background=k===t?"var(--accent)":"var(--inbg)";b.style.color=k===t?"#fff":"var(--muted)"}
   });
   var el=document.getElementById("cliContent");
   if(t==="clienti")updCliClassifica(el);
   else if(t==="articoli")updCliArticoli(el);
+  else if(t==="resi")updCliResi(el);
   else if(t==="andamento")updCliAndamento(el);
   else if(t==="elenco")updFattElencoTipo(el,"Vendita");
 }
@@ -1490,7 +1492,9 @@ function updCliClassifica(el){
   var clients={};
   filteredFatt.forEach(function(f){
     if(!clients[f.soggetto])clients[f.soggetto]={name:f.soggetto,piva:f.piva,imponibile:0,iva:0,totale:0,nFatt:0,artKeys:{}};
-    clients[f.soggetto].imponibile+=f.imponibile;clients[f.soggetto].iva+=f.iva;clients[f.soggetto].totale+=f.totale;clients[f.soggetto].nFatt++;
+    var isNC=f.tipoDoc==="TD04";
+    var sign=isNC?-1:1;
+    clients[f.soggetto].imponibile+=f.imponibile*sign;clients[f.soggetto].iva+=f.iva*sign;clients[f.soggetto].totale+=f.totale*sign;clients[f.soggetto].nFatt++;
     if(f.righe)f.righe.forEach(function(r){var k=r.codice||r.descrizione;if(k)clients[f.soggetto].artKeys[k]=true});
   });
   var cliArr=Object.values(clients).sort(function(a,b){return b.imponibile-a.imponibile});
@@ -1603,7 +1607,129 @@ function updCliArticoli(el){
   el.innerHTML=h;
 }
 
-// ═══ TAB 3: ANDAMENTO FATTURATO ═══
+// ═══ TAB 3: ANALISI RESI PER CLIENTE ═══
+function isResoLine(riga){
+  if(riga.prezzoTotale<0)return true;
+  if(riga.prezzoUnitario<0)return true;
+  var desc=(riga.descrizione||"").toUpperCase();
+  if(desc.indexOf("RESO ")===0||desc.indexOf("RESO\n")===0)return true;
+  return false;
+}
+
+function updCliResi(el){
+  var range=getCliDateRange();
+  var vendite=fattureData.filter(function(f){return f.tipo==="Vendita"&&f.data>=range.from&&f.data<=range.to});
+  
+  // Build per-client analysis
+  var clients={};
+  vendite.forEach(function(f){
+    var isNC=f.tipoDoc==="TD04"; // nota di credito
+    var cName=f.soggetto;
+    if(!clients[cName])clients[cName]={name:cName,consegnato:0,resi:0,nFatt:0,articles:{}};
+    clients[cName].nFatt++;
+    
+    if(!f.righe)return;
+    f.righe.forEach(function(r){
+      var codice=r.codice||"";
+      var desc=r.descrizione||"";
+      var isReso=isNC||isResoLine(r);
+      
+      // For returns: use absolute values
+      var qty=Math.abs(r.quantita||0);
+      var val=Math.abs(r.prezzoTotale||0);
+      
+      // Article key: strip "RESO " prefix for matching
+      var artDesc=desc.replace(/^RESO\s+/i,"").trim();
+      var artKey=codice||(artDesc.substring(0,50));
+      if(!artKey)return;
+      
+      if(!clients[cName].articles[artKey])clients[cName].articles[artKey]={
+        codice:codice,descrizione:artDesc,um:r.um||"",
+        consQty:0,consVal:0,resoQty:0,resoVal:0
+      };
+      var art=clients[cName].articles[artKey];
+      if(!art.um&&r.um)art.um=r.um;
+      
+      if(isReso){
+        art.resoQty+=qty;art.resoVal+=val;
+        clients[cName].resi+=val;
+      } else {
+        art.consQty+=qty;art.consVal+=val;
+        clients[cName].consegnato+=val;
+      }
+    });
+  });
+  
+  var cliArr=Object.values(clients).sort(function(a,b){return(b.resi/(b.consegnato||1))-(a.resi/(a.consegnato||1))});
+  var totCons=cliArr.reduce(function(s,c){return s+c.consegnato},0);
+  var totResi=cliArr.reduce(function(s,c){return s+c.resi},0);
+  var totPctReso=totCons>0?(totResi/totCons*100):0;
+  
+  var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">';
+  h+='<div><div style="font-weight:700;font-size:15px">📊 Analisi Resi per Cliente</div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+range.label+' · Resi da righe negative in fattura + note di credito (TD04)</div></div>';
+  h+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
+  [["1m","Ultimo mese"],["3m","Ultimo trimestre"],["ytd","Da inizio anno"],["ly","Anno precedente"],["max","Tutto"]].forEach(function(p){
+    var active=cliPeriodo===p[0];
+    h+='<button onclick="cliPeriodo=\''+p[0]+'\';updCliResi(document.getElementById(\'cliContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+p[1]+'</button>';
+  });
+  h+='</div></div>';
+  // Summary cards
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">';
+  [{l:"Consegnato lordo",v:"€"+totCons.toFixed(0),c:"var(--ok)"},{l:"Totale resi",v:"€"+totResi.toFixed(0),c:"var(--danger)"},{l:"Netto",v:"€"+(totCons-totResi).toFixed(0),c:"var(--text)"},{l:"% Reso medio",v:totPctReso.toFixed(1)+"%",c:totPctReso>5?"var(--danger)":totPctReso>2?"var(--warn)":"var(--ok)"}].forEach(function(s){
+    h+='<div style="background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:10px 16px;min-width:110px;flex:1"><div style="font-size:10px;color:var(--muted)">'+s.l+'</div><div style="font-size:18px;font-weight:800;font-family:monospace;color:'+s.c+'">'+s.v+'</div></div>';
+  });
+  h+='</div></div>';
+  
+  // Client rows
+  cliArr.forEach(function(c,i){
+    var pctReso=c.consegnato>0?(c.resi/c.consegnato*100):0;
+    var netto=c.consegnato-c.resi;
+    var barColor=pctReso>5?"var(--danger)":pctReso>2?"var(--warn)":"var(--ok)";
+    
+    h+='<div style="border-bottom:1px solid var(--border)">';
+    h+='<div onclick="this.nextElementSibling.classList.toggle(\'hid\')" style="padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+    h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(pctReso>5?"rgba(239,68,68,0.1)":pctReso>2?"rgba(245,158,11,0.1)":"rgba(34,197,94,0.1)")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+barColor+';flex-shrink:0">'+(i+1)+'</div>';
+    h+='<div style="flex:1;min-width:180px"><div style="font-size:13px;font-weight:600">'+c.name+'</div>';
+    h+='<div style="font-size:11px;color:var(--muted)">'+c.nFatt+' fatture · '+Object.keys(c.articles).length+' articoli</div></div>';
+    // Mini bar showing reso %
+    h+='<div style="min-width:100px"><div style="height:6px;background:var(--inbg);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:'+Math.min(pctReso,100)+'%;background:'+barColor+';border-radius:3px"></div></div>';
+    h+='<div style="font-size:10px;color:var(--muted);text-align:center">reso '+pctReso.toFixed(1)+'%</div></div>';
+    h+='<div style="text-align:right;min-width:90px"><div style="font-size:11px;color:var(--ok)">Cons. €'+c.consegnato.toFixed(0)+'</div><div style="font-size:11px;color:var(--danger)">Resi €'+c.resi.toFixed(0)+'</div><div style="font-size:13px;font-weight:700;font-family:monospace">€'+netto.toFixed(0)+'</div></div>';
+    h+='<span style="color:var(--muted);font-size:10px">▼</span></div>';
+    
+    // Detail: articles
+    h+='<div class="hid" style="padding:6px 20px 12px;background:var(--inbg)">';
+    var artArr=Object.values(c.articles).filter(function(a){return a.consQty>0||a.resoQty>0}).sort(function(a,b){
+      var pa=a.consQty>0?(a.resoQty/a.consQty):0;var pb=b.consQty>0?(b.resoQty/b.consQty):0;return pb-pa});
+    h+='<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr>';
+    h+='<th style="padding:5px 6px;text-align:left;color:var(--muted);font-size:10px">Articolo</th>';
+    h+='<th style="padding:5px 6px;text-align:center;color:var(--muted);font-size:10px">UM</th>';
+    h+='<th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Consegnato</th>';
+    h+='<th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">€ Consegnato</th>';
+    h+='<th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">Reso</th>';
+    h+='<th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">€ Reso</th>';
+    h+='<th style="padding:5px 6px;text-align:right;color:var(--muted);font-size:10px">% Reso</th>';
+    h+='</tr></thead><tbody>';
+    artArr.forEach(function(a){
+      var pct=a.consQty>0?(a.resoQty/a.consQty*100):0;
+      var pc=pct>10?"var(--danger)":pct>5?"var(--warn)":"var(--ok)";
+      h+='<tr style="border-bottom:1px solid var(--border)">';
+      h+='<td style="padding:5px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.codice?'<span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:3px">'+a.codice+'</span>':'')+a.descrizione+'</td>';
+      h+='<td style="padding:5px 6px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
+      h+='<td style="padding:5px 6px;text-align:right;color:var(--ok)">'+a.consQty.toFixed(1)+'</td>';
+      h+='<td style="padding:5px 6px;text-align:right;color:var(--ok)">€'+a.consVal.toFixed(2)+'</td>';
+      h+='<td style="padding:5px 6px;text-align:right;color:var(--danger)">'+(a.resoQty>0?a.resoQty.toFixed(1):"—")+'</td>';
+      h+='<td style="padding:5px 6px;text-align:right;color:var(--danger)">'+(a.resoVal>0?"€"+a.resoVal.toFixed(2):"—")+'</td>';
+      h+='<td style="padding:5px 6px;text-align:right;font-weight:700;color:'+pc+'">'+(pct>0?pct.toFixed(1)+"%":"—")+'</td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+  });
+  el.innerHTML=h;
+}
+
+// ═══ TAB 4: ANDAMENTO FATTURATO ═══
 function updCliAndamento(el){
   var vendite=fattureData.filter(function(f){return f.tipo==="Vendita"});
   // Group by month
@@ -1611,14 +1737,15 @@ function updCliAndamento(el){
   vendite.forEach(function(f){
     var m=f.data.substring(0,7); // YYYY-MM
     if(!months[m])months[m]={totale:0,clients:{}};
-    months[m].totale+=f.imponibile;
+    var sign=f.tipoDoc==="TD04"?-1:1;
+    months[m].totale+=f.imponibile*sign;
     if(!months[m].clients[f.soggetto])months[m].clients[f.soggetto]=0;
-    months[m].clients[f.soggetto]+=f.imponibile;
+    months[m].clients[f.soggetto]+=f.imponibile*sign;
     clientSet[f.soggetto]=true;
   });
   var mArr=Object.keys(months).sort();
   // Top 5 clients by total
-  var cliTotals={};vendite.forEach(function(f){if(!cliTotals[f.soggetto])cliTotals[f.soggetto]=0;cliTotals[f.soggetto]+=f.imponibile});
+  var cliTotals={};vendite.forEach(function(f){if(!cliTotals[f.soggetto])cliTotals[f.soggetto]=0;var sign=f.tipoDoc==="TD04"?-1:1;cliTotals[f.soggetto]+=f.imponibile*sign});
   var topCli=Object.keys(cliTotals).sort(function(a,b){return cliTotals[b]-cliTotals[a]}).slice(0,5);
   var colors=["#10b981","#3b82f6","#f59e0b","#ef4444","#8b5cf6"];
 
@@ -1679,8 +1806,9 @@ function updFattUI(){
   // Stats
   var totAcq=0,totVen=0,totIvaAcq=0,totIvaVen=0,nAcq=0,nVen=0;
   fattureData.forEach(function(f){
-    if(f.tipo==="Acquisto"){totAcq+=f.imponibile;totIvaAcq+=f.iva;nAcq++}
-    else{totVen+=f.imponibile;totIvaVen+=f.iva;nVen++}
+    var sign=f.tipoDoc==="TD04"?-1:1;
+    if(f.tipo==="Acquisto"){totAcq+=f.imponibile*sign;totIvaAcq+=f.iva*sign;nAcq++}
+    else{totVen+=f.imponibile*sign;totIvaVen+=f.iva*sign;nVen++}
   });
   var margine=totVen-totAcq;
   // Count price alerts
