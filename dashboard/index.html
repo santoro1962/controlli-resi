@@ -213,6 +213,8 @@ tr.ammanco{background:rgba(239,68,68,0.04)}
         <div id="unlockDetail" style="font-size:12px;color:var(--muted)"></div>
       </div>
     </div>
+    <!-- Pending DDT Banner -->
+    <div id="pendingDDTBanner"></div>
     <!-- Approval -->
     <div id="approvalSection" class="approval-section">
       <div class="approval-title">📋 Verifica resi <span class="approval-step" id="stepLabel">STEP 1: Verifica pesate</span></div>
@@ -335,6 +337,7 @@ var TARA=2.66;
 var ZONES=[{id:"z1",name:"Zona 1",area:"Nocera-Salerno",clr:"#f59e0b"},{id:"z2",name:"Zona 2",area:"Montoro-Solofra",clr:"#3b82f6"},{id:"z3",name:"Zona 3",area:"Avellino-Benevento",clr:"#10b981"}];
 var allData=[];var dailyData={};var approvals={};var festivi={};var curModule="resi";var curPer=30;var charts={};
 var todayStr=new Date().toISOString().slice(0,10);
+var selectedDate=todayStr;
 var gUrl=function(){return localStorage.getItem("dash-gsheet-url")||""};
 function fmtD(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function fmtDs(d){var p=d.split("-");return p[2]+"/"+p[1]}
@@ -404,16 +407,25 @@ document.getElementById("dashPin").addEventListener("keydown",function(e){if(e.k
 
 function init(){
   document.getElementById("sUrl").value=gUrl();
-  document.getElementById("todayDt").textContent=fmtD(todayStr);
-  // Load approvals from localStorage, validate against sheet data
-  try{var s=localStorage.getItem("approvals-"+todayStr);if(s)approvals=JSON.parse(s)}catch(e){}
-  try{var f=localStorage.getItem("festivi-"+todayStr);if(f)festivi=JSON.parse(f)}catch(e){}
+  document.getElementById("todayDt").textContent=fmtD(selectedDate);
+  loadApprovalsForDate();
   if(gUrl()){doSync();checkDriverAccess()} else updUI();
-  // Auto-refresh resi every 60 seconds
   setInterval(function(){if(gUrl())doSync()},60000);
-  // Auto-sync fatture every 10 seconds (silent)
   setInterval(function(){if(gUrl())autoSyncFatture()},10000);
 }
+function loadApprovalsForDate(){
+  approvals={};festivi={};
+  try{var s=localStorage.getItem("approvals-"+selectedDate);if(s)approvals=JSON.parse(s)}catch(e){}
+  try{var f=localStorage.getItem("festivi-"+selectedDate);if(f)festivi=JSON.parse(f)}catch(e){}
+}
+function selectDate(d){
+  selectedDate=d;
+  loadApprovalsForDate();
+  document.getElementById("todayDt").textContent=fmtD(selectedDate);
+  updUI();
+}
+function prevDate(){var d=new Date(selectedDate+"T12:00:00");d.setDate(d.getDate()-1);selectDate(d.toISOString().slice(0,10))}
+function nextDate(){var d=new Date(selectedDate+"T12:00:00");d.setDate(d.getDate()+1);var t=new Date();t.setHours(12,0,0,0);if(d<=t)selectDate(d.toISOString().slice(0,10))}
 
 async function doSync(){
   var url=gUrl();if(!url){showT("⚠ Configura Google Sheets nelle Impostazioni");return}
@@ -429,9 +441,9 @@ async function doSync(){
       console.log("Risposta ricevuta:",txt.substring(0,200));return}
     if(j.data){
       allData=j.data;processData();
-      var today=dailyData[todayStr];
-      Object.keys(approvals).forEach(function(zid){if(!today||!today.zones[zid])delete approvals[zid]});
-      Object.keys(festivi).forEach(function(zid){if(today&&today.zones[zid])delete festivi[zid]});
+      var selDay=dailyData[selectedDate];
+      Object.keys(approvals).forEach(function(zid){if(!selDay||!selDay.zones[zid])delete approvals[zid]});
+      Object.keys(festivi).forEach(function(zid){if(selDay&&selDay.zones[zid])delete festivi[zid]});
       saveApprovals();saveFestivi();
       document.getElementById("sDot").style.background="var(--ok)";
       document.getElementById("sLbl").textContent="Connesso — "+allData.length+" record";
@@ -461,37 +473,40 @@ function processData(){
     if(r.ddt!=null&&r.ddt!=="")day.ddt=r.ddt;if(r.differenza!=null&&r.differenza!=="")day.diff=r.differenza});
 }
 function getDayNetto(d){if(!dailyData[d])return 0;var t=0;ZONES.forEach(function(z){var zd=dailyData[d].zones[z.id];if(zd)t+=zd.peso||0});return t}
-function saveApprovals(){localStorage.setItem("approvals-"+todayStr,JSON.stringify(approvals))}
-function saveFestivi(){localStorage.setItem("festivi-"+todayStr,JSON.stringify(festivi))}
-function allApproved(){var today=dailyData[todayStr];if(!today)return false;
-  return ZONES.every(function(z){return(today.zones[z.id]&&approvals[z.id]&&approvals[z.id].approved)||festivi[z.id]});
+function saveApprovals(){localStorage.setItem("approvals-"+selectedDate,JSON.stringify(approvals))}
+function saveFestivi(){localStorage.setItem("festivi-"+selectedDate,JSON.stringify(festivi))}
+function allApproved(){var day=dailyData[selectedDate];if(!day)return false;
+  return ZONES.every(function(z){return(day.zones[z.id]&&approvals[z.id]&&approvals[z.id].approved)||festivi[z.id]});
 }
-function missingInfo(){var today=dailyData[todayStr];var m=[],u=[];ZONES.forEach(function(z){
+function missingInfo(){var day=dailyData[selectedDate];var m=[],u=[];ZONES.forEach(function(z){
   if(festivi[z.id])return;
-  if(!today||!today.zones[z.id])m.push(z.name);else if(!approvals[z.id]||!approvals[z.id].approved)u.push(z.name)});return{missing:m,unapproved:u}}
-function todayComplete(){var today=dailyData[todayStr];return today&&today.ddt!=null}
+  if(!day||!day.zones[z.id])m.push(z.name);else if(!approvals[z.id]||!approvals[z.id].approved)u.push(z.name)});return{missing:m,unapproved:u}}
+function dateComplete(){var day=dailyData[selectedDate];return day&&day.ddt!=null}
 
 function updUI(){
   updStats();updAlerts();updToday();
   // Update sidebar badge
-  var amm=0;Object.keys(dailyData).forEach(function(d){var day=dailyData[d];if(day.ddt!=null&&getDayNetto(d)-day.ddt<0)amm++});
-  var badge=document.getElementById("sbAmm");if(amm>0){badge.textContent=amm;badge.style.display=""}else{badge.style.display="none"}
+  var amm=0;var pendDDTcount=0;Object.keys(dailyData).forEach(function(d){var day=dailyData[d];if(day.ddt!=null){if(getDayNetto(d)-day.ddt<0)amm++}else if(getDayNetto(d)>0){pendDDTcount++}});
+  var badge=document.getElementById("sbAmm");var badgeVal=pendDDTcount>0?pendDDTcount:amm;
+  if(badgeVal>0){badge.textContent=badgeVal;badge.style.display="";badge.style.background=pendDDTcount>0?"var(--warn)":"var(--danger)"}else{badge.style.display="none"}
   if(curModule==="storico")updHist();if(curModule==="grafici")updCharts();if(curModule==="ddtTab")updDDTTab();
 }
 
 function updStats(){
-  var today=dailyData[todayStr];var totNet=getDayNetto(todayStr);
-  var zonesN=0;ZONES.forEach(function(z){if(today&&today.zones[z.id])zonesN++});
+  var day=dailyData[selectedDate];var totNet=getDayNetto(selectedDate);
+  var zonesN=0;ZONES.forEach(function(z){if(day&&day.zones[z.id])zonesN++});
   var appN=0;ZONES.forEach(function(z){if(approvals[z.id])appN++});
-  var ddt=today?today.ddt:null;var diff=ddt!=null?+(totNet-ddt).toFixed(2):null;
-  var amm=0,totD=0;Object.keys(dailyData).forEach(function(d){var day=dailyData[d];if(day.ddt!=null){totD++;if(getDayNetto(d)-day.ddt<0)amm++}});
+  var ddt=day?day.ddt:null;var diff=ddt!=null?+(totNet-ddt).toFixed(2):null;
+  var amm=0,totD=0;Object.keys(dailyData).forEach(function(d){var dd=dailyData[d];if(dd.ddt!=null){totD++;if(getDayNetto(d)-dd.ddt<0)amm++}});
+  // Count pending DDT days
+  var pendDDT=Object.keys(dailyData).filter(function(d){return dailyData[d].ddt==null&&getDayNetto(d)>0});
   var stats=[
     {l:"Zone ricevute",v:zonesN+"/"+ZONES.length,c:zonesN===ZONES.length?"var(--ok)":"var(--warn)"},
     {l:"Zone approvate",v:appN+"/"+zonesN,c:appN===zonesN&&zonesN>0?"var(--ok)":"var(--warn)"},
-    {l:"Pesata netta oggi",v:totNet>0?totNet.toFixed(1)+" kg":"—"},
-    {l:"DDT oggi",v:ddt!=null?ddt.toFixed(1)+" kg":"da inserire",c:ddt!=null?"var(--text)":"var(--warn)"},
-    {l:"Diff. oggi",v:diff!=null?diff.toFixed(2)+" kg":"—",c:diff!=null?(diff<0?"var(--danger)":"var(--ok)"):"var(--muted)"},
-    {l:"Ammanchi totali",v:amm+"/"+totD,c:amm>0?"var(--danger)":"var(--ok)"},
+    {l:"Pesata netta",v:totNet>0?totNet.toFixed(1)+" kg":"—"},
+    {l:"DDT",v:ddt!=null?ddt.toFixed(1)+" kg":"da inserire",c:ddt!=null?"var(--text)":"var(--warn)"},
+    {l:"Differenza",v:diff!=null?diff.toFixed(2)+" kg":"—",c:diff!=null?(diff<0?"var(--danger)":"var(--ok)"):"var(--muted)"},
+    {l:"DDT pendenti",v:pendDDT.length,c:pendDDT.length>0?"var(--warn)":"var(--ok)"},
   ];
   document.getElementById("statsRow").innerHTML=stats.map(function(s){return'<div class="stat"><div class="stat-label">'+s.l+'</div><div class="stat-val" style="color:'+(s.c||"var(--text)")+'">'+s.v+'</div></div>'}).join("");
 }
@@ -506,15 +521,30 @@ function updAlerts(){
 }
 
 function updToday(){
-  var today=dailyData[todayStr];var html="";var hasZones=false;
-  if(todayComplete()){
+  var day=dailyData[selectedDate];var html="";var hasZones=false;
+  // Pending DDT banner
+  var pendDDT=Object.keys(dailyData).filter(function(d){return dailyData[d].ddt==null&&getDayNetto(d)>0}).sort().reverse();
+  var pendHtml="";
+  if(pendDDT.length>0){
+    pendHtml='<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px 18px;margin-bottom:14px">';
+    pendHtml+='<div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--warn)">📋 '+pendDDT.length+' giorn'+(pendDDT.length===1?'o':'i')+' con DDT da inserire</div>';
+    pendHtml+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    pendDDT.forEach(function(d){
+      var isSel=d===selectedDate;
+      pendHtml+='<button onclick="selectDate(\''+d+'\')" style="background:'+(isSel?'var(--accent)':'var(--inbg)')+';color:'+(isSel?'#fff':'var(--text)')+';border:1px solid '+(isSel?'var(--accent)':'var(--inbord)')+';border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:monospace">'+fmtDs(d)+'</button>';
+    });
+    pendHtml+='</div></div>';
+  }
+  document.getElementById("pendingDDTBanner").innerHTML=pendHtml;
+  
+  if(dateComplete()){
     document.getElementById("approvalSection").classList.add("hid");document.getElementById("ddtSection").classList.add("hid");
-    var totNet=getDayNetto(todayStr);var diff=+(totNet-today.ddt).toFixed(2);
+    var totNet=getDayNetto(selectedDate);var diff=+(totNet-day.ddt).toFixed(2);
     document.getElementById("completedBanner").classList.remove("hid");
-    document.getElementById("completedSub").textContent="Pesata: "+totNet.toFixed(2)+" kg · DDT: "+today.ddt.toFixed(2)+" kg · Diff: "+diff.toFixed(2)+" kg "+(diff<0?"⚠ AMMANCO":"✓ OK");return}
+    document.getElementById("completedSub").textContent="Pesata: "+totNet.toFixed(2)+" kg · DDT: "+day.ddt.toFixed(2)+" kg · Diff: "+diff.toFixed(2)+" kg "+(diff<0?"⚠ AMMANCO":"✓ OK");return}
   document.getElementById("completedBanner").classList.add("hid");document.getElementById("approvalSection").classList.remove("hid");
   ZONES.forEach(function(z){
-    var zd=today&&today.zones[z.id];var isApproved=approvals[z.id]&&approvals[z.id].approved;
+    var zd=day&&day.zones[z.id];var isApproved=approvals[z.id]&&approvals[z.id].approved;
     if(zd){
       hasZones=true;var pesoSalvato=zd.peso||0;var nc=zd.nceste||0;
       
@@ -668,7 +698,7 @@ function updToday(){
   document.getElementById("zoneCards").innerHTML=html;
 
   // Festivo buttons for zones without data and not yet festivo
-  var pendingZones=ZONES.filter(function(z){return!(today&&today.zones[z.id])&&!festivi[z.id]});
+  var pendingZones=ZONES.filter(function(z){return!(day&&day.zones[z.id])&&!festivi[z.id]});
   var festSec=document.getElementById("festSection");
   if(pendingZones.length>0){
     festSec.classList.remove("hid");
@@ -687,7 +717,7 @@ function updToday(){
 
 function festZone(zid){festivi[zid]=true;saveFestivi();updUI();showT("🏖️ "+ZONES.find(function(z){return z.id===zid}).name+" — festivo")}
 function unfestZone(zid){delete festivi[zid];saveFestivi();updUI()}
-function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive?"))return;ZONES.forEach(function(z){var today=dailyData[todayStr];if(!(today&&today.zones[z.id])&&!festivi[z.id])festivi[z.id]=true});saveFestivi();updUI();showT("🏖️ Tutte festive")}
+function festAllDash(){if(!confirm("Segnare tutte le zone in attesa come festive?"))return;ZONES.forEach(function(z){var day=dailyData[selectedDate];if(!(day&&day.zones[z.id])&&!festivi[z.id])festivi[z.id]=true});saveFestivi();updUI();showT("🏖️ Tutte festive")}
 function approveCesta(zid,cestaNum,lordo,netto){
   if(!approvals[zid])approvals[zid]={ceste:{},approved:false};
   if(!approvals[zid].ceste)approvals[zid].ceste={};
@@ -706,7 +736,7 @@ function correctCesta(zid,cestaNum){
   saveApprovals();updUI();showT("✓ Cesta "+cestaNum+" corretta: "+v.toFixed(2)+" → "+n.toFixed(2)+" kg");
 }
 function checkZoneComplete(zid){
-  var today=dailyData[todayStr];var zd=today&&today.zones[zid];if(!zd)return;
+  var day=dailyData[selectedDate];var zd=day&&day.zones[zid];if(!zd)return;
   var nc=zd.nceste||1;var cd=zd.cesteDetail||[];
   var numCeste=Math.max(nc,cd.length);
   var allOk=true;var totN=0;var totL=0;
@@ -826,10 +856,10 @@ async function checkDriverAccess(){
 function ddtPreview(){var v=parseFloat(document.getElementById("ddtInput").value);var el=document.getElementById("ddtDiffVal");var btn=document.getElementById("ddtSaveBtn");
   if(v>0){var totNet=0;ZONES.forEach(function(z){if(approvals[z.id])totNet+=approvals[z.id].netto});var diff=+(totNet-v).toFixed(2);el.textContent=(diff<0?"🔴 ":"🟢 ")+diff.toFixed(2)+" kg";el.style.color=diff<0?"var(--danger)":"var(--ok)";btn.disabled=false}else{el.textContent="—";el.style.color="var(--muted)";btn.disabled=true}}
 async function saveDDT(){var v=parseFloat(document.getElementById("ddtInput").value);if(!v)return;var btn=document.getElementById("ddtSaveBtn");btn.textContent="⏳ Salvataggio...";btn.disabled=true;var url=gUrl();if(!url){showT("❌ Configura Google Sheets");return}
-  try{var today=dailyData[todayStr];var fz="";ZONES.forEach(function(z){if(today&&today.zones[z.id]&&!fz)fz=z.id});
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateDDT",data:todayStr,zona:fz,ddt:v})});
-    for(var zid in approvals){if(approvals[zid].corrected){var t2=dailyData[todayStr];var nc=t2&&t2.zones[zid]?t2.zones[zid].nceste||1:1;var cL=approvals[zid].netto+TARA*nc;
-      await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:todayStr,operatore:t2.zones[zid].operatore||"",zona:zid,peso:cL,nceste:nc,zonaName:ZONES.find(function(z){return z.id===zid}).name})})}}
+  try{var day=dailyData[selectedDate];var fz="";ZONES.forEach(function(z){if(day&&day.zones[z.id]&&!fz)fz=z.id});
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"updateDDT",data:selectedDate,zona:fz,ddt:v})});
+    for(var zid in approvals){if(approvals[zid].corrected){var t2=dailyData[selectedDate];var nc=t2&&t2.zones[zid]?t2.zones[zid].nceste||1:1;var cL=approvals[zid].netto+TARA*nc;
+      await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:selectedDate,operatore:t2.zones[zid].operatore||"",zona:zid,peso:cL,nceste:nc,zonaName:ZONES.find(function(z){return z.id===zid}).name})})}}
     showT("✓ DDT salvato — giornata completata!");await doSync()}catch(e){showT("❌ Errore salvataggio")}
   btn.textContent="✓ Salva Resi da DDT";btn.disabled=false}
 
