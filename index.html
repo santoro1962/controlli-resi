@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0e1a">
-<title>Resi Pane</title>
+<title>Resi</title>
 <style>
 :root{--bg:#0a0e1a;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--danger:#ef4444;--ok:#22c55e;--warn:#f59e0b;--accent:#8b5cf6;--inbg:#1e293b;--inbord:#334155;--z1:#f59e0b;--z2:#3b82f6;--z3:#10b981}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -118,11 +118,11 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 <div class="app">
   <!-- LOGIN -->
   <div id="loginScr" class="login">
-    <div class="logo-big">🍞</div><h1>Resi Pane</h1><p>Seleziona il tuo profilo e inserisci il PIN.</p>
+    <div class="logo-big">🍞</div><h1>Resi</h1><p>Seleziona il tuo profilo e inserisci il PIN.</p>
     <div class="login-btns">
       <button class="login-btn" onclick="selUser('Giovanni')"><div class="lb-icon" style="background:rgba(245,158,11,0.15)">🚚</div><div><div class="lb-name">Giovanni</div><div class="lb-zones">Zona 1 — Nocera-Salerno</div></div></button>
-      <button class="login-btn" onclick="selUser('Antonio')"><div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div><div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3</div></div></button>
-      <button class="login-btn" onclick="selUser('Sergio')"><div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div><div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3</div></div></button>
+      <button class="login-btn" onclick="selUser('Antonio')"><div class="lb-icon" style="background:rgba(59,130,246,0.15)">🚚</div><div><div class="lb-name">Antonio</div><div class="lb-zones">Zona 3 — Avellino-Benevento</div></div></button>
+      <button class="login-btn" onclick="selUser('Sergio')"><div class="lb-icon" style="background:rgba(16,185,97,0.15)">🚚</div><div><div class="lb-name">Sergio</div><div class="lb-zones">Zone 2, 3 — Montoro-Solofra, Avellino-Benevento</div></div></button>
       <button class="login-btn" onclick="selUser('Carmela')"><div class="lb-icon" style="background:rgba(236,72,153,0.15)">👩</div><div><div class="lb-name">Carmela</div><div class="lb-zones">Controllo · Solo visualizzazione</div></div></button>
     </div>
     <div id="pinPanel" class="hid" style="width:100%;max-width:320px;margin-top:24px">
@@ -138,7 +138,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
 
   <!-- MAIN APP -->
   <div id="mainApp" class="hid">
-    <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi Pane</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><div style="display:flex;gap:8px"><button style="background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:18px;color:var(--text);cursor:pointer" onclick="doSync()">🔄</button><button class="btn-gear" onclick="openSet()">⚙️</button></div></div>
+    <div class="hdr"><div class="hdr-left"><div class="logo">🍞</div><div><h1>Resi</h1><div class="hdr-sub"><span id="sDot" class="dot" style="background:var(--danger)"></span><span id="sLbl">Offline</span></div></div></div><div style="display:flex;gap:8px"><button style="background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:12px;font-size:18px;color:var(--text);cursor:pointer" onclick="doSync()">🔄</button><button class="btn-gear" onclick="openSet()">⚙️</button></div></div>
     <div class="user-badge"><div class="ub-icon" id="ubIcon">🚚</div><div><div class="ub-name" id="ubName"></div><div class="ub-zones" id="ubZones"></div></div></div>
     <div id="setP" class="set-card hid"><div style="font-weight:700;font-size:16px;margin-bottom:10px">⚙️ Impostazioni</div><p style="font-size:12px;color:var(--muted);margin-bottom:12px">URL Google Sheets</p><input id="sUrl" type="url" class="fi" placeholder="https://script.google.com/.../exec" style="margin-bottom:10px"><div class="set-btns" style="margin-top:0;margin-bottom:14px"><button class="btn-ok" onclick="saveSet()">✓ Salva</button><button class="btn-xx" onclick="doSync()">🔄</button></div><div style="border-top:1px solid var(--border);padding-top:14px"><button class="btn-xx" style="width:100%" onclick="changeUser()">👤 Cambia profilo</button></div></div>
 
@@ -147,7 +147,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
       <div id="offlineBanner" class="hid" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
         <div style="font-size:28px;margin-bottom:6px">📡</div>
         <div style="font-size:15px;font-weight:700;color:#ef4444;margin-bottom:4px">Connessione assente</div>
-        <div style="font-size:13px;color:var(--muted)">Impossibile registrare resi senza connessione al server. Verifica il Wi-Fi e riprova.</div>
+        <div style="font-size:13px;color:var(--muted)">Impossibile registrare resi senza connessione al server. Verifica la rete o il WIFI e riprova.</div>
         <button onclick="doSync()" style="margin-top:12px;background:var(--inbg);border:1px solid var(--inbord);border-radius:10px;padding:10px 24px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer">🔄 Riprova connessione</button>
       </div>
       <div class="today"><div class="today-date"><strong id="todayDt"></strong></div><div id="zoneGrid"></div></div>
@@ -262,7 +262,7 @@ function initApp(){
   document.getElementById("sUrl").value=gUrl();
   try{var s=localStorage.getItem("dayData");if(s)dayData=JSON.parse(s)}catch(e){}
   delete dayData["2026-03-24"];delete dayData["2026-03-25"];saveL();
-  var mz=curUser==="Carmela"?"Controllo · Tutte le zone":myZones().map(function(id){var z=zoneById(id);return z?z.name:id}).join(", ");
+  var mz=curUser==="Carmela"?"Controllo · Tutte le zone":myZones().map(function(id){var z=zoneById(id);return z?z.name+" — "+z.area:id}).join(", ");
   document.getElementById("ubName").textContent=curUser;document.getElementById("ubZones").textContent=mz;
   findAct();if(gUrl()){doSync().then(function(){if(!_isConnected)showT("⛔ Connessione al server assente")})}else updUI();if(curUser!=="Carmela"){chkPM();setInterval(chkPM,60000)}setInterval(function(){if(gUrl())doSync()},60000)}
 function findAct(){var d=new Date();d.setDate(d.getDate()-1);var y=d.toISOString().slice(0,10);activeDate=(dayData[y]&&!myDayOk(y))?y:todayStr}
@@ -290,7 +290,7 @@ function updUI(){
     else if(fest){st="🏖️ festivo";sc="f"}
     else if(!isMine){st="altro operatore";sc="oth"}
     else{st="in attesa";sc="w"}
-    html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div></div></div><span class="zr-st '+sc+'">'+st+'</span></div>';
+    html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div><div style="font-size:12px;color:var(--muted)">'+z.area+'</div></div></div><span class="zr-st '+sc+'">'+st+'</span></div>';
     if(hasD&&v.autista)html+='<div class="zr-detail">'+(v.autista==="Carmela"?"👩 ":"🚚 ")+v.autista+'</div>';
   });
   document.getElementById("zoneGrid").innerHTML=html;
