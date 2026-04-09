@@ -116,6 +116,21 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
   </div>
 </div>
 <div class="app">
+<!-- SAVE OVERLAY -->
+<div id="saveOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:20000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;max-width:320px;width:100%;text-align:center">
+    <div id="saveIcon" style="font-size:48px;margin-bottom:12px">⏳</div>
+    <div id="saveTitle" style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Salvataggio in corso...</div>
+    <div id="saveMsg" style="font-size:13px;color:var(--muted);margin-bottom:16px">Non chiudere l'app</div>
+    <div id="saveProgress" style="height:6px;background:var(--inbg);border-radius:3px;overflow:hidden;margin-bottom:16px"><div id="saveBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#10b981);border-radius:3px;transition:width 0.5s"></div></div>
+    <div id="saveDetail" style="font-size:11px;color:var(--muted);font-family:monospace"></div>
+    <button id="saveDoneBtn" onclick="closeSaveOverlay()" style="display:none;margin-top:16px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;width:100%">✓ OK</button>
+    <div id="saveErrorBtns" style="display:none;gap:10px;margin-top:16px">
+      <button onclick="closeSaveOverlayToRetry();wSave()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer">🔄 Riprova</button>
+      <button onclick="closeSaveOverlayToRetry()" style="flex:1;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer">← Torna al riepilogo</button>
+    </div>
+  </div>
+</div>
   <!-- LOGIN -->
   <div id="loginScr" class="login">
     <div class="logo-big">🍞</div><h1>Resi</h1><p>Seleziona il tuo profilo e inserisci il PIN.</p>
@@ -167,7 +182,7 @@ button{-webkit-appearance:none;font-family:inherit;cursor:pointer;border:none}
         <div style="background:var(--inbg);border:1px solid var(--inbord);border-radius:12px;padding:16px;text-align:center">
           <div style="font-size:14px;font-weight:700;margin-bottom:10px">📸 Come scattare la foto</div>
           <div style="font-size:13px;color:var(--muted);line-height:1.8">
-            <div>① Inquadra il <strong style="color:var(--warn)">display della bilancia</strong> con il peso visibile</div>
+            <div>① Inquadra il <strong style="color:var(--warn)">display piccolo della bilancia</strong> con il peso visibile</div>
             <div>② Inquadra la <strong style="color:var(--ok)">cesta rossa</strong> con il pane</div>
             <div style="margin-top:6px;font-size:12px">Stai a 1-2 metri, foto frontale</div>
           </div>
@@ -280,15 +295,14 @@ function updUI(){
   document.getElementById("todayDt").textContent=fmtDt(activeDate);
   var isOld=activeDate!==todayStr;
   var html="",myZ=myZones();
-  ZONES.forEach(function(z){
+  var showZones=curUser==="Carmela"?ZONES:ZONES.filter(function(z){return myZ.indexOf(z.id)>=0});
+  showZones.forEach(function(z){
     var v=getDay(activeDate)[z.id],done=v!=null,fest=v==="festivo",hasD=done&&!fest;
     var net=zGetNet(activeDate,z.id);
-    var isMine=myZ.indexOf(z.id)>=0;
-    var cls=hasD?"done":fest?"fest":!isMine?"other":"";
+    var cls=hasD?"done":fest?"fest":"";
     var st,sc;
     if(hasD){st="✓ "+net.toFixed(1)+" kg";sc="ok"}
     else if(fest){st="🏖️ festivo";sc="f"}
-    else if(!isMine){st="altro operatore";sc="oth"}
     else{st="in attesa";sc="w"}
     html+='<div class="zr '+cls+'"><div class="zr-left"><div class="zr-dot" style="background:'+z.clr+'"></div><div><div class="zr-name">'+z.name+'</div><div style="font-size:12px;color:var(--muted)">'+z.area+'</div></div></div><span class="zr-st '+sc+'">'+st+'</span></div>';
     if(hasD&&v.autista)html+='<div class="zr-detail">'+(v.autista==="Carmela"?"👩 ":"🚚 ")+v.autista+'</div>';
@@ -468,17 +482,26 @@ function wBldSum(){
 
 async function wSave(){
   if(!_isConnected){showT("⛔ Connessione assente — impossibile salvare");doSync();return}
-  var btn=document.getElementById("btnSF");btn.textContent="⏳ Salvataggio...";btn.disabled=true;
+  
+  // Show blocking overlay
+  var ov=document.getElementById("saveOverlay");ov.style.display="flex";
+  var icon=document.getElementById("saveIcon");
+  var title=document.getElementById("saveTitle");
+  var msg=document.getElementById("saveMsg");
+  var bar=document.getElementById("saveBar");
+  var detail=document.getElementById("saveDetail");
+  var doneBtn=document.getElementById("saveDoneBtn");
+  doneBtn.style.display="none";
+  icon.textContent="⏳";title.textContent="Salvataggio in corso...";msg.textContent="Non chiudere l'app";bar.style.width="5%";detail.textContent="Preparazione dati...";
+  
   var totNetto=0;wCeste.forEach(function(c){totNetto+=c.pesoNetto||0});
-  // 1) SAVE LOCALLY IMMEDIATELY
   var cesteData=wCeste.map(function(c){return{pesoLordo:c.pesoLordo,pesoNetto:c.pesoNetto}});
-  getDay(activeDate)[wZone.id]={ceste:cesteData,autista:curUser,totaleNetto:totNetto};saveL();
-  showT("✓ "+wZone.name+" — "+totNetto.toFixed(1)+" kg netto");
-  // 2) Collect photos — use original capture directly (no re-encode to avoid failures)
+  var syncZone=wZone;var syncDate=activeDate;var syncNCeste=wCeste.length;
+  
+  // Collect photos
   var photosToSync=[];
   for(var pi=0;pi<wCeste.length;pi++){
     if(wCeste[pi].foto){
-      // Reduce to 800px quality 0.5 for reliable upload
       try{
         var img2=document.createElement("canvas");
         var srcImg=new Image();
@@ -494,34 +517,79 @@ async function wSave(){
           srcImg.src=wCeste[pi].foto;
         });
         if(photoData)photosToSync.push({cesta:pi+1,foto:photoData});
-      }catch(e){/* skip photo on error */}
+      }catch(e){}
     }
   }
-  var syncZone=wZone;var syncDate=activeDate;var syncNCeste=wCeste.length;
-  // 3) Return to main immediately
-  cancelWiz();
-  // 4) BACKGROUND SYNC — data first (fast), then photos one by one
-  var url=gUrl();if(!url)return;
+  
+  var totalSteps=1+photosToSync.length;var step=0;
+  
+  // 1) Save data to server
+  bar.style.width="10%";detail.textContent="Invio dati al server...";
+  var url=gUrl();if(!url){showSaveError("URL server non configurato");return}
   try{
-    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:syncNCeste,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
-  }catch(e){showT("⚠ Dati non sincronizzati")}
-  // Upload photos one at a time with delay between each
+    var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"addResi",data:syncDate,operatore:curUser,zona:syncZone.id,zonaName:syncZone.name+" "+syncZone.area,peso:totNetto,nceste:syncNCeste,ceste:cesteData.map(function(c,i){return{n:i+1,lordo:c.pesoLordo,netto:c.pesoNetto}})})});
+    var j=await r.json();
+    if(!j.success){showSaveError("Il server non ha confermato il salvataggio");return}
+  }catch(e){showSaveError("Errore di rete — dati non salvati: "+e.message);return}
+  
+  step++;bar.style.width=Math.round((step/totalSteps)*80+10)+"%";
+  detail.textContent="✓ Dati salvati sul server";
+  
+  // Save locally too
+  getDay(activeDate)[syncZone.id]={ceste:cesteData,autista:curUser,totaleNetto:totNetto};saveL();
+  
+  // 2) Upload photos one at a time
   var fotoOk=0;
   for(var i=0;i<photosToSync.length;i++){
+    detail.textContent="📷 Caricamento foto "+(i+1)+"/"+photosToSync.length+"...";
+    bar.style.width=Math.round(((step+i)/totalSteps)*80+10)+"%";
     try{
-      showT("📷 Caricamento foto "+(i+1)+"/"+photosToSync.length+"...");
-      var r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})});
-      var j=await r.json();
-      if(j.success)fotoOk++;
-      else if(j.error)console.log("Upload foto "+(i+1)+" errore:",j.error);
-    }catch(e){console.log("Upload foto "+(i+1)+" fallito:",e.message)}
-    // Small delay between uploads
+      var r2=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"uploadFoto",data:syncDate,operatore:curUser,zona:syncZone.id,cesta:photosToSync[i].cesta,foto:photosToSync[i].foto})});
+      var j2=await r2.json();
+      if(j2.success)fotoOk++;
+    }catch(e){}
     if(i<photosToSync.length-1)await new Promise(function(r){setTimeout(r,3000)});
   }
-  if(photosToSync.length>0){
-    if(fotoOk===photosToSync.length)showT("📷 "+fotoOk+" foto salvate ✓");
-    else showT("⚠ "+fotoOk+"/"+photosToSync.length+" foto salvate");
-  }
+  
+  // 3) Show success
+  bar.style.width="100%";
+  icon.textContent="✅";
+  title.textContent="Salvato!";
+  title.style.color="#22c55e";
+  var successMsg=syncZone.name+" — "+totNetto.toFixed(1)+" kg netto";
+  if(photosToSync.length>0)successMsg+="\n📷 "+fotoOk+"/"+photosToSync.length+" foto caricate";
+  msg.textContent=successMsg;
+  detail.textContent="Tutti i dati sono stati salvati sul server";
+  doneBtn.style.display="block";
+}
+
+function showSaveError(errMsg){
+  document.getElementById("saveIcon").textContent="❌";
+  document.getElementById("saveTitle").textContent="Errore di salvataggio";
+  document.getElementById("saveTitle").style.color="#ef4444";
+  document.getElementById("saveMsg").textContent=errMsg;
+  document.getElementById("saveDetail").textContent="Riprova o verifica la connessione";
+  document.getElementById("saveBar").style.width="100%";
+  document.getElementById("saveBar").style.background="#ef4444";
+  // Show retry + close buttons
+  document.getElementById("saveDoneBtn").style.display="none";
+  document.getElementById("saveErrorBtns").style.display="flex";
+}
+
+function closeSaveOverlay(){
+  var ov=document.getElementById("saveOverlay");ov.style.display="none";
+  document.getElementById("saveTitle").style.color="";
+  document.getElementById("saveBar").style.background="linear-gradient(90deg,#f59e0b,#10b981)";
+  document.getElementById("saveErrorBtns").style.display="none";
+  cancelWiz();doSync();
+}
+
+function closeSaveOverlayToRetry(){
+  var ov=document.getElementById("saveOverlay");ov.style.display="none";
+  document.getElementById("saveTitle").style.color="";
+  document.getElementById("saveBar").style.background="linear-gradient(90deg,#f59e0b,#10b981)";
+  document.getElementById("saveErrorBtns").style.display="none";
+  // Stay on summary screen — don't cancel wizard
 }
 
 function openSet(){var p=prompt("Password:");if(p!=="189092"){if(p!==null)showT("❌ Password errata");return}document.getElementById("setP").classList.toggle("hid")}
