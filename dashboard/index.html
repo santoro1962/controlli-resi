@@ -1461,14 +1461,42 @@ function updFornClassifica(el){
   el.innerHTML=h;
 }
 
-var cliPeriodo="max";
-function getCliDateRange(){
-  var now=new Date();var y=now.getFullYear();var m=now.getMonth();
-  if(cliPeriodo==="1m"){var d=new Date(y,m-1,now.getDate());return{from:d.toISOString().slice(0,10),to:"9999-12-31",label:"Ultimo mese"}}
-  if(cliPeriodo==="3m"){var d=new Date(y,m-3,now.getDate());return{from:d.toISOString().slice(0,10),to:"9999-12-31",label:"Ultimo trimestre"}}
-  if(cliPeriodo==="ytd"){return{from:y+"-01-01",to:"9999-12-31",label:"Da inizio anno "+y}}
-  if(cliPeriodo==="ly"){return{from:(y-1)+"-01-01",to:(y-1)+"-12-31",label:"Anno "+(y-1)}}
-  return{from:"2000-01-01",to:"9999-12-31",label:"Tutti i dati"};
+var cliSelectedMonths=null; // null = all, otherwise Set of "YYYY-MM"
+function getCliMonths(){
+  var months={};
+  fattureData.filter(function(f){return f.tipo==="Vendita"}).forEach(function(f){
+    var m=f.data.substring(0,7);months[m]=true;
+  });
+  return Object.keys(months).sort().reverse();
+}
+function toggleCliMonth(m){
+  if(!cliSelectedMonths)cliSelectedMonths=new Set();
+  if(cliSelectedMonths.has(m))cliSelectedMonths.delete(m);
+  else cliSelectedMonths.add(m);
+  if(cliSelectedMonths.size===0)cliSelectedMonths=null;
+}
+function cliFilterByMonths(fatt){
+  if(!cliSelectedMonths)return fatt;
+  return fatt.filter(function(f){return cliSelectedMonths.has(f.data.substring(0,7))});
+}
+function getCliLabel(){
+  if(!cliSelectedMonths)return"Tutti i mesi";
+  var arr=Array.from(cliSelectedMonths).sort();
+  var MESI=["","Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+  return arr.map(function(m){var p=m.split("-");return MESI[+p[1]]+" "+p[0]}).join(", ");
+}
+function renderMonthButtons(refreshFn){
+  var months=getCliMonths();
+  var MESI=["","Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+  var h='<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">';
+  h+='<button onclick="cliSelectedMonths=null;'+refreshFn+'" style="background:'+(cliSelectedMonths===null?"var(--accent)":"var(--inbg)")+';color:'+(cliSelectedMonths===null?"#fff":"var(--muted)")+';border:1px solid '+(cliSelectedMonths===null?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Tutto</button>';
+  months.forEach(function(m){
+    var active=cliSelectedMonths&&cliSelectedMonths.has(m);
+    var p=m.split("-");var label=MESI[+p[1]]+" "+p[0].substring(2);
+    h+='<button onclick="toggleCliMonth(\''+m+'\');'+refreshFn+'" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+label+'</button>';
+  });
+  h+='</div>';
+  return h;
 }
 
 function setCliTab(t){
@@ -1487,8 +1515,7 @@ function setCliTab(t){
 
 // ═══ TAB 1: CLIENTI — Classifica per fatturato ═══
 function updCliClassifica(el){
-  var range=getCliDateRange();
-  var filteredFatt=fattureData.filter(function(f){return f.tipo==="Vendita"&&f.data>=range.from&&f.data<=range.to});
+  var filteredFatt=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
   var clients={};
   filteredFatt.forEach(function(f){
     if(!clients[f.soggetto])clients[f.soggetto]={name:f.soggetto,piva:f.piva,imponibile:0,iva:0,totale:0,nFatt:0,artKeys:{}};
@@ -1501,15 +1528,11 @@ function updCliClassifica(el){
   var totGenerale=cliArr.reduce(function(s,x){return s+x.imponibile},0);
 
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
   h+='<div><div style="font-weight:700;font-size:15px">🏪 Clienti per fatturato</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+range.label+' · '+cliArr.length+' clienti · Imponibile: €'+totGenerale.toFixed(0)+'</div></div>';
-  h+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
-  [["1m","Ultimo mese"],["3m","Ultimo trimestre"],["ytd","Da inizio anno"],["ly","Anno precedente"],["max","Tutto"]].forEach(function(p){
-    var active=cliPeriodo===p[0];
-    h+='<button onclick="cliPeriodo=\''+p[0]+'\';updCliClassifica(document.getElementById(\'cliContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+p[1]+'</button>';
-  });
-  h+='</div></div></div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+cliArr.length+' clienti · Imponibile: €'+totGenerale.toFixed(0)+'</div></div></div>';
+  h+=renderMonthButtons("setCliTab('clienti')");
+  h+='</div>';
 
   cliArr.forEach(function(c,i){
     var pctTot=totGenerale>0?(c.imponibile/totGenerale*100):0;
@@ -1565,8 +1588,7 @@ function updCliClassifica(el){
 
 // ═══ TAB: TOP ARTICOLI VENDUTI ═══
 function updCliTopArticoli(el){
-  var range=getCliDateRange();
-  var vendite=fattureData.filter(function(f){return f.tipo==="Vendita"&&f.data>=range.from&&f.data<=range.to});
+  var vendite=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
   
   var arts={};
   vendite.forEach(function(f){
@@ -1593,15 +1615,11 @@ function updCliTopArticoli(el){
   var cumPct=0;
   
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
   h+='<div><div style="font-weight:700;font-size:15px">🏆 Classifica Articoli Venduti</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+range.label+' · '+artArr.length+' articoli · Ricavo totale: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div>';
-  h+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
-  [["1m","Ultimo mese"],["3m","Ultimo trimestre"],["ytd","Da inizio anno"],["ly","Anno precedente"],["max","Tutto"]].forEach(function(p){
-    var active=cliPeriodo===p[0];
-    h+='<button onclick="cliPeriodo=\''+p[0]+'\';updCliTopArticoli(document.getElementById(\'cliContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+p[1]+'</button>';
-  });
-  h+='</div></div></div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+artArr.length+' articoli · Ricavo totale: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div></div>';
+  h+=renderMonthButtons("setCliTab('topArt')");
+  h+='</div>';
   
   h+='<div style="overflow-x:auto;max-height:600px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
   h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">#</th>';
@@ -1644,8 +1662,7 @@ function isResoLine(riga){
 }
 
 function updCliResi(el){
-  var range=getCliDateRange();
-  var vendite=fattureData.filter(function(f){return f.tipo==="Vendita"&&f.data>=range.from&&f.data<=range.to});
+  var vendite=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
   
   // Build per-client analysis
   var clients={};
@@ -1693,15 +1710,10 @@ function updCliResi(el){
   var totPctReso=totCons>0?(totResi/totCons*100):0;
   
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
   h+='<div><div style="font-weight:700;font-size:15px">📊 Analisi Resi per Cliente</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+range.label+' · Resi da righe negative in fattura + note di credito (TD04)</div></div>';
-  h+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
-  [["1m","Ultimo mese"],["3m","Ultimo trimestre"],["ytd","Da inizio anno"],["ly","Anno precedente"],["max","Tutto"]].forEach(function(p){
-    var active=cliPeriodo===p[0];
-    h+='<button onclick="cliPeriodo=\''+p[0]+'\';updCliResi(document.getElementById(\'cliContent\'))" style="background:'+(active?"var(--accent)":"var(--inbg)")+';color:'+(active?"#fff":"var(--muted)")+';border:1px solid '+(active?"var(--accent)":"var(--inbord)")+';border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">'+p[1]+'</button>';
-  });
-  h+='</div></div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · Resi da righe negative in fattura + note di credito (TD04)</div></div></div>';
+  h+=renderMonthButtons("setCliTab('resi')");
   // Summary cards
   h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">';
   [{l:"Consegnato lordo",v:"€"+totCons.toFixed(0),c:"var(--ok)"},{l:"Totale resi",v:"€"+totResi.toFixed(0),c:"var(--danger)"},{l:"Netto",v:"€"+(totCons-totResi).toFixed(0),c:"var(--text)"},{l:"% Reso medio",v:totPctReso.toFixed(1)+"%",c:totPctReso>5?"var(--danger)":totPctReso>2?"var(--warn)":"var(--ok)"}].forEach(function(s){
