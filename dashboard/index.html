@@ -1598,21 +1598,38 @@ function normalizeDesc(desc){
   s=s.replace(/\s*-\s*.+$/,"");
   // Strip parentheses content
   s=s.replace(/\(.*?\)/g,"");
-  // Strip weight/size patterns
-  s=s.replace(/\d+\s*(GR|KG|PZ|ML|LT|G)\b/gi,"");
+  // Strip weight/size/unit patterns
+  s=s.replace(/\d+[.,]?\d*\s*(GR|KG|PZ|ML|LT|G)\b/gi,"");
+  s=s.replace(/\bGR[.]\d+/g,""); // GR.200 notation
   s=s.replace(/\bG\d+/g,"");
   s=s.replace(/\b\d+KG\b/g,"");
-  // Strip packaging/form words
-  s=s.replace(/\b(CONFEZIONAT[OAEI]|BUSTA|VASSOIO|SFUSO|INTERO|A FETTE|AL KG|TIPO \d+|GRANA FINE|DOPPIA COTTURA|BOLLITI)\b/gi,"");
-  // Strip filler words (including ALL' with apostrophe)
+  s=s.replace(/\b\d+PZ\b/g,"");
+  // Strip packaging/form/qualifier words
+  s=s.replace(/\b(CONFEZIONAT[OAEI]|CONF|BUSTA|VASSOIO|SFUS[OAEI]|INTERO|INTERA|INTERI|A FETTE|AL KG|AL PZ|TIPO \d+|GRANA FINE|DOPPIA COTTURA|BOLLITI|RICOPERT[OAEI]|ARTIGIANAL[EI]|CONFEZIONE|SIGILLO|STRAPPO)\b/gi,"");
+  // Strip "ALL'" with apostrophe before stripping filler words  
   s=s.replace(/\bALL['']/g,"");
+  // Strip filler words
   s=s.replace(/\b(DI|DEL|DELLA|DELLE|DEI|DA|A|AL|ALLE|ALLO|ALLA|IN|CON|LE|LA|IL|LO|GLI|I|PER|E)\b/gi,"");
-  // Bakery synonyms
-  s=s.replace(/\b(PAGNOTTA|PAGNOTTE|FILONE|FILONI|FILONCINO|SFILATINO)\b/g,"PANE");
-  s=s.replace(/\bFOCACCE\b/g,"FOCACCIA");
+  // Strip standalone PZ
+  s=s.replace(/\bPZ\b/g,"");
+  // Bakery bread synonyms → all become PANE
+  s=s.replace(/\b(PAGNOTTA|PAGNOTTE|FILONE|FILONI|FILONCINO|SFILATINO|FOCACCIA|FOCACCE|PANINO|PANINI)\b/g,"PANE");
+  // Fresella/Caponata synonyms
+  s=s.replace(/\bCAPONATE\b/g,"FRESELLA");
+  s=s.replace(/\bFRESELLE\b/g,"FRESELLA");
+  s=s.replace(/\bCAPONATA\b/g,""); // strip qualifier (caponata = type of fresella)
+  // Normalize adjective gender/number
+  s=s.replace(/\bBIANCHE\b/g,"BIANCA");
+  s=s.replace(/\bBIANCHI\b/g,"BIANCA");
+  s=s.replace(/\bINTEGRALI\b/g,"INTEGRALE");
+  // Product synonyms
   s=s.replace(/\bCACAO\b/g,"CIOCCOLATO");
+  s=s.replace(/\bSCAROLA\b/g,"VERDURE");
+  s=s.replace(/\bSEMPLICI\b/g,"CLASSICHE");
   // Strip FARINA SEMOLA
   s=s.replace(/\bFARINA\s*SEMOLA\b/g,"");
+  // Merge MOLLICA variants
+  s=s.replace(/\bMOLLICA\s+PANE\s+BIANCO\b/g,"MOLLICA PANE");
   s=s.replace(/\s+/g," ").trim();
   return s;
 }
