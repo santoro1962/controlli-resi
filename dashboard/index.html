@@ -1587,59 +1587,108 @@ function updCliClassifica(el){
 }
 
 // ═══ TAB: TOP ARTICOLI VENDUTI ═══
+// ═══ ARTICLE GROUPING SYSTEM ═══
+var artMerges={}; // {sourceKey: targetKey} — manual merges
+try{var _am=localStorage.getItem("art-merges");if(_am)artMerges=JSON.parse(_am)}catch(e){}
+function saveArtMerges(){localStorage.setItem("art-merges",JSON.stringify(artMerges))}
+
+function normalizeDesc(desc){
+  var s=(desc||"").toUpperCase();
+  s=s.replace(/\s*-\s*CONFEZIONAT[OA].*$/,""); // strip " - CONFEZIONATO/A ..."
+  s=s.replace(/\s*-\s*BUSTA.*$/,"");
+  s=s.replace(/\s*-\s*VASSOIO.*$/,"");
+  s=s.replace(/\s*-\s*SFUSO.*$/,"");
+  s=s.replace(/\(.*?\)/g,""); // strip parentheses
+  s=s.replace(/\d+\s*(GR|KG|PZ|ML|LT)\b/gi,""); // strip weights
+  s=s.replace(/G\d+/g,""); // G250 etc
+  s=s.replace(/\b(AL KG|INTERO|A FETTE|SFUSO|TIPO \d+|GRANA FINE)\b/gi,"");
+  s=s.replace(/\b(DI|DEL|DELLA|DELLE|DEI|A|AL|ALLE|IN|CON|LE|LA|IL|LO|GLI|I|PER)\b/gi,"");
+  s=s.replace(/\s+/g," ").trim();
+  return s;
+}
+
+function getArtGroupKey(codice,descrizione){
+  // Check manual merge first
+  var rawKey=codice||descrizione;
+  if(artMerges[rawKey])return artMerges[rawKey];
+  // Auto-group by normalized description
+  return normalizeDesc(descrizione);
+}
+
 function updCliTopArticoli(el){
   var vendite=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
   
-  var arts={};
+  // First pass: collect all articles
+  var rawArts={};
   vendite.forEach(function(f){
     var isNC=f.tipoDoc==="TD04";
     if(!f.righe)return;
     f.righe.forEach(function(r){
       var isReso=isNC||isResoLine(r);
-      if(isReso)return; // skip returns for this view
+      if(isReso)return;
       var k=r.codice||r.descrizione;if(!k)return;
       var desc=(r.descrizione||"").replace(/^RESO\s+/i,"").trim();
-      if(!arts[k])arts[k]={codice:r.codice||"",descrizione:desc,um:r.um||"",totQty:0,totRicavo:0,nClienti:{},nFatt:0,lastPrezzo:0,lastData:""};
-      arts[k].totQty+=r.quantita||0;
-      arts[k].totRicavo+=r.prezzoTotale||0;
-      arts[k].nClienti[f.soggetto]=true;
-      arts[k].nFatt++;
-      if(!arts[k].um&&r.um)arts[k].um=r.um;
-      if(f.data>arts[k].lastData){arts[k].lastData=f.data;arts[k].lastPrezzo=r.prezzoUnitario||0}
+      if(!rawArts[k])rawArts[k]={codice:r.codice||"",descrizione:desc,um:r.um||"",totQty:0,totRicavo:0,nClienti:{},lastPrezzo:0,lastData:""};
+      rawArts[k].totQty+=r.quantita||0;rawArts[k].totRicavo+=r.prezzoTotale||0;
+      rawArts[k].nClienti[f.soggetto]=true;
+      if(!rawArts[k].um&&r.um)rawArts[k].um=r.um;
+      if(f.data>rawArts[k].lastData){rawArts[k].lastData=f.data;rawArts[k].lastPrezzo=r.prezzoUnitario||0}
     });
   });
   
-  var artArr=Object.values(arts).sort(function(a,b){return b.totRicavo-a.totRicavo});
+  // Second pass: group by normalized key
+  var groups={};
+  Object.keys(rawArts).forEach(function(k){
+    var a=rawArts[k];
+    var gk=getArtGroupKey(a.codice||k,a.descrizione);
+    if(!groups[gk])groups[gk]={descrizione:a.descrizione,codici:[],um:a.um,totQty:0,totRicavo:0,nClienti:{},lastPrezzo:0,lastData:"",members:[]};
+    var g=groups[gk];
+    g.totQty+=a.totQty;g.totRicavo+=a.totRicavo;
+    Object.keys(a.nClienti).forEach(function(c){g.nClienti[c]=true});
+    if(a.codice&&g.codici.indexOf(a.codice)<0)g.codici.push(a.codice);
+    if(!g.um&&a.um)g.um=a.um;
+    if(a.lastData>g.lastData){g.lastData=a.lastData;g.lastPrezzo=a.lastPrezzo}
+    // Use longest description as group name
+    if(a.descrizione.length>g.descrizione.length)g.descrizione=a.descrizione;
+    g.members.push({codice:a.codice||k,descrizione:a.descrizione,qty:a.totQty,ricavo:a.totRicavo});
+  });
+  
+  var artArr=Object.values(groups).sort(function(a,b){return b.totRicavo-a.totRicavo});
   var totRicavo=artArr.reduce(function(s,a){return s+a.totRicavo},0);
-  // Cumulative % for Pareto
   var cumPct=0;
+  var nMerged=artArr.filter(function(a){return a.members.length>1}).length;
   
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
   h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
   h+='<div><div style="font-weight:700;font-size:15px">🏆 Classifica Articoli Venduti</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+artArr.length+' articoli · Ricavo totale: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div></div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+artArr.length+' gruppi (da '+Object.keys(rawArts).length+' codici) · Ricavo: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div></div>';
   h+=renderMonthButtons("setCliTab('topArt')");
+  if(nMerged>0)h+='<div style="margin-top:8px;font-size:11px;color:var(--accent)">🔗 '+nMerged+' articoli raggruppati automaticamente — clicca ▼ per dettagli o per correggere</div>';
   h+='</div>';
   
   h+='<div style="overflow-x:auto;max-height:600px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
   h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">#</th>';
-  h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Articolo</th>';
+  h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Codici</th>';
+  h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Descrizione</th>';
   h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">UM</th>';
   h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Qty venduta</th>';
   h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ultimo prezzo</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ricavo periodo</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% sul totale</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% cumulata</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">N° clienti</th>';
+  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ricavo</th>';
+  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">%</th>';
+  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% cum.</th>';
+  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Clienti</th>';
   h+='</tr></thead><tbody>';
   artArr.forEach(function(a,i){
     var pct=totRicavo>0?(a.totRicavo/totRicavo*100):0;
     cumPct+=pct;
     var nCli=Object.keys(a.nClienti).length;
     var rowBg=cumPct<=80?"rgba(34,197,94,0.04)":cumPct<=95?"rgba(245,158,11,0.03)":"transparent";
-    h+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+'">';
+    var hasMulti=a.members.length>1;
+    var codesStr=a.codici.length>0?a.codici.join(", "):"—";
+    h+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';cursor:'+(hasMulti?"pointer":"default")+'" '+(hasMulti?'onclick="this.nextElementSibling.classList.toggle(\'hid\')"':'')+'>';
     h+='<td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</td>';
-    h+='<td style="padding:6px 8px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(a.codice?'<span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:3px">'+a.codice+'</span>':'')+a.descrizione+'</td>';
+    h+='<td style="padding:6px 8px;font-size:10px;color:var(--muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+codesStr+'</td>';
+    h+='<td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.descrizione+(hasMulti?' <span style="font-size:9px;color:var(--accent)">🔗'+a.members.length+'</span>':'')+'</td>';
     h+='<td style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
     h+='<td style="padding:6px 8px;text-align:right">'+a.totQty.toFixed(1)+(a.um?" "+a.um:"")+'</td>';
     h+='<td style="padding:6px 8px;text-align:right">'+(a.lastPrezzo?"€"+a.lastPrezzo.toFixed(4)+(a.um?"/"+a.um:""):"—")+'</td>';
@@ -1647,9 +1696,30 @@ function updCliTopArticoli(el){
     h+='<td style="padding:6px 8px;text-align:right;color:var(--muted)">'+pct.toFixed(1)+'%</td>';
     h+='<td style="padding:6px 8px;text-align:right;font-weight:600;color:'+(cumPct<=80?"var(--ok)":cumPct<=95?"var(--warn)":"var(--muted)")+'">'+cumPct.toFixed(1)+'%</td>';
     h+='<td style="padding:6px 8px;text-align:right">'+nCli+'</td></tr>';
+    // Sub-row: member details for grouped articles
+    if(hasMulti){
+      h+='<tr class="hid" style="background:var(--inbg)"><td colspan="10" style="padding:8px 20px">';
+      h+='<div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:6px">🔗 Articoli raggruppati (stessa descrizione normalizzata):</div>';
+      a.members.forEach(function(m){
+        h+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">';
+        h+='<span><span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:4px">'+m.codice+'</span>'+m.descrizione+'</span>';
+        h+='<span style="color:var(--muted)">'+m.qty.toFixed(1)+' · €'+m.ricavo.toFixed(2)+'</span></div>';
+      });
+      h+='<div style="margin-top:8px"><button onclick="unmergeGroup(\''+encodeURIComponent(normalizeDesc(a.descrizione))+'\')" style="background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:4px 12px;font-size:10px;cursor:pointer">✕ Separa questo gruppo</button></div>';
+      h+='</td></tr>';
+    }
   });
   h+='</tbody></table></div>';
   el.innerHTML=h;
+}
+
+function unmergeGroup(encodedKey){
+  var gk=decodeURIComponent(encodedKey);
+  // Remove all manual merges pointing to this group
+  var changed=false;
+  Object.keys(artMerges).forEach(function(k){if(artMerges[k]===gk){delete artMerges[k];changed=true}});
+  if(changed){saveArtMerges();showT("✓ Gruppo separato")}
+  setCliTab("topArt");
 }
 
 // ═══ TAB 3: ANALISI RESI PER CLIENTE ═══
