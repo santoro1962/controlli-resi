@@ -1594,15 +1594,25 @@ function saveArtMerges(){localStorage.setItem("art-merges",JSON.stringify(artMer
 
 function normalizeDesc(desc){
   var s=(desc||"").toUpperCase();
-  s=s.replace(/\s*-\s*CONFEZIONAT[OA].*$/,""); // strip " - CONFEZIONATO/A ..."
-  s=s.replace(/\s*-\s*BUSTA.*$/,"");
-  s=s.replace(/\s*-\s*VASSOIO.*$/,"");
-  s=s.replace(/\s*-\s*SFUSO.*$/,"");
-  s=s.replace(/\(.*?\)/g,""); // strip parentheses
-  s=s.replace(/\d+\s*(GR|KG|PZ|ML|LT)\b/gi,""); // strip weights
-  s=s.replace(/G\d+/g,""); // G250 etc
-  s=s.replace(/\b(AL KG|INTERO|A FETTE|SFUSO|TIPO \d+|GRANA FINE)\b/gi,"");
-  s=s.replace(/\b(DI|DEL|DELLA|DELLE|DEI|A|AL|ALLE|IN|CON|LE|LA|IL|LO|GLI|I|PER)\b/gi,"");
+  // Strip everything after " - " (packaging info)
+  s=s.replace(/\s*-\s*.+$/,"");
+  // Strip parentheses content
+  s=s.replace(/\(.*?\)/g,"");
+  // Strip weight/size patterns
+  s=s.replace(/\d+\s*(GR|KG|PZ|ML|LT|G)\b/gi,"");
+  s=s.replace(/\bG\d+/g,"");
+  s=s.replace(/\b\d+KG\b/g,"");
+  // Strip packaging/form words
+  s=s.replace(/\b(CONFEZIONAT[OAEI]|BUSTA|VASSOIO|SFUSO|INTERO|A FETTE|AL KG|TIPO \d+|GRANA FINE|DOPPIA COTTURA|BOLLITI)\b/gi,"");
+  // Strip filler words (including ALL' with apostrophe)
+  s=s.replace(/\bALL['']/g,"");
+  s=s.replace(/\b(DI|DEL|DELLA|DELLE|DEI|DA|A|AL|ALLE|ALLO|ALLA|IN|CON|LE|LA|IL|LO|GLI|I|PER|E)\b/gi,"");
+  // Bakery synonyms
+  s=s.replace(/\b(PAGNOTTA|PAGNOTTE|FILONE|FILONI|FILONCINO|SFILATINO)\b/g,"PANE");
+  s=s.replace(/\bFOCACCE\b/g,"FOCACCIA");
+  s=s.replace(/\bCACAO\b/g,"CIOCCOLATO");
+  // Strip FARINA SEMOLA
+  s=s.replace(/\bFARINA\s*SEMOLA\b/g,"");
   s=s.replace(/\s+/g," ").trim();
   return s;
 }
@@ -1618,7 +1628,7 @@ function getArtGroupKey(codice,descrizione){
 function updCliTopArticoli(el){
   var vendite=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
   
-  // First pass: collect all articles
+  // First pass: collect all articles — key by code+description to avoid cross-client code conflicts
   var rawArts={};
   vendite.forEach(function(f){
     var isNC=f.tipoDoc==="TD04";
@@ -1626,8 +1636,9 @@ function updCliTopArticoli(el){
     f.righe.forEach(function(r){
       var isReso=isNC||isResoLine(r);
       if(isReso)return;
-      var k=r.codice||r.descrizione;if(!k)return;
       var desc=(r.descrizione||"").replace(/^RESO\s+/i,"").trim();
+      if(!desc)return;
+      var k=(r.codice||"")+"||"+desc;
       if(!rawArts[k])rawArts[k]={codice:r.codice||"",descrizione:desc,um:r.um||"",totQty:0,totRicavo:0,nClienti:{},lastPrezzo:0,lastData:""};
       rawArts[k].totQty+=r.quantita||0;rawArts[k].totRicavo+=r.prezzoTotale||0;
       rawArts[k].nClienti[f.soggetto]=true;
