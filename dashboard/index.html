@@ -1588,26 +1588,40 @@ function updCliClassifica(el){
 
 // ═══ TAB: TOP ARTICOLI VENDUTI ═══
 // ═══ ARTICLE GROUPING SYSTEM ═══
-var artMerges={}; // {sourceKey: targetKey} — manual merges
+var artMerges={}; // {sourceKey: targetGroupKey} — manual merges
 try{var _am=localStorage.getItem("art-merges");if(_am)artMerges=JSON.parse(_am)}catch(e){}
 function saveArtMerges(){localStorage.setItem("art-merges",JSON.stringify(artMerges))}
 
+var artGroupNames={}; // {groupKey: customDisplayName}
+try{var _agn=localStorage.getItem("art-group-names");if(_agn)artGroupNames=JSON.parse(_agn)}catch(e){}
+function saveArtGroupNames(){localStorage.setItem("art-group-names",JSON.stringify(artGroupNames))}
+
+var _artEditMode=false;
+var _artDragCode=null; // code being dragged
+var _artDragGroup=null; // group being dragged
+var _lastArtGroups=null; // cached group data for drag operations
+
 function normalizeDesc(desc){
   var s=(desc||"").toUpperCase();
+  // Clean special characters
+  s=s.replace(/[\u00A0\u200B]/g," ");
+  s=s.replace(/[''`\u2018\u2019\u0027]/g,"'");
   // Strip everything after " - " (packaging info)
   s=s.replace(/\s*-\s*.+$/,"");
   // Strip parentheses content
   s=s.replace(/\(.*?\)/g,"");
   // Strip weight/size/unit patterns
   s=s.replace(/\d+[.,]?\d*\s*(GR|KG|PZ|ML|LT|G)\b/gi,"");
-  s=s.replace(/\bGR[.]\d+/g,""); // GR.200 notation
+  s=s.replace(/\bGR[.]\d+/g,"");
   s=s.replace(/\bG\d+/g,"");
   s=s.replace(/\b\d+KG\b/g,"");
   s=s.replace(/\b\d+PZ\b/g,"");
+  // Strip CONF explicitly (abbreviation of confezionato)
+  s=s.replace(/\bCONF\b/gi,"");
   // Strip packaging/form/qualifier words
-  s=s.replace(/\b(CONFEZIONAT[OAEI]|CONF|BUSTA|VASSOIO|SFUS[OAEI]|INTERO|INTERA|INTERI|A FETTE|AL KG|AL PZ|TIPO \d+|GRANA FINE|DOPPIA COTTURA|BOLLITI|RICOPERT[OAEI]|ARTIGIANAL[EI]|CONFEZIONE|SIGILLO|STRAPPO)\b/gi,"");
+  s=s.replace(/\b(CONFEZIONAT[OAEI]|BUSTA|VASSOIO|SFUS[OAEI]|INTERO|INTERA|INTERI|A FETTE|AL KG|AL PZ|TIPO \d+|GRANA FINE|DOPPIA COTTURA|BOLLITI|RICOPERT[OAEI]|ARTIGIANAL[EI]|CONFEZIONE|SIGILLO|STRAPPO)\b/gi,"");
   // Strip "ALL'" with apostrophe before stripping filler words  
-  s=s.replace(/\bALL['']/g,"");
+  s=s.replace(/\bALL[''\u2019\u0027]/g,"");
   // Strip filler words
   s=s.replace(/\b(DI|DEL|DELLA|DELLE|DEI|DA|A|AL|ALLE|ALLO|ALLA|IN|CON|LE|LA|IL|LO|GLI|I|PER|E)\b/gi,"");
   // Strip standalone PZ
@@ -1644,8 +1658,6 @@ function getArtGroupKey(codice,descrizione){
 
 function updCliTopArticoli(el){
   var vendite=cliFilterByMonths(fattureData.filter(function(f){return f.tipo==="Vendita"}));
-  
-  // First pass: collect all articles — key by code+description to avoid cross-client code conflicts
   var rawArts={};
   vendite.forEach(function(f){
     var isNC=f.tipoDoc==="TD04";
@@ -1663,87 +1675,184 @@ function updCliTopArticoli(el){
       if(f.data>rawArts[k].lastData){rawArts[k].lastData=f.data;rawArts[k].lastPrezzo=r.prezzoUnitario||0}
     });
   });
-  
-  // Second pass: group by normalized key
   var groups={};
   Object.keys(rawArts).forEach(function(k){
     var a=rawArts[k];
     var gk=getArtGroupKey(a.codice||k,a.descrizione);
-    if(!groups[gk])groups[gk]={descrizione:a.descrizione,codici:[],um:a.um,totQty:0,totRicavo:0,nClienti:{},lastPrezzo:0,lastData:"",members:[]};
+    if(!groups[gk])groups[gk]={gk:gk,descrizione:a.descrizione,codici:[],um:a.um,totQty:0,totRicavo:0,nClienti:{},lastPrezzo:0,lastData:"",members:[]};
     var g=groups[gk];
     g.totQty+=a.totQty;g.totRicavo+=a.totRicavo;
     Object.keys(a.nClienti).forEach(function(c){g.nClienti[c]=true});
     if(a.codice&&g.codici.indexOf(a.codice)<0)g.codici.push(a.codice);
     if(!g.um&&a.um)g.um=a.um;
     if(a.lastData>g.lastData){g.lastData=a.lastData;g.lastPrezzo=a.lastPrezzo}
-    // Use longest description as group name
     if(a.descrizione.length>g.descrizione.length)g.descrizione=a.descrizione;
-    g.members.push({codice:a.codice||k,descrizione:a.descrizione,qty:a.totQty,ricavo:a.totRicavo});
+    g.members.push({codice:a.codice||k,rawKey:k,descrizione:a.descrizione,qty:a.totQty,ricavo:a.totRicavo});
   });
-  
   var artArr=Object.values(groups).sort(function(a,b){return b.totRicavo-a.totRicavo});
+  _lastArtGroups=groups;
   var totRicavo=artArr.reduce(function(s,a){return s+a.totRicavo},0);
   var cumPct=0;
   var nMerged=artArr.filter(function(a){return a.members.length>1}).length;
-  
+  var nManual=Object.keys(artMerges).length;
+  var edit=_artEditMode;
+
   var h='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">';
   h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
   h+='<div><div style="font-weight:700;font-size:15px">🏆 Classifica Articoli Venduti</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+artArr.length+' gruppi (da '+Object.keys(rawArts).length+' codici) · Ricavo: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div></div>';
-  h+=renderMonthButtons("setCliTab('topArt')");
-  if(nMerged>0)h+='<div style="margin-top:8px;font-size:11px;color:var(--accent)">🔗 '+nMerged+' articoli raggruppati automaticamente — clicca ▼ per dettagli o per correggere</div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-top:4px">'+getCliLabel()+' · '+artArr.length+' gruppi ('+Object.keys(rawArts).length+' codici) · Ricavo: <strong style="color:var(--ok)">€'+totRicavo.toFixed(0)+'</strong></div></div>';
+  // Edit mode toggle
+  h+='<button onclick="_artEditMode=!_artEditMode;setCliTab(\'topArt\')" style="background:'+(edit?"var(--accent)":"var(--inbg)")+';color:'+(edit?"#fff":"var(--muted)")+';border:1px solid '+(edit?"var(--accent)":"var(--inbord)")+';border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">'+(edit?"✓ Fine modifica":"✏️ Gestisci gruppi")+'</button>';
   h+='</div>';
-  
-  h+='<div style="overflow-x:auto;max-height:600px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
-  h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">#</th>';
-  h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Codici</th>';
-  h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Descrizione</th>';
-  h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">UM</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Qty venduta</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ultimo prezzo</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ricavo</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">%</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% cum.</th>';
-  h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Clienti</th>';
-  h+='</tr></thead><tbody>';
-  artArr.forEach(function(a,i){
-    var pct=totRicavo>0?(a.totRicavo/totRicavo*100):0;
-    cumPct+=pct;
-    var nCli=Object.keys(a.nClienti).length;
-    var rowBg=cumPct<=80?"rgba(34,197,94,0.04)":cumPct<=95?"rgba(245,158,11,0.03)":"transparent";
-    var hasMulti=a.members.length>1;
-    var codesStr=a.codici.length>0?a.codici.join(", "):"—";
-    h+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';cursor:'+(hasMulti?"pointer":"default")+'" '+(hasMulti?'onclick="this.nextElementSibling.classList.toggle(\'hid\')"':'')+'>';
-    h+='<td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</td>';
-    h+='<td style="padding:6px 8px;font-size:10px;color:var(--muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+codesStr+'</td>';
-    h+='<td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.descrizione+(hasMulti?' <span style="font-size:9px;color:var(--accent)">🔗'+a.members.length+'</span>':'')+'</td>';
-    h+='<td style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
-    h+='<td style="padding:6px 8px;text-align:right">'+a.totQty.toFixed(1)+(a.um?" "+a.um:"")+'</td>';
-    h+='<td style="padding:6px 8px;text-align:right">'+(a.lastPrezzo?"€"+a.lastPrezzo.toFixed(4)+(a.um?"/"+a.um:""):"—")+'</td>';
-    h+='<td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--ok)">€'+a.totRicavo.toFixed(2)+'</td>';
-    h+='<td style="padding:6px 8px;text-align:right;color:var(--muted)">'+pct.toFixed(1)+'%</td>';
-    h+='<td style="padding:6px 8px;text-align:right;font-weight:600;color:'+(cumPct<=80?"var(--ok)":cumPct<=95?"var(--warn)":"var(--muted)")+'">'+cumPct.toFixed(1)+'%</td>';
-    h+='<td style="padding:6px 8px;text-align:right">'+nCli+'</td></tr>';
-    // Sub-row: member details for grouped articles
-    if(hasMulti){
-      h+='<tr class="hid" style="background:var(--inbg)"><td colspan="10" style="padding:8px 20px">';
-      h+='<div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:6px">🔗 Articoli raggruppati (stessa descrizione normalizzata):</div>';
-      a.members.forEach(function(m){
-        h+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">';
-        h+='<span><span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:4px">'+m.codice+'</span>'+m.descrizione+'</span>';
-        h+='<span style="color:var(--muted)">'+m.qty.toFixed(1)+' · €'+m.ricavo.toFixed(2)+'</span></div>';
+  h+=renderMonthButtons("setCliTab('topArt')");
+  if(nMerged>0)h+='<div style="margin-top:8px;font-size:11px;color:var(--accent)">🔗 '+nMerged+' raggruppati'+(nManual>0?' · <span style="color:var(--warn)">'+nManual+' regole manuali</span>':'')+'</div>';
+  if(edit)h+='<div style="margin-top:8px;padding:10px 14px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);border-radius:10px;font-size:12px;color:var(--text);line-height:1.7"><strong>Modalità modifica attiva</strong><br>• Trascina un <strong>articolo</strong> su un altro gruppo per spostarlo<br>• Trascina un <strong>gruppo intero</strong> (dal nome) su un altro per unirli<br>• Clicca ✏️ per rinominare la categoria<br>• Le regole manuali vengono salvate automaticamente</div>';
+  h+='</div>';
+
+  if(edit){
+    // ═══ EDIT MODE: card-based drag-and-drop ═══
+    h+='<div id="artGroupsContainer" style="padding:10px">';
+    artArr.forEach(function(a,i){
+      var gk=a.gk;
+      var displayName=artGroupNames[gk]||a.descrizione;
+      var hasMulti=a.members.length>1;
+      var nCli=Object.keys(a.nClienti).length;
+      var pct=totRicavo>0?(a.totRicavo/totRicavo*100):0;
+      h+='<div class="art-group-drop" data-gk="'+encodeURIComponent(gk)+'" ondragover="event.preventDefault();this.style.borderColor=\'var(--accent)\'" ondragleave="this.style.borderColor=\'var(--border)\'" ondrop="artDrop(event,this)" style="background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;transition:border-color 0.15s">';
+      // Group header — draggable
+      h+='<div draggable="true" ondragstart="artDragGroupStart(event,\''+encodeURIComponent(gk)+'\')" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:grab">';
+      h+='<span style="font-size:14px;cursor:grab">☰</span>';
+      h+='<span id="gname-'+i+'" style="font-weight:700;font-size:13px;flex:1">'+displayName+'</span>';
+      h+='<span style="font-size:10px;color:var(--muted);font-family:monospace">€'+a.totRicavo.toFixed(0)+' · '+pct.toFixed(1)+'% · '+nCli+' cli</span>';
+      if(hasMulti)h+='<span style="font-size:9px;color:var(--accent);font-weight:700">🔗'+a.members.length+'</span>';
+      h+='<button onclick="artRenamePrompt(\''+encodeURIComponent(gk)+'\',\''+encodeURIComponent(displayName)+'\')" style="background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:2px 4px" title="Rinomina categoria">✏️</button>';
+      h+='</div>';
+      // Rename input (hidden by default)
+      h+='<div id="rename-'+encodeURIComponent(gk)+'" class="hid" style="margin-bottom:8px;display:flex;gap:6px">';
+      h+='<input id="reninput-'+encodeURIComponent(gk)+'" style="background:var(--inbg);border:1px solid var(--accent);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;font-weight:600;flex:1;outline:none" placeholder="Nome categoria...">';
+      h+='<button onclick="artDoRename(\''+encodeURIComponent(gk)+'\')" style="background:var(--ok);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer">✓ Salva</button>';
+      h+='<button onclick="document.getElementById(\'rename-'+encodeURIComponent(gk)+'\').classList.add(\'hid\')" style="background:var(--inbg);color:var(--muted);border:1px solid var(--inbord);border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">Annulla</button>';
+      h+='</div>';
+      // Members
+      h+='<div style="display:flex;flex-wrap:wrap;gap:5px">';
+      a.members.sort(function(x,y){return y.ricavo-x.ricavo}).forEach(function(m){
+        var mKey=m.codice||m.rawKey;
+        h+='<div draggable="true" ondragstart="artDragStart(event,\''+encodeURIComponent(mKey)+'\')" style="background:var(--inbg);border:1px solid var(--inbord);border-radius:8px;padding:5px 10px;cursor:grab;font-size:11px;display:flex;align-items:center;gap:6px;max-width:380px;font-family:monospace">';
+        h+='<span style="font-size:9px;font-weight:700;color:var(--accent);flex-shrink:0">'+m.codice+'</span>';
+        h+='<span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+m.descrizione+'">'+m.descrizione+'</span>';
+        h+='<span style="color:var(--muted);font-size:9px;flex-shrink:0">€'+m.ricavo.toFixed(0)+'</span>';
+        h+='</div>';
       });
-      h+='<div style="margin-top:8px"><button onclick="unmergeGroup(\''+encodeURIComponent(normalizeDesc(a.descrizione))+'\')" style="background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:4px 12px;font-size:10px;cursor:pointer">✕ Separa questo gruppo</button></div>';
-      h+='</td></tr>';
-    }
-  });
-  h+='</tbody></table></div>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+  } else {
+    // ═══ VIEW MODE: table (original) ═══
+    h+='<div style="overflow-x:auto;max-height:600px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace"><thead><tr style="background:var(--inbg);position:sticky;top:0;z-index:1">';
+    h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">#</th>';
+    h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Codici</th>';
+    h+='<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px">Descrizione</th>';
+    h+='<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">UM</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Qty venduta</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ultimo prezzo</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Ricavo</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">%</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">% cum.</th>';
+    h+='<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:10px">Clienti</th>';
+    h+='</tr></thead><tbody>';
+    artArr.forEach(function(a,i){
+      var pct=totRicavo>0?(a.totRicavo/totRicavo*100):0;
+      cumPct+=pct;
+      var nCli=Object.keys(a.nClienti).length;
+      var rowBg=cumPct<=80?"rgba(34,197,94,0.04)":cumPct<=95?"rgba(245,158,11,0.03)":"transparent";
+      var hasMulti=a.members.length>1;
+      var codesStr=a.codici.length>0?a.codici.join(", "):"—";
+      var displayName=artGroupNames[a.gk]||a.descrizione;
+      h+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';cursor:'+(hasMulti?"pointer":"default")+'" '+(hasMulti?'onclick="this.nextElementSibling.classList.toggle(\'hid\')"':'')+'>';
+      h+='<td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</td>';
+      h+='<td style="padding:6px 8px;font-size:10px;color:var(--muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+codesStr+'</td>';
+      h+='<td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+displayName+(hasMulti?' <span style="font-size:9px;color:var(--accent)">🔗'+a.members.length+'</span>':'')+'</td>';
+      h+='<td style="padding:6px 8px;text-align:center;color:var(--muted);font-size:10px">'+(a.um||"—")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right">'+a.totQty.toFixed(1)+(a.um?" "+a.um:"")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right">'+(a.lastPrezzo?"€"+a.lastPrezzo.toFixed(4)+(a.um?"/"+a.um:""):"—")+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--ok)">€'+a.totRicavo.toFixed(2)+'</td>';
+      h+='<td style="padding:6px 8px;text-align:right;color:var(--muted)">'+pct.toFixed(1)+'%</td>';
+      h+='<td style="padding:6px 8px;text-align:right;font-weight:600;color:'+(cumPct<=80?"var(--ok)":cumPct<=95?"var(--warn)":"var(--muted)")+'">'+cumPct.toFixed(1)+'%</td>';
+      h+='<td style="padding:6px 8px;text-align:right">'+nCli+'</td></tr>';
+      if(hasMulti){
+        h+='<tr class="hid" style="background:var(--inbg)"><td colspan="10" style="padding:8px 20px">';
+        h+='<div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:6px">🔗 Articoli raggruppati:</div>';
+        a.members.forEach(function(m){
+          h+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">';
+          h+='<span><span style="background:var(--card);padding:0 3px;border-radius:2px;font-size:9px;margin-right:4px">'+m.codice+'</span>'+m.descrizione+'</span>';
+          h+='<span style="color:var(--muted)">'+m.qty.toFixed(1)+' · €'+m.ricavo.toFixed(2)+'</span></div>';
+        });
+        h+='</td></tr>';
+      }
+    });
+    h+='</tbody></table></div>';
+  }
   el.innerHTML=h;
+}
+
+// ═══ DRAG & DROP HANDLERS ═══
+function artDragStart(ev,encodedCode){
+  ev.dataTransfer.setData("text/plain","ART:"+encodedCode);
+  ev.dataTransfer.effectAllowed="move";
+}
+function artDragGroupStart(ev,encodedGk){
+  ev.dataTransfer.setData("text/plain","GRP:"+encodedGk);
+  ev.dataTransfer.effectAllowed="move";
+}
+function artDrop(ev,dropEl){
+  ev.preventDefault();
+  dropEl.style.borderColor="var(--border)";
+  var data=ev.dataTransfer.getData("text/plain");
+  var targetGk=decodeURIComponent(dropEl.getAttribute("data-gk"));
+  if(data.startsWith("ART:")){
+    var code=decodeURIComponent(data.substring(4));
+    artMerges[code]=targetGk;
+    saveArtMerges();
+    showT("✓ Articolo spostato");
+    setCliTab("topArt");
+  } else if(data.startsWith("GRP:")){
+    var fromGk=decodeURIComponent(data.substring(4));
+    if(fromGk===targetGk)return;
+    // Move all members of fromGk into targetGk
+    if(_lastArtGroups&&_lastArtGroups[fromGk]){
+      _lastArtGroups[fromGk].members.forEach(function(m){
+        var mKey=m.codice||m.rawKey;
+        artMerges[mKey]=targetGk;
+      });
+      saveArtMerges();
+      showT("✓ Gruppi uniti");
+      setCliTab("topArt");
+    }
+  }
+}
+
+// ═══ RENAME HANDLERS ═══
+function artRenamePrompt(encodedGk,encodedCurrent){
+  var renEl=document.getElementById("rename-"+encodedGk);
+  if(!renEl)return;
+  renEl.classList.remove("hid");
+  var inp=document.getElementById("reninput-"+encodedGk);
+  if(inp){inp.value=decodeURIComponent(encodedCurrent);inp.focus();inp.select();
+    inp.onkeydown=function(e){if(e.key==="Enter")artDoRename(encodedGk);if(e.key==="Escape")renEl.classList.add("hid")}
+  }
+}
+function artDoRename(encodedGk){
+  var gk=decodeURIComponent(encodedGk);
+  var inp=document.getElementById("reninput-"+encodedGk);
+  if(!inp||!inp.value.trim())return;
+  artGroupNames[gk]=inp.value.trim();
+  saveArtGroupNames();
+  showT("✓ Categoria rinominata");
+  setCliTab("topArt");
 }
 
 function unmergeGroup(encodedKey){
   var gk=decodeURIComponent(encodedKey);
-  // Remove all manual merges pointing to this group
   var changed=false;
   Object.keys(artMerges).forEach(function(k){if(artMerges[k]===gk){delete artMerges[k];changed=true}});
   if(changed){saveArtMerges();showT("✓ Gruppo separato")}
